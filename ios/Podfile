@@ -1,0 +1,93 @@
+# # Resolve react_native_pods.rb with node to allow for hoisting
+# require Pod::Executable.execute_command('node', ['-p',
+#   'require.resolve(
+#     "react-native/scripts/react_native_pods.rb",
+#     {paths: [process.argv[1]]},
+#   )', __dir__]).strip
+
+# ENV['RCT_NEW_ARCH_ENABLED'] = '1'
+
+# $RNFirebaseDisableSPM = true
+
+# platform :ios, min_ios_version_supported
+# prepare_react_native_project!
+
+# linkage = ENV['USE_FRAMEWORKS']
+# if linkage != nil
+#   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+#   use_frameworks! :linkage => linkage.to_sym
+# end
+
+# target 'Shelynx' do
+#   config = use_native_modules!
+
+# #  pod 'GoogleMaps'
+# #   pod 'Google-Maps-iOS-Utils'
+
+#   use_react_native!(
+#     :path => config[:reactNativePath],
+#    :hermes_enabled => true,
+#   :new_arch_enabled => true,
+#     # An absolute path to your application root.
+#     :app_path => "#{Pod::Config.instance.installation_root}/.."
+#   )
+
+# #  pod 'react-native-maps', :path => '../node_modules/react-native-maps'
+
+
+#   post_install do |installer|
+#     react_native_post_install(
+#       installer,
+#       config[:reactNativePath],
+#       :mac_catalyst_enabled => false,
+#       # :ccache_enabled => true
+#     )
+#   end
+# end
+
+# Resolve react_native_pods.rb with node to allow for hoisting
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
+
+ENV['RCT_NEW_ARCH_ENABLED'] = '1'
+
+# Disable Firebase Swift Package Manager
+$RNFirebaseDisableSPM = true
+
+platform :ios, min_ios_version_supported
+
+prepare_react_native_project!
+
+# Use STATIC frameworks
+use_frameworks! :linkage => :static
+
+target 'Shelynx' do
+  config = use_native_modules!
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    :hermes_enabled => true,
+    :new_arch_enabled => true,
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
+  post_install do |installer|
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false
+    )
+
+    # Fix non-modular include errors
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings[
+          'CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'
+        ] = 'YES'
+      end
+    end
+  end
+end

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "41084014958",
+    "project_id": "shien-backend",
+    "storage_bucket": "shien-backend.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:41084014958:android:4a499a4360fcb56056b17f",
+        "android_client_info": {
+          "package_name": "com.shelynx"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVc_7QfNEi7V1AicVLPCw_MDBnOG5O9p8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
