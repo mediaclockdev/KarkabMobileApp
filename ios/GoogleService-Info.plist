@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>325150637146-1m4nc326cebogsrva9cc1hubik01ku5p.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.325150637146-1m4nc326cebogsrva9cc1hubik01ku5p</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>325150637146-suscumjd9o5t19h9n2dinuimi72decvu.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDITUtKX1EGtOGKYilyMI4LwJdO0ScgMr8</string>
+	<key>GCM_SENDER_ID</key>
+	<string>325150637146</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.karKab.au</string>
+	<key>PROJECT_ID</key>
+	<string>karkab-f93b9</string>
+	<key>STORAGE_BUCKET</key>
+	<string>karkab-f93b9.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:325150637146:ios:ffea90b1330881cfc8ac63</string>
+</dict>
+</plist>

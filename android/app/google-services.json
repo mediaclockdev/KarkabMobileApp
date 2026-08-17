@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "325150637146",
+    "project_id": "karkab-f93b9",
+    "storage_bucket": "karkab-f93b9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:325150637146:android:4d46f49af27af5acc8ac63",
+        "android_client_info": {
+          "package_name": "com.karkab"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6FNAO7Tem6DCYCLIONEVQt2FlD3bkQPE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
