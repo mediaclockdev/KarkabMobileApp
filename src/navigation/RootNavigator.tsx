@@ -1,45 +1,38 @@
-import React, { useEffect } from 'react';
-// import { NavigationContainer } from '@react-navigation/native';
-// import { navigationRef } from './NavigationService';
+import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../share/hooks/useAppSelector';
-import { NavigationContainer } from '@react-navigation/native'
 import MainTabNavigator from './MainTabNavigator';
 import AuthNavigator from './AuthNavigator';
 import AppLoader from '../share/components/AppLoader';
 import { storage } from '../share/storage/mmkv';
-import { loginSuccess } from '../auth/redux/authSlice';
-// import AuthNavigator from './AuthNavigator';
-// import BootSplash from 'react-native-bootsplash';
+import { loginSuccess, setAuthenticated } from '../auth/redux/authSlice';
 
 const RootNavigator: React.FC = () => {
-    const { isAuthenticated } = useAppSelector(
-        (state: any) => state.auth
-    );
-      const dispatch = useAppDispatch();
-    const authData = storage.getString('authData');
-    const token = storage.getString('userToken');
-useEffect(()=>{
-if (authData) {
-  const parsedData = JSON.parse(authData);
- dispatch(loginSuccess(parsedData));
-}
-},[])
+    const dispatch = useAppDispatch();
+    const { isAuthenticated } = useAppSelector((state: any) => state.auth);
+    const [hydrated, setHydrated] = useState(false);
 
+    useEffect(() => {
+        const authData = storage.getString('authData');
+        const token = storage.getString('userToken');
+
+        if (authData && token) {
+            try {
+                dispatch(loginSuccess(JSON.parse(authData)));
+                dispatch(setAuthenticated(true));   // loginSuccess alone doesn't set this
+            } catch {
+                storage.remove('authData');
+                storage.remove('userToken');
+            }
+        }
+        setHydrated(true);
+    }, [dispatch]);
+
+    if (!hydrated) return <AppLoader />;
 
     return (
         <>
-        {console.log(token,"kkkkkkkkkkkkk")}
-        {/* <NavigationContainer> */}
-  {/* <MainTabNavigator /> */}
-  {/* <AuthNavigator/> */}
-        {/* </NavigationContainer> */}
-        {/* <MainTabNavigator /> */}
-            { token && token != ''? (
-                <MainTabNavigator />
-            ) : (
-                <AuthNavigator />
-            )}
-            <AppLoader/>
+            {isAuthenticated ? <MainTabNavigator /> : <AuthNavigator />}
+            <AppLoader />
         </>
     );
 };

@@ -7,9 +7,8 @@ import {
 } from 'react-native'
 
 interface AppTextProps extends TextProps {
-  children: React.ReactNode
-  ellipsizeMode: any
-  /* Typography */
+  children?: React.ReactNode
+  ellipsizeMode?: any
   fontSize?: number
   fontWeight?: TextStyle['fontWeight']
   fontFamily?: string
@@ -30,7 +29,7 @@ interface AppTextProps extends TextProps {
   /* Layout */
   margin?: number
   marginTop?: number
-  width?:number
+  width?: number
   marginBottom?: number
   marginLeft?: number
   marginRight?: number
@@ -39,7 +38,7 @@ interface AppTextProps extends TextProps {
   paddingBottom?: number
   paddingLeft?: number
   paddingRight?: number
-  alignSelf: any
+  alignSelf?: any
   /* Extra */
   opacity?: number
 
@@ -75,7 +74,7 @@ const AppText: React.FC<AppTextProps> = ({
   paddingRight,
   alignSelf,
   opacity,
-width,
+  width,
   style,
 
   ...props
@@ -95,19 +94,15 @@ width,
           lineHeight,
           letterSpacing,
           width,
-
           color,
-
           textAlign,
           textTransform,
           textDecorationLine,
-
           margin,
           marginTop,
           marginBottom,
           marginLeft,
           marginRight,
-
           padding,
           paddingTop,
           paddingBottom,
@@ -116,7 +111,6 @@ width,
           alignSelf,
           opacity,
         },
-
         style,
       ]}
       {...props}

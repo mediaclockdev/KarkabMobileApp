@@ -34,38 +34,6 @@ const Home = () => {
   const playsong = useAppSelector(
     (state: any) => state.auth.playsong
   );
-  // const fetchPosts = async () => {
-  //     try {
-  //       const res = await fetch('https://randomuser.me/api/?results=10');
-  //       const data = await res.json();
-
-  //       const transformedPosts = data.results.map(
-  //         (user: any, index: number) =>
-  //           console.log(user, index)
-  //          // mapRandomUserToPost(user, index)
-  //       );
-
-  //      // setPosts(transformedPosts);
-  //     } catch (error) {
-  //       console.log('Fetch error:', error);
-  //     } finally {
-  //     //  setLoading(false);
-  //     }
-  //   };
-
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     console.log('AudioRec Focused');
-
-  //     return async () => {
-  //       console.log('AudioRec Unfocused');
-
-  //       await Sound.stopPlayer();
-  //       Sound.removePlayBackListener();
-  //     };
-  //   }, [])
-  // );
 
 
   const fetchHomeData = async () => {
@@ -199,7 +167,7 @@ const Home = () => {
 
         <HomeBanner />
         {/* <FontDebug/> */}
-        <View style={styles.filterview}>
+        {/* <View style={styles.filterview}>
           <TouchableOpacity
             activeOpacity={0.3}
             style={[styles.filter, { borderColor: color.homebordercolor }]}>
@@ -265,20 +233,11 @@ const Home = () => {
             >
               {"Sort"}
             </AppText>
-            {/* <AppText
-
-            color={"#FCC378"}
-            fontSize={12}
-            fontWeight="500"
-          >
-            {"⌵"}
-          </AppText> */}
           </TouchableOpacity>
-        </View>
+        </View> */}
 
-        {/* <AppText color="red" fontSize={78}>
-  Hello World
-</AppText> */}
+
+
         <View style={styles.titles}>
           <AppText color={color.darkthemetext} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
             Browse moods
@@ -296,7 +255,6 @@ const Home = () => {
               source={Images.arrow}
               width={5}
               height={8}
-
             />
           </TouchableOpacity>
 
@@ -313,8 +271,6 @@ const Home = () => {
                 <AppText color={color.darkthemetext} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
                   Continue playing
                 </AppText>
-
-
               </View>
               <MusicCard data={playsong} />
             </>

@@ -12,15 +12,14 @@ import apiUrls from "../../services/apiUrls"
 import { loginSuccess, setAuthenticated } from "../../auth/redux/authSlice"
 import { useDispatch } from "react-redux"
 import { storage } from "../storage/mmkv"
-import { useTranslation } from "react-i18next"
+import { useTranslation } from 'react-i18next';
 
 
 export default function AppleButton() {
   const color = useAppColors()
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
-  const { t } = useTranslation("ar");
-
+const { t } = useTranslation();
   const handleAppleLoginfun = async (identityToken: string) => {
     console.log("Apple Login API called with ID Token:", identityToken);
     try {
@@ -118,7 +117,7 @@ export default function AppleButton() {
               fontSize={14}
               fontFamily={Inter.medium}
             >
-              {t("Continue with Apple")}
+              {t('auth.social.continueWithApple')}
             </AppText>
           </>
 

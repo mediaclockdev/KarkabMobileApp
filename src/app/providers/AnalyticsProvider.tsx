@@ -4,7 +4,7 @@ export const AnalyticsContext = createContext<any>(null)
 
 const AnalyticsProvider = ({ children }: PropsWithChildren) => {
   const track = (event: string, params?: any) => {
-    console.log('Analytics:', event, params)
+    console.log('Analytics of the app:', event, params)
   }
 
   return (

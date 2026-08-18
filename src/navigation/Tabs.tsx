@@ -1,6 +1,5 @@
 import React from 'react';
 import { HideableBottomTabs } from './HideableBottomTabs';
-// import { useHideableTabBar } from './useHideTabBar';
 import Home from '../screens/Home';
 import Profile from '../screens/Profile';
 import Search from '../screens/Search';
@@ -13,9 +12,7 @@ import SudaneseClassicsScreen from '../screens/Search/SudaneseClassicsScreen';
 import Browsemood from '../screens/Home/Browsemood';
 import SongsListScreen from '../screens/Home/SongsListScreen';
 import SearchSongSecreen from '../screens/SearchSongSecreen';
-//import { useHideTabBar } from './useHideTabBar';
 export const Tabs = () => {
-    // const controller = useHideTabBar();
 
     const screens = [
         { name: 'Home', component: Home },
@@ -37,7 +34,6 @@ export const Tabs = () => {
     return (
         <HideableBottomTabs
             screens={screens}
-        //controller={controller}
         />
     );
 };

@@ -4,20 +4,23 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
+  Pressable,
 } from 'react-native'
 
 import AppImage from './AppImage'
 import color, { useAppColors } from '../constants/color'
 import { BottomIcons, Images } from '../constants/media'
 import { Inter } from '../constants/fonts'
+import AppText from './AppText'
 
 interface SearchBarProps {
-  value: string
-  onChangeText: (text: string) => void
+  value?: string
+  onChangeText?: (text: string) => void
   placeholder?: string
   onFilterPress?: () => void
-  title: string
+  title?: string
   onPress?: () => void
+  IsPressable?: boolean
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -26,7 +29,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
   placeholder = 'Search songs,artists  or lyrics...',
   onFilterPress,
   title = '',
-  onPress
+  onPress,
+  IsPressable = true
 }) => {
   const color = useAppColors();
   return (
@@ -39,18 +43,31 @@ const SearchBar: React.FC<SearchBarProps> = ({
         height={18}
         tintColor={"#EEA75E"}
       />
+      {
+        IsPressable ?
 
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        editable={false}
-        placeholder={'Search songs,artists  or lyrics...'}
-        placeholderTextColor={'#777'}
-        style={[styles.input, { color: color.darkthemetext, }]}
 
-      />
+          <Pressable>
+            <AppText>Search songs,artists  or lyrics...</AppText>
+          </Pressable>
 
-      <TouchableOpacity
+
+          :
+          <TextInput
+            value={value}
+            onChangeText={onChangeText}
+            editable={false}
+            placeholder={'Search songs,artists  or lyrics...'}
+            placeholderTextColor={'#777'}
+            style={[styles.input, { color: color.darkthemetext, }]}
+
+          />
+
+
+      }
+
+      {/*  removed for now  */}
+      {/* <TouchableOpacity
         style={styles.filterButton}
         onPress={onFilterPress}
       >
@@ -61,7 +78,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           tintColor={title == 'search' ? '#FF3F44' : "#EEA75E"}
           resizeMode="contain"
         />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </TouchableOpacity>
   )
 }

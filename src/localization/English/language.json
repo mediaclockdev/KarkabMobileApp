@@ -1,5 +1,130 @@
 {
-    "title" : "Let’s Make Memories",
-"Bycontinuingyouagreetoour":"By continuing you agree to our"
-   
+  "common": {
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "ok": "OK",
+    "or": "or",
+    "change": "Change",
+    "error": "Error",
+    "somethingWentWrong": "Something went wrong",
+    "restartManually": "Please close and reopen the app to apply the new language."
+  },
+  "auth": {
+    "login": {
+      "title": "Let's Make Memories",
+      "headline": "Ready for your",
+      "tagline": "Your stage is waiting",
+      "taglineAccent": "دورك تغنى والمسرح بانتظارك",
+      "emailPlaceholder": "Enter Email",
+      "emailOrUsername": "Email, username or mobile",
+      "passwordPlaceholder": "Password",
+      "forgotPassword": "Forgot password?",
+      "signIn": "Sign In",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign Up",
+      "legalPrefix": "By continuing you agree to our",
+      "terms": "Terms of Service",
+      "and": "and",
+      "privacy": "Privacy Policy",
+      "loginFailed": "Login Failed"
+    },
+   "signup": {
+  "title": "Create Account",
+  "headline": "Ready for your",
+  "fullName": "Full Name *",
+  "emailAddress": "Enter Email *",
+  "choosePassword": "Choose Password *",
+  "confirmPassword": "Confirm Password *",
+  "alreadyHaveAccount": "Already have an account?",
+  "signIn": "Sign In",
+  "createAccount": "Sign Up",
+  "successTitle": "Success",
+  "successMessage": "Account created successfully",
+  "failed": "Signup failed"
+},
+    "social": {
+      "continueWithGoogle": "Continue with Google",
+      "continueWithApple": "Continue with Apple",
+      "divider": "OR"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "descriptionLine1": "No worries! Enter your email address and we'll",
+      "descriptionLine2": "send you an OTP to reset your password",
+      "emailAddress": "Email Address",
+      "enterEmail": "Enter Email",
+      "sendResetLink": "Send reset link",
+      "backToLogin": "Back to Login"
+    },
+    "otp": {
+      "title": "Verify Your Identity",
+      "descriptionLine1": "Enter the 6-digit verification code we've sent",
+      "descriptionLine2": "to your email address",
+      "placeholder": "Enter 6-digit code",
+      "didntReceive": "Didn't receive the code?",
+      "resendCode": "Resend Code",
+      "canResendNow": "You can resend now",
+      "resendIn": "Resend in",
+      "verifyCode": "Verify Code",
+      "expiryLine1": "For your security, this code will expire",
+      "expiryLine2": "in 10 minutes"
+    },
+    "resetPassword": {
+      "title": "Create New Password",
+      "descriptionLine1": "Your new password must be different from",
+      "descriptionLine2": "previously used passwords",
+      "newPassword": "New Password",
+      "enterNewPassword": "Enter new password",
+      "confirmPassword": "Confirm Password",
+      "updatePassword": "Update Password",
+      "encryptedNote": "Your password is encrypted and secure",
+      "strength": {
+        "label": "Strength",
+        "weak": "Weak",
+        "medium": "Medium",
+        "strong": "Strong"
+      }
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email",
+      "passwordRequired": "Password is required",
+      "passwordTooShort": "Password must be at least {{count}} characters",
+      "passwordsDoNotMatch": "Passwords do not match",
+      "otpRequired": "Verification code is required",
+      "otpInvalid": "Please enter the 6-digit code",
+        "confirmPasswordRequired": "Please confirm your password"
+
+    }
+  },
+  "karaoke": {
+    "result": {
+      "congrats": "Mabrook",
+      "duration": "Duration",
+      "songCompletion": "Song completion",
+      "status": "Status",
+      "nextSong": "Next Song",
+      "singAgain": "Sing Again",
+      "backToLibrary": "Back to Library"
+    },
+    "startSinging": "Start Singing"
+  },
+  "settings": {
+    "theme": {
+      "light": "Light",
+      "dark": "Dark"
+    }
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "ar": "العربية",
+    "switchTitle": "Change language",
+    "switchMessage": "The app will restart to apply the new layout direction.",
+    "switchConfirm": "Restart now"
+  },
+  "app": {
+    "name": "Karkab"
+  }
 }

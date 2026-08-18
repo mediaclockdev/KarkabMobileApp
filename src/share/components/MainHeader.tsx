@@ -27,7 +27,6 @@ const MainHeader: React.FC<MainHeaderProps> = ({
   user,
   userName = 'Kareena',
   profileImage = Images.profile,
-  onNotificationPress,
   onProfilePress,
 }) => {
   const color = useAppColors();
@@ -82,7 +81,6 @@ const MainHeader: React.FC<MainHeaderProps> = ({
             </AppText>
             <AppText
               fontSize={10}
-              //fontWeight="400"
               color={color.lgyellow}
               fontFamily={Inter.regular}
               marginTop={5}
@@ -102,51 +100,19 @@ const MainHeader: React.FC<MainHeaderProps> = ({
             end={{ x: 1, y: 1 }}
             style={{
               borderRadius: 20,
-              //padding: 1,
               height: 33,
               justifyContent: 'center',
             }}
           >
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={onProfilePress}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 9,
-                paddingHorizontal: 12,
-                // paddingVertical: 8,
-                borderRadius: 18,
-                backgroundColor: color.darkbackround,
-                marginHorizontal: 1,
-                // marginVertical:0.5,
-                height: 32,
-              }}
-            >
-              <Image
-                source={Images.Vip}
-                style={styles.actionIcon}
-              />
 
-              <AppText
-                fontSize={10}
-                fontWeight="400"
-                color={color.darkthemetext}
-                fontFamily={Inter.regular}
-              >
-                Karkab VIP
-              </AppText>
-            </TouchableOpacity>
           </LinearGradient>
 
-          {/* <TouchableOpacity style={styles.notificationView}> */}
           <LinearGradient
             colors={['#FDCD00', '#FF8300']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{
               borderRadius: 25,
-              // padding: 1,
             }}
           >
             <TouchableOpacity
@@ -170,7 +136,6 @@ const MainHeader: React.FC<MainHeaderProps> = ({
 
           </LinearGradient>
 
-          {/* </TouchableOpacity> */}
         </View>
 
       </View>
