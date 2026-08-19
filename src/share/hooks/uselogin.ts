@@ -11,7 +11,8 @@ import {
 } from './Loginvalidation';
 import { loginSuccess, setAuthenticated } from '../../auth/redux/authSlice';
 import authService from '../../services/auth.service';
-
+import ApiService from '../../services/api';
+import apiUrls from '../../services/apiUrls';
 const EMPTY_ERRORS: LoginErrors = { email: null, password: null };
 
 /**
@@ -61,8 +62,15 @@ export const useLogin = () => {
 
         try {
             setLoading(true);
-            const res = await authService.login({ email, password });
 
+            const response = await ApiService.post(
+                apiUrls.login,
+                {
+                    email: email,
+                    password: password,
+                }
+            );
+            const res = response.data
             if (res.success && res.token) {
                 persistSession(res);
                 return;
