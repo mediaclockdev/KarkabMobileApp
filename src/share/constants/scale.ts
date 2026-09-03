@@ -1,11 +1,11 @@
 import { Dimensions, PixelRatio } from 'react-native';
-import DeviceInfo from 'react-native-device-info';
+// import DeviceInfo from 'react-native-device-info';
 
 const { width, height } = Dimensions.get('window');
 const baseWidth = 375; // iPhone base
 const baseHeight = 812;
 
-export const isTablet = DeviceInfo.isTablet();
+// export const isTablet = DeviceInfo.isTablet();
 
 // Horizontal scale — for width, fontSize, padding
 export const s = (size: number) => (width / baseWidth) * size;

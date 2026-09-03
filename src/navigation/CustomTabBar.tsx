@@ -67,6 +67,8 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
           && route.name !== 'Browsemood'
           && route.name !== 'SongsListScreen'
           && route.name !== 'SearchSongSecreen'
+          && route.name !== 'SelectedArtistScreen'
+
 
         )
         .map((route, index) => {

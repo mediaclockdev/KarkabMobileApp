@@ -13,7 +13,7 @@ import {
 } from './Signupvalidation';
 import { storage } from '../storage/mmkv';
 import { useAppDispatch } from './useAppSelector';
-import { loginSuccess, setAuthenticated } from '../../auth/redux/authSlice';
+import { loginSuccess, setAuthenticated, setLoginState } from '../../auth/redux/authSlice';
 
 type Field = 'name' | 'email' | 'password' | 'confirmPassword';
 
@@ -50,6 +50,7 @@ export const useSignup = () => {
 
       dispatch(loginSuccess(authData));
       dispatch(setAuthenticated(true));
+      dispatch(setLoginState('first'));
     },
     [dispatch],
   );

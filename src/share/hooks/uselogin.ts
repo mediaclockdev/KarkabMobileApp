@@ -9,7 +9,7 @@ import {
     hasErrors,
     validateLogin,
 } from './Loginvalidation';
-import { loginSuccess, setAuthenticated } from '../../auth/redux/authSlice';
+import { loginSuccess, setAuthenticated, setLoginState } from '../../auth/redux/authSlice';
 import authService from '../../services/auth.service';
 import ApiService from '../../services/api';
 import apiUrls from '../../services/apiUrls';
@@ -51,6 +51,7 @@ export const useLogin = () => {
 
             dispatch(loginSuccess(authData));
             dispatch(setAuthenticated(true));
+            dispatch(setLoginState('first'));
         },
         [dispatch],
     );

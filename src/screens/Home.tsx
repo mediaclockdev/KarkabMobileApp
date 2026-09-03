@@ -23,6 +23,7 @@ import AppLoader from "../share/components/AppLoader";
 import { navigate } from "../navigation/NavigationService";
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { Sound } from "react-native-nitro-sound";
+import SelectedArtistScreen from "./Home/SelectedArtistScreen";
 
 const Home = () => {
   const navigation = useNavigation();
@@ -34,7 +35,9 @@ const Home = () => {
   const playsong = useAppSelector(
     (state: any) => state.auth.playsong
   );
-
+  const loginState = useAppSelector(
+    (state: any) => state.auth.loginState
+  );
 
   const fetchHomeData = async () => {
     try {
@@ -139,6 +142,28 @@ const Home = () => {
     topmostdata()
     //fetchHomeData()
   }, [])
+
+
+  // useFocusEffect(
+
+  //   useCallback(() => {
+  //     { console.log(loginState, "llllllllllll") }
+  //     if (loginState == 'first') {
+
+  //       return (navigation.navigate('SelectedArtistScreen'))
+
+  //     }
+  //     else {
+  //       console.log('wdkdkwnkdwn')
+  //     }
+  //   }, [loginState])
+  // )
+
+  if (loginState == 'first') {
+
+    return <SelectedArtistScreen />
+
+  }
 
 
   return (

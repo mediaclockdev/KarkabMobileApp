@@ -29,6 +29,9 @@ const apiUrls = {
   getsudanesesong: '/api/songs/sudanese-classics',
   sudanesecategory: '/api/categories/sudanese-cultural/subcategories',
   getsudanesesongbycategory: (categoryId: number | string) => `/api/categories/${categoryId}/songs`,
+  artists: '/api/artists/active',
+  selectartists: '/api/user/artists'
+
 
 };
 

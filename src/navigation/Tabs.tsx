@@ -12,6 +12,7 @@ import SudaneseClassicsScreen from '../screens/Search/SudaneseClassicsScreen';
 import Browsemood from '../screens/Home/Browsemood';
 import SongsListScreen from '../screens/Home/SongsListScreen';
 import SearchSongSecreen from '../screens/SearchSongSecreen';
+import SelectedArtistScreen from '../screens/Home/SelectedArtistScreen';
 export const Tabs = () => {
 
     const screens = [
@@ -27,6 +28,9 @@ export const Tabs = () => {
         { name: 'Browsemood', component: Browsemood },
         { name: 'SongsListScreen', component: SongsListScreen },
         { name: 'SearchSongSecreen', component: SearchSongSecreen },
+        { name: 'SelectedArtistScreen', component: SelectedArtistScreen },
+
+
 
 
     ];

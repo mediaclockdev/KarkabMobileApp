@@ -8,6 +8,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import CustomTabBar from './CustomTabBar';
+import { useAppSelector } from '../share/hooks/useAppSelector';
 
 const Tab = createBottomTabNavigator();
 
@@ -21,6 +22,11 @@ type Props = {
 export const HideableBottomTabs = ({ screens }: Props) => {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+
+  const loginState = useAppSelector(
+    (state: any) => state.auth.loginState
+  );
+
   const isTablet = width >= 768;
   const TAB_HEIGHT = isTablet ? 85 : 65;
 
@@ -30,14 +36,23 @@ export const HideableBottomTabs = ({ screens }: Props) => {
         screenOptions={{
           headerShown: false,
           tabBarShowLabel: false,
-          //   tabBarHideOnKeyboard: true,
+
+          tabBarStyle:
+            loginState === 'first'
+              ? { display: 'none' }
+              : styles.tabBar,
         }}
         tabBar={(props) => {
           const currentRoute =
             props.state.routes[props.state.index]?.name;
 
-          // Hide entire tab bar on Recording screen
-          if (currentRoute === 'Recording' || currentRoute === 'SearchSongSecreen') {
+          // Always hide tab bar for these screens
+          if (
+            loginState === 'first' ||
+            currentRoute === 'Recording' ||
+            currentRoute === 'SearchSongSecreen' ||
+            currentRoute === 'SelectedArtistScreen'
+          ) {
             return null;
           }
 
@@ -47,7 +62,6 @@ export const HideableBottomTabs = ({ screens }: Props) => {
                 styles.tabContainer,
                 {
                   height: TAB_HEIGHT,
-                  //  paddingBottom: insets.bottom,
                 },
               ]}
             >
@@ -71,6 +85,11 @@ export const HideableBottomTabs = ({ screens }: Props) => {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+
+  tabBar: {
+    backgroundColor: 'transparent',
+    borderTopWidth: 0,
   },
 
   tabContainer: {

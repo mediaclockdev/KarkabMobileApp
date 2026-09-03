@@ -5,6 +5,7 @@ interface AuthState {
     accessToken: string | null
     refreshToken: string | null
     isAuthenticated: boolean
+    loginState: string | null
     loading: boolean
     error: string | null,
     userCountry: any | null,
@@ -16,6 +17,7 @@ const initialState: AuthState = {
     user: null,
     accessToken: null,
     isAuthenticated: false,
+    loginState: null,
     loading: false,
     refreshToken: null,
     error: null,
@@ -35,6 +37,10 @@ const authSlice = createSlice({
         setAuthenticated(state, action: PayloadAction<boolean>) {
             state.isAuthenticated = action.payload
         },
+        setLoginState(state, action: PayloadAction<string | null>) {
+            state.loginState = action.payload
+        },
+
         loaderstate(state, action) {
             state.loading = action.payload
             //state.isPaused = action.payload
@@ -80,6 +86,7 @@ const authSlice = createSlice({
 
 export const {
     setAuthenticated,
+    setLoginState,
     loginSuccess,
     loginFailure,
     loaderstate,

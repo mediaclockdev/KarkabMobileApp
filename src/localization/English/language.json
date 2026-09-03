@@ -28,20 +28,20 @@
       "privacy": "Privacy Policy",
       "loginFailed": "Login Failed"
     },
-   "signup": {
-  "title": "Create Account",
-  "headline": "Ready for your",
-  "fullName": "Full Name *",
-  "emailAddress": "Enter Email *",
-  "choosePassword": "Choose Password *",
-  "confirmPassword": "Confirm Password *",
-  "alreadyHaveAccount": "Already have an account?",
-  "signIn": "Sign In",
-  "createAccount": "Sign Up",
-  "successTitle": "Success",
-  "successMessage": "Account created successfully",
-  "failed": "Signup failed"
-},
+    "signup": {
+      "title": "Create Account",
+      "headline": "Ready for your",
+      "fullName": "Full Name *",
+      "emailAddress": "Enter Email *",
+      "choosePassword": "Choose Password *",
+      "confirmPassword": "Confirm Password *",
+      "alreadyHaveAccount": "Already have an account?",
+      "signIn": "Sign In",
+      "createAccount": "Sign Up",
+      "successTitle": "Success",
+      "successMessage": "Account created successfully",
+      "failed": "Signup failed"
+    },
     "social": {
       "continueWithGoogle": "Continue with Google",
       "continueWithApple": "Continue with Apple",
@@ -94,8 +94,7 @@
       "passwordsDoNotMatch": "Passwords do not match",
       "otpRequired": "Verification code is required",
       "otpInvalid": "Please enter the 6-digit code",
-        "confirmPasswordRequired": "Please confirm your password"
-
+      "confirmPasswordRequired": "Please confirm your password"
     }
   },
   "karaoke": {

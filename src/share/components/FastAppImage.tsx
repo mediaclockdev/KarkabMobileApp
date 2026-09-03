@@ -27,7 +27,10 @@ export const FastAppImage = ({
     <View style={[styles.container, style]}>
       {loading && (
         <View style={styles.loader}>
-          <ActivityIndicator size="small" />
+          <ActivityIndicator
+            size="small"
+            color="#FFFFFF"
+          />
         </View>
       )}
 
@@ -48,10 +51,15 @@ export const FastAppImage = ({
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
+    position: 'relative',
   },
+
   loader: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 10,
+    elevation: 10,
+    marginTop: 35
   },
 });

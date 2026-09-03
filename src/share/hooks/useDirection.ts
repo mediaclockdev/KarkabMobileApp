@@ -15,14 +15,14 @@ export const useDirection = () => {
 
     return {
         isRTL,
-        language: i18n.language.split('-')[0] as AppLanguage,    /** Natural text alignment for the active language. */
+        language: i18n.language.split('-')[0] as AppLanguage,
         textAlign: (isRTL ? 'right' : 'left') as 'right' | 'left',
         /** Opposite alignment, e.g. for a trailing link. */
         textAlignOpposite: (isRTL ? 'left' : 'right') as 'left' | 'right',
         /** Always-LTR fields: email, password, phone, URLs, numbers. */
-       ltrField: {
-  writingDirection: 'ltr' as const,
-  textAlign: (isRTL ? 'right' : 'left') as 'right' | 'left',
-},
+        ltrField: {
+            writingDirection: 'ltr' as const,
+            textAlign: (isRTL ? 'right' : 'left') as 'right' | 'left',
+        },
     };
 };
