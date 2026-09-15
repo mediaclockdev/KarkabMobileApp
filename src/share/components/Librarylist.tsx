@@ -278,12 +278,12 @@ const Librarylist = ({ musicData,
     return (
       <View
 
-        activeOpacity={0.8}
+        //  activeOpacity={0.8}
         style={[styles.card, { borderColor: '#1A1A1A' }]}
       >
         {/* Image */}
         <TouchableOpacity
-          onPress={() => navigation.navigate('.', {
+          onPress={() => (navigation as any).navigate('.', {
             id: item.id,
           })}
         >
@@ -309,7 +309,7 @@ const Librarylist = ({ musicData,
         </TouchableOpacity>
         {/* Content */}
         <TouchableOpacity
-          onPress={() => navigation.navigate('.', {
+          onPress={() => (navigation as any).navigate('.', {
             id: item.id,
           })}
           style={styles.content}>
@@ -387,7 +387,7 @@ const Librarylist = ({ musicData,
             marginBottom: 5
           }}
         >
-          {item.duration || '00:00'}
+          {Number(item.duration || 0).toFixed(2) || '00:00'}
         </AppText>
 
 

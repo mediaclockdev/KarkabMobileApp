@@ -51,7 +51,7 @@ const ArtistListItem = ({
             <View style={styles.left}>
 
                 <AppImage
-                    source={Images.profile}
+                    source={item?.artist_image || Images.profile}
                     style={styles.image}
                 />
 
@@ -69,7 +69,7 @@ const ArtistListItem = ({
 
 
                     <AppText style={styles.followers}>
-                        12.5K songs . 1.2 M listener
+                        {item?.total_songs} songs . {item?.listenersCount} listener
                     </AppText>
 
 

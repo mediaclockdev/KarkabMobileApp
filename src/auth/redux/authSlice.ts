@@ -1,5 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
+
+interface ToastState {
+    visible: boolean;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+}
+
 interface AuthState {
     user: any | null
     accessToken: string | null
@@ -10,6 +17,7 @@ interface AuthState {
     error: string | null,
     userCountry: any | null,
     playsong: any | null,
+    toast: ToastState
     isPaused: boolean,
 }
 
@@ -27,6 +35,11 @@ const initialState: AuthState = {
         dial_code: '61',
         code: 'AU',
     },
+    toast: {
+        visible: false,
+        message: '',
+        type: 'success',
+    },
     playsong: null
 }
 
@@ -39,6 +52,10 @@ const authSlice = createSlice({
         },
         setLoginState(state, action: PayloadAction<string | null>) {
             state.loginState = action.payload
+        },
+        loginRequest(state) {
+            state.loading = true
+            state.error = null
         },
 
         loaderstate(state, action) {
@@ -80,13 +97,25 @@ const authSlice = createSlice({
         },
         addsong: (state, action) => {
             state.playsong = action.payload
-        }
+        },
+        showToast(state, action) {
+            state.toast = {
+                visible: true,
+                message: action.payload.message,
+                type: action.payload.type,
+            };
+        },
+
+        hideToast(state) {
+            state.toast.visible = false;
+        },
     },
 })
 
 export const {
     setAuthenticated,
     setLoginState,
+    loginRequest,
     loginSuccess,
     loginFailure,
     loaderstate,
@@ -95,7 +124,9 @@ export const {
     restoreSessionComplete,
     isPausesd,
     updateUserCoyntry,
-    addsong
+    addsong,
+    showToast,
+    hideToast,
 } = authSlice.actions
 
 export default authSlice.reducer

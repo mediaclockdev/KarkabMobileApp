@@ -1,5 +1,5 @@
 
-import { Dimensions, FlatList, ImageBackground, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { ActivityIndicator, Dimensions, FlatList, ImageBackground, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import Header from "../share/components/Header";
 import { Banner, Images, Logo } from "../share/constants/media";
 import color, { useAppColors } from "../share/constants/color";
@@ -21,7 +21,7 @@ import { Sound } from "react-native-nitro-sound";
 
 const Search = () => {
   //const [search, setSearch] = useState('')
-
+  const [loader, setLoader] = useState(false)
   const recentdata = ['Mabrook', 'Mabrook', 'Mabrook']
   const dispatch = useAppDispatch();
   const color = useAppColors();
@@ -59,11 +59,11 @@ const Search = () => {
   const trandingdata = async () => {
     console.log("popular api called")
     try {
-      dispatch(loaderstate(true));
+      setLoader(true)
 
       const response = await ApiService.get(apiUrls.gettrandingsong);
 
-      const data = response.data;
+      const data = (response as any).data;
       console.log(data, 'tranding API RESPONSEdddd');
 
       if (data?.success) {
@@ -72,7 +72,7 @@ const Search = () => {
     } catch (error) {
       console.log('trandingdata ERROR:', error);
     } finally {
-      dispatch(loaderstate(false));
+      setLoader(false)
     }
   };
 
@@ -82,18 +82,26 @@ const Search = () => {
   }, [])
 
 
-  const handlenavigation = async ({ item }) => {
+  const handlenavigation = async ({ item }: { item: { title: string } }) => {
     console.log(item)
     if (item.title == 'Artists') {
-      navigation.navigate('ArtistScreen')
+      (navigation as any).navigate('ArtistScreen')
     }
     else if (item.title == 'Songs') {
-      navigation.navigate('SongsScreen')
+      (navigation as any).navigate('SongsScreen')
     }
     else if (item.title == 'Sudanese classics') {
-      navigation.navigate('SudaneseClassicsScreen')
+      (navigation as any).navigate('SudaneseClassicsScreen')
     }
-
+    else if (item.title == 'Playlists') {
+      (navigation as any).navigate('PlayListScreen')
+    }
+    else if (item.title == 'Genre') {
+      (navigation as any).navigate('GenreScreen')
+    }
+    else if (item.title == 'Performances') {
+      (navigation as any).navigate('PerformanceScreen')
+    }
 
   }
 
@@ -171,7 +179,7 @@ const Search = () => {
             rightIcon={Images.mics}
 
             onRightPress={() => {
-              navigation.navigate('Recording');
+              (navigation as any).navigate('Recording');
             }}
             rightView={
               <></>
@@ -189,244 +197,249 @@ const Search = () => {
             onFilterPress={() => console.log('filter')}
             title="search"
             onPress={() => {
-              navigation.navigate('SearchSongSecreen', { previousScreen: 'Home' })
+              (navigation as any).navigate('SearchSongSecreen', { previousScreen: 'Home' })
             }}
 
           />
-          <ScrollView showsVerticalScrollIndicator={false} style={{ gap: 20, marginVertical: 10 }}>
-            <View style={styles.titles}>
-              <AppText
-                color={color.darkthemetext}
-                fontSize={12}
-                fontWeight="500"
-                fontFamily={Inter.regular}
-              >
-                Recent searches
-              </AppText>
-
-              <TouchableOpacity
-                activeOpacity={0.5}
-                style={{
-                  flexDirection: 'row',
-                  gap: 5,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
-              >
-                <AppText
-                  color={'#F6A202'}
-                  fontSize={12}
-                  fontWeight="500"
-                  fontFamily={Inter.regular}
-                >
-                  More
-                </AppText>
-
-                <AppImage
-                  source={Images.arrow}
-                  width={5}
-                  height={8}
-                  resizeMode="contain"
-                  tintColor={'#F6A202'}
-                />
-              </TouchableOpacity>
-            </View>
-
-            <FlatList
-              data={recentdata.slice(0, 3)}
-              numColumns={3}
-              scrollEnabled={false}
-              style={{ maxHeight: 120, marginTop: 20 }}
-              keyExtractor={(item, index) => index.toString()}
-              columnWrapperStyle={{
-                justifyContent: 'space-between',
-
-              }}
-              renderItem={({ item }) => (
-                <View style={[styles.recentview, { backgroundColor: color.darkbackround, borderColor: color.searhbarbordercolor }]}>
-                  <View style={{ flexDirection: 'row', gap: 8 }}>
-                    <AppImage
-                      source={Images.music}
-                      width={15}
-                      height={15}
-                    />
-
-                    <AppText
-                      color={color.darkthemetext}
-                      fontSize={12}
-                      fontWeight="500"
-                      fontFamily={Inter.regular}
-                    >
-                      {item}
-                    </AppText>
-                  </View>
-                  <TouchableOpacity>
-                    <AppText
-                      color={color.darkthemetext}
-                      fontSize={12}
-                      fontWeight="500"
-                      fontFamily={Inter.regular}
-                    >
-                      X
-                    </AppText>
-                  </TouchableOpacity>
-
-                </View>
-              )}
-            />
-            <View style={styles.titles}>
-              <AppText
-                color={color.darkthemetext}
-                fontSize={12}
-                fontWeight="500"
-                fontFamily={Inter.regular}
-              >
-                Start Singing
-              </AppText>
-
-              <TouchableOpacity
-                activeOpacity={0.5}
-                style={{
-                  flexDirection: 'row',
-                  gap: 5,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
-              >
-                <AppText
-                  color={'#F6A202'}
-                  fontSize={12}
-                  fontWeight="500"
-                  fontFamily={Inter.regular}
-                >
-                  View all
-                </AppText>
-
-                <AppImage
-                  source={Images.arrow}
-                  width={5}
-                  height={8}
-                  resizeMode="contain"
-                  tintColor={'#F6A202'}
-                />
-              </TouchableOpacity>
-            </View>
-
-
-            <SingingList />
-
-            <View style={styles.titles}>
-              <AppText
-                color={color.darkthemetext}
-                fontSize={12}
-                fontWeight="500"
-                fontFamily={Inter.regular}
-              >
-                Trending Sudanese Songs
-              </AppText>
-
-              <TouchableOpacity
-                onPress={() => {
-                  navigation.navigate('SongsListScreen', {
-                    songs: populardatas,
-                    previousScreen: 'Search',
-                  });
-                }}
-                activeOpacity={0.5}
-                style={{
-                  flexDirection: 'row',
-                  gap: 5,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
-              >
-                <AppText
-                  color={'#F6A202'}
-                  fontSize={12}
-                  fontWeight="500"
-                  fontFamily={Inter.regular}
-                >
-                  See all
-                </AppText>
-
-                <AppImage
-                  source={Images.arrow}
-                  width={5}
-                  height={8}
-                  resizeMode="contain"
-                  tintColor={'#F6A202'}
-                />
-              </TouchableOpacity>
-            </View>
-
-
-
-
-
-            <TrandingList data={populardatas} />
-
-            <AppText color={color.darkthemetext} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
-              Browse by category
-            </AppText>
-
-
-            <View style={styles.container1}>
-              {browesdata.map((item, index) => (
-                <TouchableOpacity
-                  onPress={() => {
-                    handlenavigation({ item })
-                  }}
-                  key={index} style={{
-                    width: '31%',
-                    marginBottom: 12, borderWidth: 1, borderColor: index === 3 || index === 1 ? "#806141" : "#9F4A65", borderRadius: 12
-                  }}>
-                  <ImageBackground
-                    source={item.image}
-                    resizeMode="cover"
-                    style={{
-                      width: '100%',
-                      height: 98,
-
-                      borderRadius: 12
-                    }}
-                    imageStyle={styles.image}
+          {
+            loader ?
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#EFCB61" />
+              </View> :
+              <ScrollView showsVerticalScrollIndicator={false} style={{ gap: 20, marginVertical: 10 }}>
+                <View style={styles.titles}>
+                  <AppText
+                    color={color.darkthemetext}
+                    fontSize={12}
+                    fontWeight="500"
+                    fontFamily={Inter.regular}
                   >
-                    <View style={[styles.overlay, { justifyContent: 'space-between', height: 98, }]}>
+                    Recent searches
+                  </AppText>
 
-                      <AppImage
-                        source={item.icon}
-                        width={28}
-                        height={28}
-                        resizeMode="contain"
-                      />
+                  <TouchableOpacity
+                    activeOpacity={0.5}
+                    style={{
+                      flexDirection: 'row',
+                      gap: 5,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <AppText
+                      color={'#F6A202'}
+                      fontSize={12}
+                      fontWeight="500"
+                      fontFamily={Inter.regular}
+                    >
+                      More
+                    </AppText>
 
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <AppText
-                          color={"#FFF"}
-                          fontSize={12}
-                          fontWeight="600"
-                          fontFamily={Inter.medium}
-                        >
-                          {item.title}
-                        </AppText>
+                    <AppImage
+                      source={Images.arrow}
+                      width={5}
+                      height={8}
+                      resizeMode="contain"
+                      tintColor={'#F6A202'}
+                    />
+                  </TouchableOpacity>
+                </View>
 
+                <FlatList
+                  data={recentdata.slice(0, 3)}
+                  numColumns={3}
+                  scrollEnabled={false}
+                  style={{ maxHeight: 120, marginTop: 20 }}
+                  keyExtractor={(item, index) => index.toString()}
+                  columnWrapperStyle={{
+                    justifyContent: 'space-between',
 
+                  }}
+                  renderItem={({ item }) => (
+                    <View style={[styles.recentview, { backgroundColor: color.darkbackround, borderColor: color.searhbarbordercolor }]}>
+                      <View style={{ flexDirection: 'row', gap: 8 }}>
                         <AppImage
-                          source={Images.arrow}
-                          width={5}
-                          height={8}
-                          tintColor={"#FFF"}
+                          source={Images.music}
+                          width={15}
+                          height={15}
                         />
 
+                        <AppText
+                          color={color.darkthemetext}
+                          fontSize={12}
+                          fontWeight="500"
+                          fontFamily={Inter.regular}
+                        >
+                          {item}
+                        </AppText>
                       </View>
+                      <TouchableOpacity>
+                        <AppText
+                          color={color.darkthemetext}
+                          fontSize={12}
+                          fontWeight="500"
+                          fontFamily={Inter.regular}
+                        >
+                          X
+                        </AppText>
+                      </TouchableOpacity>
 
                     </View>
-                  </ImageBackground>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <View style={{ height: 80 }} />
-          </ScrollView>
+                  )}
+                />
+                <View style={styles.titles}>
+                  <AppText
+                    color={color.darkthemetext}
+                    fontSize={12}
+                    fontWeight="500"
+                    fontFamily={Inter.regular}
+                  >
+                    Start Singing
+                  </AppText>
+
+                  <TouchableOpacity
+                    activeOpacity={0.5}
+                    style={{
+                      flexDirection: 'row',
+                      gap: 5,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <AppText
+                      color={'#F6A202'}
+                      fontSize={12}
+                      fontWeight="500"
+                      fontFamily={Inter.regular}
+                    >
+                      View all
+                    </AppText>
+
+                    <AppImage
+                      source={Images.arrow}
+                      width={5}
+                      height={8}
+                      resizeMode="contain"
+                      tintColor={'#F6A202'}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+
+                <SingingList />
+
+                <View style={styles.titles}>
+                  <AppText
+                    color={color.darkthemetext}
+                    fontSize={12}
+                    fontWeight="500"
+                    fontFamily={Inter.regular}
+                  >
+                    Trending Sudanese Songs
+                  </AppText>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      (navigation as any).navigate('SongsListScreen', {
+                        songs: populardatas,
+                        previousScreen: 'Search',
+                      });
+                    }}
+                    activeOpacity={0.5}
+                    style={{
+                      flexDirection: 'row',
+                      gap: 5,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <AppText
+                      color={'#F6A202'}
+                      fontSize={12}
+                      fontWeight="500"
+                      fontFamily={Inter.regular}
+                    >
+                      See all
+                    </AppText>
+
+                    <AppImage
+                      source={Images.arrow}
+                      width={5}
+                      height={8}
+                      resizeMode="contain"
+                      tintColor={'#F6A202'}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+
+
+
+
+                <TrandingList data={populardatas} />
+
+                <AppText color={color.darkthemetext} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
+                  Browse by category
+                </AppText>
+
+
+                <View style={styles.container1}>
+                  {browesdata.map((item, index) => (
+                    <TouchableOpacity
+                      onPress={() => {
+                        handlenavigation({ item })
+                      }}
+                      key={index} style={{
+                        width: '31%',
+                        marginBottom: 12, borderWidth: 1, borderColor: index === 3 || index === 1 ? "#806141" : "#9F4A65", borderRadius: 12
+                      }}>
+                      <ImageBackground
+                        source={item.image}
+                        resizeMode="cover"
+                        style={{
+                          width: '100%',
+                          height: 98,
+
+                          borderRadius: 12
+                        }}
+                        imageStyle={styles.image}
+                      >
+                        <View style={[styles.overlay, { justifyContent: 'space-between', height: 98, }]}>
+
+                          <AppImage
+                            source={item.icon}
+                            width={28}
+                            height={28}
+                            resizeMode="contain"
+                          />
+
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <AppText
+                              color={"#FFF"}
+                              fontSize={12}
+                              fontWeight="600"
+                              fontFamily={Inter.medium}
+                            >
+                              {item.title}
+                            </AppText>
+
+
+                            <AppImage
+                              source={Images.arrow}
+                              width={5}
+                              height={8}
+                              tintColor={"#FFF"}
+                            />
+
+                          </View>
+
+                        </View>
+                      </ImageBackground>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <View style={{ height: 80 }} />
+              </ScrollView>}
         </View>
       </ImageBackground>
     </SafeAreaView>
@@ -468,7 +481,7 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    width: '28%', // 2 cards per row
+    width: '28%',
     marginBottom: 12,
     flexWrap: 'wrap',
   },

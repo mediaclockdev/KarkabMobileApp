@@ -1,7 +1,7 @@
 import { put, select, takeLatest, call } from 'redux-saga/effects'
 import { SagaIterator } from 'redux-saga'
 import {
-  
+
   loginSuccess,
   loginRequest,
 } from './authSlice'
@@ -17,7 +17,7 @@ function* handleRestoreSession(): SagaIterator {
     )
 
     if (!accessToken) {
-    //  yield put(logout())
+      //  yield put(logout())
     }
   } catch {
     //yield put(logout())
@@ -50,13 +50,13 @@ function* handleLogin(
         ? error.message
         : 'Something went wrong'
 
-   // yield put(loginFailure(message))
+    // yield put(loginFailure(message))
   }
 }
 
 /* ---------------- ROOT SAGA ---------------- */
 
 export default function* authSaga(): SagaIterator {
- // yield takeLatest(restoreSession.type, handleRestoreSession)
+  // yield takeLatest(restoreSession.type, handleRestoreSession)
   yield takeLatest(loginRequest.type, handleLogin)
 }

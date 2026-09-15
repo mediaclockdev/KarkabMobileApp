@@ -68,7 +68,15 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
           && route.name !== 'SongsListScreen'
           && route.name !== 'SearchSongSecreen'
           && route.name !== 'SelectedArtistScreen'
-
+          && route.name !== 'AllArtistScreen'
+          && route.name !== 'PlayListScreen'
+          && route.name !== 'GenreScreen'
+          && route.name !== 'PerformanceScreen'
+          && route.name !== 'SettingScreen'
+          && route.name !== 'ManageProfileScreen'
+          && route.name !== 'NotificationScreen'
+          && route.name !== 'CreatePlaylist'
+          && route.name !== 'PlaylistDetailScreen'
 
         )
         .map((route, index) => {
@@ -132,6 +140,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
             </TouchableOpacity>
           );
         })}
+
     </View>
   );
 };

@@ -13,6 +13,15 @@ import Browsemood from '../screens/Home/Browsemood';
 import SongsListScreen from '../screens/Home/SongsListScreen';
 import SearchSongSecreen from '../screens/SearchSongSecreen';
 import SelectedArtistScreen from '../screens/Home/SelectedArtistScreen';
+import AllArtistScreen from '../screens/Home/AllArtistScreen';
+import PlayListScreen from '../screens/Search/PlayListScreen';
+import GenreScreen from '../screens/Search/GenreScreen';
+import PerformanceScreen from '../screens/Search/PerformanceScreen';
+import SettingScreen from '../screens/Profile/SettingScreen';
+import ManageProfileScreen from '../screens/Profile/ManageProfileScreen';
+import NotificationScreen from '../screens/Profile/NotificationScreen';
+import CreatePlaylist from '../screens/Profile/CreatePlaylist';
+import PlaylistDetailScreen from '../screens/Profile/PlaylistDetailScreen';
 export const Tabs = () => {
 
     const screens = [
@@ -29,8 +38,15 @@ export const Tabs = () => {
         { name: 'SongsListScreen', component: SongsListScreen },
         { name: 'SearchSongSecreen', component: SearchSongSecreen },
         { name: 'SelectedArtistScreen', component: SelectedArtistScreen },
-
-
+        { name: 'AllArtistScreen', component: AllArtistScreen },
+        { name: 'PlayListScreen', component: PlayListScreen },
+        { name: 'GenreScreen', component: GenreScreen },
+        { name: 'PerformanceScreen', component: PerformanceScreen },
+        { name: 'SettingScreen', component: SettingScreen },
+        { name: 'ManageProfileScreen', component: ManageProfileScreen },
+        { name: 'NotificationScreen', component: NotificationScreen },
+        { name: 'CreatePlaylist', component: CreatePlaylist },
+        { name: 'PlaylistDetailScreen', component: PlaylistDetailScreen },
 
 
     ];
@@ -39,5 +55,6 @@ export const Tabs = () => {
         <HideableBottomTabs
             screens={screens}
         />
+
     );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     FlatList,
 
@@ -10,7 +10,7 @@ import {
 
 
 import AppText from '../../share/components/AppText';
-
+import ApiService from '../../services/api';
 import CategoryChip from '../../share/components/CategoryChip';
 import BannerCard from '../../share/components/BannerCard';
 import BandCard from '../../share/components/BandCard';
@@ -22,7 +22,9 @@ import color from '../../share/constants/color';
 import { Inter } from '../../share/constants/fonts';
 import SearchBar from '../../share/components/SearchBar';
 import AppImage from '../../share/components/AppImage';
-import { Images } from '../../share/constants/media';
+import { Images, Logo } from '../../share/constants/media';
+import { useNavigation } from '@react-navigation/native';
+import apiUrls from '../../services/apiUrls';
 
 
 
@@ -100,8 +102,62 @@ const bands = [
 
 
 
+
+
 const ArtistScreen = () => {
+    const navigation = useNavigation();
     const [selectedCategory, setSelectedCategory] = useState('All');
+    const [artistdata, setArtistdata] = useState<any[]>([]);
+    const [artisttopdata, setArtisttopdata] = useState<any[]>([]);
+
+
+
+    useEffect(() => {
+        getartistfun()
+        gettopartistfun()
+    }, [])
+
+    const getartistfun = async () => {
+        console.log("popular api called")
+        try {
+
+
+            const response = await ApiService.get(apiUrls.artists);
+
+            const data = (response as any).data;
+            console.log(data.artists, 'getartist API RESPONSE');
+
+            if (data?.success) {
+                setArtistdata(data.artists)
+            }
+        } catch (error) {
+            console.log('populardata ERROR:', error);
+        } finally {
+
+        }
+    };
+
+    const gettopartistfun = async () => {
+        console.log("popular api called")
+        try {
+
+
+            const response = await ApiService.get(apiUrls.artists + '?sort=popular');
+
+            const data = (response as any).data;
+            console.log(data.artists, 'gettopartistfun API RESPONSE');
+
+            if (data?.success) {
+                setArtisttopdata(data.artists)
+            }
+        } catch (error) {
+            console.log('populardata ERROR:', error);
+        } finally {
+
+        }
+    };
+
+
 
     return (
 
@@ -123,19 +179,40 @@ const ArtistScreen = () => {
 
                 <View style={styles.header}>
                     <View style={styles.headerContent}>
-                        <AppText
-                            style={[
-                                styles.title,
-                                {
-                                    color: color.darkthemetext,
-                                },
-                            ]}>
-                            Artist
-                        </AppText>
 
-                        <AppText style={styles.subtitle}>
-                            What would you like to sing today?
-                        </AppText>
+                        <TouchableOpacity
+                            onPress={() => {
+
+                                (navigation as any).navigate('Search')
+                            }}
+                        >
+
+                            {/* <Text style={styles.back}>←</Text> */}
+                            <AppImage
+                                source={Logo.arrowline}
+                                height={25}
+                                width={19}
+                                resizeMode='cover'
+                                tintColor={"#FFFF"}
+                            />
+                        </TouchableOpacity>
+                        <View>
+
+
+                            <AppText
+                                style={[
+                                    styles.title,
+                                    {
+                                        color: color.darkthemetext,
+                                    },
+                                ]}>
+                                Artist
+                            </AppText>
+
+                            <AppText style={styles.subtitle}>
+                                What would you like to sing today?
+                            </AppText>
+                        </View>
                     </View>
 
                     <TouchableOpacity style={styles.micContainer}>
@@ -148,7 +225,11 @@ const ArtistScreen = () => {
                     </TouchableOpacity>
                 </View>
 
-                <SearchBar />
+                <SearchBar
+                    onPress={() => {
+                        ; (navigation as any).navigate('SearchSongSecreen', { previousScreen: 'ArtistScreen' })
+                    }}
+                />
 
 
 
@@ -187,11 +268,17 @@ const ArtistScreen = () => {
                     <AppText style={styles.sectionTitle}>
                         Top Artists
                     </AppText>
+                    <TouchableOpacity
+                        onPress={() => {
+                            (navigation as any).navigate('AllArtistScreen', { previousScreen: 'ArtistScreen' })
+                        }}
+                    >
 
-                    <AppText style={styles.view}>
-                        View all  ›
-                    </AppText>
 
+                        <AppText style={styles.view}>
+                            View all  ›
+                        </AppText>
+                    </TouchableOpacity>
                 </View>
 
 
@@ -202,13 +289,20 @@ const ArtistScreen = () => {
 
                     showsHorizontalScrollIndicator={false}
 
-                    data={artists}
+                    data={artisttopdata?.slice(0, 10)}
 
                     keyExtractor={(item) => item.id}
                     //style={{ height: 340 }}
                     renderItem={({ item }) => (
 
-                        <TopArtist item={item} />
+                        <TopArtist item={item}
+                            onPress={() => {
+                                (navigation as any).navigate('SongsListScreen', {
+                                    artist: item,
+                                    previousScreen: 'ArtistScreen',
+                                });
+                            }}
+                        />
 
                     )}
 
@@ -221,23 +315,35 @@ const ArtistScreen = () => {
                     <AppText style={styles.sectionTitle}>
                         All Artists
                     </AppText>
+                    <TouchableOpacity
+                        onPress={() => {
+                            (navigation as any).navigate('AllArtistScreen', { previousScreen: 'ArtistScreen' })
+                        }}
+                    >
+                        <AppText style={styles.view}>
+                            View all  ›
+                        </AppText>
+                    </TouchableOpacity>
 
-                    <AppText style={styles.view}>
-                        View all  ›
-                    </AppText>
 
                 </View>
 
 
 
                 {
-                    artists.map(item => (
+                    artistdata?.slice(0, 8).map(item => (
 
                         <ArtistListItem
 
                             key={item.id}
 
                             item={item}
+                            onPress={() => {
+                                (navigation as any).navigate('SongsListScreen', {
+                                    artist: item,
+                                    previousScreen: 'ArtistScreen',
+                                });
+                            }}
 
                         />
 
@@ -325,6 +431,9 @@ const styles = StyleSheet.create({
 
     headerContent: {
         flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 15
     },
 
     micContainer: {

@@ -1,89 +1,68 @@
-import { FlatList, ImageBackground, ImageSourcePropType, TouchableOpacity, View } from "react-native";
-import AppImage from "./AppImage";
-import AppText from "./AppText";
-import { Inter } from "../constants/fonts";
-import color, { useAppColors } from "../constants/color";
-import { Images, Logo } from "../constants/media";
-import { GlobalImage } from "../utils/GlobalImage";
-import { useNavigation } from '@react-navigation/native'
+
+import React from 'react';
+import {
+  FlatList,
+  ImageBackground,
+  ImageSourcePropType,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
+import AppImage from './AppImage';
+import AppText from './AppText';
+import { Inter } from '../constants/fonts';
+import color from '../constants/color';
+import { Images, Logo } from '../constants/media';
+import { GlobalImage } from '../utils/GlobalImage';
+import { useNavigation } from '@react-navigation/native';
 
 type TrandingListItem = {
   id: number;
   title: string;
-  title1: string;
-  image: ImageSourcePropType;
+  artist: string;
+  image?: ImageSourcePropType;
+  cover_image_url?: string;
+  likes_count?: number;
 };
 
 type TrandingListProps = {
   data?: TrandingListItem[];
 };
 
-export default function TrandingList({ data }: TrandingListProps) {
-
-  const colors = useAppColors();
-
+export default function TrandingList({
+  data = [],
+}: TrandingListProps) {
   const navigation = useNavigation();
-  const recentdata: TrandingListItem[] = [
-    {
-      id: 1,
-      title: "يا أغلى وطن",
-      artist: "محمد وردي",
-      image: Images.singericon
-    },
-    {
-      id: 2,
-      title: "محمد وردي",
-      artist: "مصطفى سيد أحمد",
-      image: Images.singericon
-    },
-    {
-      id: 3,
-      title: "يا أغلى وطن",
-      artist: "محمد وردي",
-      image: Images.singericon
-    },
-    {
-      id: 4, title: "محمد وردي",
-      artist: "مصطفى سيد أحمد",
-      image: Images.singericon
-    },
-
-  ];
 
   return (
-
-
-
-    <View style={{ flexDirection: "row", gap: 10, flexWrap: 'wrap', }}>
-
+    <View>
       <FlatList
         data={data}
-        // data={recentdata}
-        numColumns={4}
-        scrollEnabled={false}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={item => item.id.toString()}
         contentContainerStyle={{
-          paddingTop: 20,
           paddingHorizontal: 10,
+          paddingVertical: 15,
         }}
-        columnWrapperStyle={{
-          // justifyContent: 'space-between',
-          marginBottom: 10,
-          gap: 10
-        }}
-
-        ListEmptyComponent={() =>
-
-          <View style={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingVertical: 40,
-          }}>
+        ItemSeparatorComponent={() => (
+          <View style={{ width: 10 }} />
+        )}
+        ListEmptyComponent={
+          <View
+            style={{
+              width: 350,
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingVertical: 40,
+            }}
+          >
             <AppImage
               source={Logo.ymusic}
               width={20}
               height={20}
             />
+
             <AppText
               color={color.darkthemetext}
               fontSize={14}
@@ -92,16 +71,17 @@ export default function TrandingList({ data }: TrandingListProps) {
               No songs found
             </AppText>
           </View>
-
         }
-        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity
+            activeOpacity={0.8}
             onPress={() => {
-              navigation.navigate('.', { id: item.id });
+              (navigation as any).navigate('.', {
+                id: item.id,
+              });
             }}
             style={{
-              width: '23%',
+              width: 125,
               height: 164,
               borderRadius: 10,
               borderWidth: 1,
@@ -109,39 +89,52 @@ export default function TrandingList({ data }: TrandingListProps) {
               overflow: 'hidden',
               justifyContent: 'center',
               alignItems: 'center',
-              //backgroundColor: colors.cardBackground,
+              backgroundColor: '#1A1919',
             }}
           >
+            {/* Background Image */}
             <ImageBackground
-              source={GlobalImage(item.cover_image_url)}
+              source={
+                item?.cover_image_url
+                  ? GlobalImage(item.cover_image_url)
+                  : item?.image
+              }
               resizeMode="cover"
               style={{
-                flex: 1,
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: 294,
-                alignSelf: 'center',
-                // marginBottom: 290,
                 position: 'absolute',
-                alignSelf: 'center',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
                 width: '100%',
+                height: '100%',
               }}
-            >
-            </ImageBackground>
+            />
+
+            {/* Dark overlay */}
+            <View
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.35)',
+              }}
+            />
+
+            {/* Play Button */}
             <View
               style={{
                 borderWidth: 2,
                 borderColor: '#BC4402',
                 justifyContent: 'center',
                 alignItems: 'center',
-                backgroundColor: 'black',
+                backgroundColor: 'rgba(0,0,0,0.8)',
                 height: 38,
                 width: 38,
                 borderRadius: 19,
-                marginTop: 20,
-                // position: 'absolute',
-                alignSelf: 'center',
-                //  bottom: 10,
+                marginTop: 15,
               }}
             >
               <AppImage
@@ -152,17 +145,22 @@ export default function TrandingList({ data }: TrandingListProps) {
               />
             </View>
 
+            {/* Song Title */}
             <AppText
               color="#FFFFFF"
               fontSize={12}
               fontFamily={Inter.regular}
               textAlign="center"
               numberOfLines={1}
-              style={{ marginTop: 10 }}
+              style={{
+                marginTop: 10,
+                paddingHorizontal: 8,
+              }}
             >
               {item?.title}
             </AppText>
-            {/* {console.log(item,"dhvdhcvhcv")} */}
+
+            {/* Artist */}
             <AppText
               color="#FFFFFF"
               fontSize={12}
@@ -170,10 +168,14 @@ export default function TrandingList({ data }: TrandingListProps) {
               textAlign="center"
               marginTop={4}
               numberOfLines={1}
+              style={{
+                paddingHorizontal: 8,
+              }}
             >
-              {item.artist}
+              {item?.artist}
             </AppText>
 
+            {/* Likes */}
             <View
               style={{
                 flexDirection: 'row',
@@ -195,13 +197,13 @@ export default function TrandingList({ data }: TrandingListProps) {
                 fontFamily={Inter.regular}
                 marginLeft={4}
               >
-                {item.likes_count}
+                {item?.likes_count ?? 0}
               </AppText>
             </View>
-
           </TouchableOpacity>
         )}
       />
     </View>
   );
-}           
+}
+

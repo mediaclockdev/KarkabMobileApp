@@ -55,236 +55,249 @@ const musicData = [
 
 
 
-const MusicList: React.FC<{ data?: any[] }> = ({ data }) => {
+const MusicList: React.FC<{
+  data?: any[];
+  loading?: boolean;
+}> = ({ data = [],
+  loading = false, }) => {
 
-
-  const color = useAppColors();
-  const [playingId, setPlayingId] = useState<string | null>(null);
-  const [loadings, setLoadings] = useState(false);
-  const dispatch = useAppDispatch();
-  const playsong = useAppSelector(
-    (state: any) => state.auth.playsong
-  );
-  const navigation = useNavigation();
-
-  const playRecording = async (item: any) => {
-    await Sound.stopPlayer();
-    Sound.removePlayBackListener();
-    setPlayingId(item.id);
-    setLoadings(true)
-    await dispatch(isPausesd(false));
-    console.log(item.id, item.song_url, "dkdkbkdbkdb5")
-    // try {
-    //   const result = await Sound.startPlayer(item.song_url);
-
-    //   console.log('Playing:', result);
-    //   await Sound.removePlayBackListener();
-    //   Sound.addPlayBackListener((e) => {
-    //     setLoadings(false)
-    //     console.log(
-    //       'Current:',
-    //       Sound.mmssss(Math.floor(e.currentPosition)),
-    //     );
-
-    dispatch(
-      addsong({
-        ...item,
-      }),)
-    setLoadings(false)
-    console.log(playsong, "dkdkbkdbkdb5")
-    //     if (e.currentPosition >= e.duration) {
-    //       Sound.stopPlayer();
-    //       Sound.removePlayBackListener();
-    //       setPlay(true)
-    //       setPlayingId(null)
-    //     }
-    //   });
-    // } catch (error) {
-    //   console.log('Play error:', error);
-    // }
-  };
-
-  const stopRecording = async () => {
-    try {
-      console.log('Stopping player');
-      await dispatch(isPausesd(true));
-      await Sound.pausePlayer();
-
-      setPlayingId(null);
-    } catch (error) {
-      console.log('Stop Error:', error);
-    }
-  };
-  const waveColors = [
-    '#B72C7F',
-    '#AE711C',
-    '#D3C36A',
-    '#4CAF50',
-    '#2196F3',
-    '#9C27B0',
-  ];
-
-  const renderWave = (waveColor: string) => {
-    return (
-      <View style={styles.waveContainer}>
-        {[...Array(18)].map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.wave,
-              {
-                height: Math.floor(Math.random() * 18) + 6,
-                backgroundColor: waveColor,
-              },
-            ]}
-          />
-        ))}
-      </View>
+    const [loadingId, setLoadingId] = useState<string | null>(null);
+    const color = useAppColors();
+    const [playingId, setPlayingId] = useState<string | null>(null);
+    const [loadings, setLoadings] = useState(false);
+    const dispatch = useAppDispatch();
+    const playsong = useAppSelector(
+      (state: any) => state.auth.playsong
     );
-  };
+    const navigation = useNavigation();
 
+    const playRecording = async (item: any) => {
+      await Sound.stopPlayer();
+      Sound.removePlayBackListener();
+      setPlayingId(item.id);
+      setLoadings(true)
+      await dispatch(isPausesd(false));
+      console.log(item.id, item.song_url, "dkdkbkdbkdb5")
+      // try {
+      //   const result = await Sound.startPlayer(item.song_url);
 
-  const renderItem = ({ item, index }: any) => {
-    return (
-      <TouchableOpacity
-        activeOpacity={0.8}
-        style={[styles.card, { borderColor: color.homebordercolor }]}
-      >
-        {/* Image */}
-        <View
-          style={{
-            width: 49,
-            height: 49,
-            borderRadius: 8,
-            overflow: 'hidden',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-          <AppImage
-            source={GlobalImage(item?.cover_image_url)}
-            width={49}
-            height={89}
-            resizeMode="cover"
-          />
-        </View>
+      //   console.log('Playing:', result);
+      //   await Sound.removePlayBackListener();
+      //   Sound.addPlayBackListener((e) => {
+      //     setLoadings(false)
+      //     console.log(
+      //       'Current:',
+      //       Sound.mmssss(Math.floor(e.currentPosition)),
+      //     );
 
-        {/* Content */}
-        <View style={styles.content}>
-          <AppText
-            fontSize={12}
-            fontWeight="700"
-            color={color.darkthemetext}
-            fontFamily={Inter.bold}
-            numberOfLines={1}
-          >
-            {item.title}
-          </AppText>
+      dispatch(
+        addsong({
+          ...item,
+        }),)
+      setLoadings(false)
+      console.log(playsong, "dkdkbkdbkdb5")
+      //     if (e.currentPosition >= e.duration) {
+      //       Sound.stopPlayer();
+      //       Sound.removePlayBackListener();
+      //       setPlay(true)
+      //       setPlayingId(null)
+      //     }
+      //   });
+      // } catch (error) {
+      //   console.log('Play error:', error);
+      // }
+    };
 
-          <AppText
-            fontSize={10}
-            color={color.darkthemetext}
-            marginTop={4}
-            fontFamily={Inter.regular}
-            numberOfLines={1}
-          >
-            {item.artist}
-          </AppText>
+    const stopRecording = async () => {
+      try {
+        console.log('Stopping player');
+        await dispatch(isPausesd(true));
+        await Sound.pausePlayer();
 
+        setPlayingId(null);
+      } catch (error) {
+        console.log('Stop Error:', error);
+      }
+    };
+    const waveColors = [
+      '#B72C7F',
+      '#AE711C',
+      '#D3C36A',
+      '#4CAF50',
+      '#2196F3',
+      '#9C27B0',
+    ];
 
-        </View>
-
-        {/* Right Side */}
-        <View style={styles.right}>
-          <AppImage
-            source={Images.freq}
-            width={94}
-            height={12}
-            tintColor={waveColors[index % waveColors.length]}
-          />
-          {/* Play Button */}
-          <TouchableOpacity style={styles.playButton} onPress={() => {
-            playingId === item.id
-              ? stopRecording()
-              : playRecording(item)
-          }}
-          >
-            {loadings && playingId == item.id ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <>
+    const renderWave = (waveColor: string) => {
+      return (
+        <View style={styles.waveContainer}>
+          {[...Array(18)].map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.wave,
                 {
-                  playingId == item.id ?
-                    <View style={styles.pauseContainer}>
-                      <View style={styles.pauseLine} />
-                      <View style={styles.pauseLine} />
-                    </View> :
-                    <AppImage
-                      source={Images.playicon}
-                      width={10}
-                      height={10}
-                      tintColor={color.darkthemetext}
-                    />
-                }
-              </>)}
+                  height: Math.floor(Math.random() * 18) + 6,
+                  backgroundColor: waveColor,
+                },
+              ]}
+            />
+          ))}
+        </View>
+      );
+    };
+
+
+    const renderItem = ({ item, index }: any) => {
+      return (
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={[styles.card, { borderColor: color.homebordercolor }]}
+        >
+          {/* Image */}
+          <View
+            style={{
+              width: 49,
+              height: 49,
+              borderRadius: 8,
+              overflow: 'hidden',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            <AppImage
+              source={GlobalImage(item?.cover_image_url)}
+              width={49}
+              height={89}
+              resizeMode="cover"
+            />
+          </View>
+
+          {/* Content */}
+          <View style={styles.content}>
+            <AppText
+              fontSize={12}
+              fontWeight="700"
+              color={color.darkthemetext}
+              fontFamily={Inter.bold}
+              numberOfLines={1}
+            >
+              {item.title}
+            </AppText>
+
+            <AppText
+              fontSize={10}
+              color={color.darkthemetext}
+              marginTop={4}
+              fontFamily={Inter.regular}
+              numberOfLines={1}
+            >
+              {item.artist}
+            </AppText>
+
+
+          </View>
+
+          {/* Right Side */}
+          <View style={styles.right}>
+            <AppImage
+              source={Images.freq}
+              width={94}
+              height={12}
+              tintColor={waveColors[index % waveColors.length]}
+            />
+            {/* Play Button */}
+            <TouchableOpacity style={styles.playButton} onPress={() => {
+              playingId === item.id
+                ? stopRecording()
+                : playRecording(item)
+            }}
+            >
+              {loadings && playingId == item.id ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  {
+                    playingId == item.id ?
+                      <View style={styles.pauseContainer}>
+                        <View style={styles.pauseLine} />
+                        <View style={styles.pauseLine} />
+                      </View> :
+                      <AppImage
+                        source={Images.playicon}
+                        width={10}
+                        height={10}
+                        tintColor={color.darkthemetext}
+                      />
+                  }
+                </>)}
 
 
 
 
-          </TouchableOpacity>
+            </TouchableOpacity>
 
-          {/* Menu */}
-          {/* <TouchableOpacity style={styles.menu}>
+            {/* Menu */}
+            {/* <TouchableOpacity style={styles.menu}>
             <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
             <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
             <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
           </TouchableOpacity> */}
-        </View>
-      </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      )
+    }
+
+    return (
+      <View style={{
+        backgroundColor: color.darkbackround,
+        borderWidth: 1,
+        borderColor: color.homebordercolor,
+        borderRadius: 12,
+        marginBottom: 15
+      }}>
+        {loading ? (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator
+              size="small"
+              color={color.mgyellow}
+            />
+          </View>
+        ) : (
+          <FlatList
+            data={data?.slice(0, 8) || musicData}
+            // data={musicData}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContainer}
+            ListEmptyComponent={() =>
+
+              <View style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+                paddingVertical: 40,
+              }}>
+                <AppImage
+                  source={Logo.ymusic}
+                  width={20}
+                  height={20}
+                />
+                <AppText
+                  color={color.darkthemetext}
+                  fontSize={14}
+                  marginTop={10}
+                >
+                  No songs found
+                </AppText>
+              </View>
+
+            }
+          />)}
+      </View>
+
     )
   }
-
-  return (
-    <View style={{
-      backgroundColor: color.darkbackround,
-      borderWidth: 1,
-      borderColor: color.homebordercolor,
-      borderRadius: 12
-    }}>
-      <FlatList
-        data={data?.slice(0, 8) || musicData}
-        // data={musicData}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
-        ListEmptyComponent={() =>
-
-          <View style={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingVertical: 40,
-          }}>
-            <AppImage
-              source={Logo.ymusic}
-              width={20}
-              height={20}
-            />
-            <AppText
-              color={color.darkthemetext}
-              fontSize={14}
-              marginTop={10}
-            >
-              No songs found
-            </AppText>
-          </View>
-
-        }
-      />
-    </View>
-
-  )
-}
 
 export default MusicList
 
@@ -367,5 +380,16 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     backgroundColor: '#FFF',
     marginVertical: 1.5,
+  },
+  loaderContainer: {
+    height: 180,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  emptyContainer: {
+    height: 180,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 })

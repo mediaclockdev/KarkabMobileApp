@@ -227,7 +227,7 @@ export default function SongsScreen() {
 
             const response = await ApiService.get(apiUrls.gettrandingsong);
 
-            const data = response.data;
+            const data = (response as any).data;
             console.log(data, 'tranding API RESPONSEdddd');
 
             if (data?.success) {
@@ -247,7 +247,7 @@ export default function SongsScreen() {
 
             const response = await ApiService.get(apiUrls.getnewreleases);
 
-            const data = response.data;
+            const data = (response as any)?.data;
             console.log(data, 'tranding API RESPONSEdddd');
 
             if (data?.success) {
@@ -267,7 +267,7 @@ export default function SongsScreen() {
 
             const response = await ApiService.get(apiUrls.categories);
 
-            const data = response?.data;
+            const data = (response as any)?.data;
             console.log(data?.categories, 'category API RESPONSEdddd');
 
             if (data?.success) {
@@ -288,7 +288,7 @@ export default function SongsScreen() {
             //  setIsLoading(true)
             const response = await ApiService.get(apiUrls.favorites)
 
-            const data = response.data
+            const data = (response as any).data
             console.log(data, "favorate API RESPONSE")
 
             if (data?.success) {
@@ -335,7 +335,7 @@ export default function SongsScreen() {
                     <TouchableOpacity
                         onPress={() => {
 
-                            navigation.navigate('Search')
+                            (navigation as any).navigate('Search')
                         }}
                     >
 
@@ -392,7 +392,7 @@ export default function SongsScreen() {
 
                 <TouchableOpacity
                     onPress={() => {
-                        navigation.navigate('SearchSongSecreen', { previousScreen: 'SongsScreen' })
+                        (navigation as any).navigate('SearchSongSecreen', { previousScreen: 'SongsScreen' })
                     }}
                     style={styles.searchBox}>
                     <AppImage
@@ -435,7 +435,7 @@ export default function SongsScreen() {
                                     setSelected(item.title);
 
 
-                                    navigation.navigate('SongsListScreen', {
+                                    (navigation as any).navigate('SongsListScreen', {
                                         songs: item,
                                         previousScreen: 'SongsScreen',
                                         filter: true
@@ -539,7 +539,7 @@ export default function SongsScreen() {
                     <TouchableOpacity
 
                         onPress={() => {
-                            navigation.navigate('SongsListScreen', {
+                            (navigation as any).navigate('SongsListScreen', {
                                 songs: populardatas,
                                 previousScreen: 'SongsScreen',
                             });
@@ -588,7 +588,7 @@ export default function SongsScreen() {
                     renderItem={({ item }) => (
                         <SongCard item={item}
                             width={(width - 45) / 3}
-                            onpress={() => navigation.navigate('.', {
+                            onpress={() => (navigation as any).navigate('.', {
                                 id: item.id,
                             })}
 
@@ -606,7 +606,7 @@ export default function SongsScreen() {
                     </Text>
                     <TouchableOpacity
                         onPress={() => {
-                            navigation.navigate('SongsListScreen', {
+                            (navigation as any).navigate('SongsListScreen', {
                                 songs: newReleasesdata,
                                 previousScreen: 'SongsScreen',
                             });
@@ -668,7 +668,7 @@ export default function SongsScreen() {
                                 showNewTag={true}
                                 item={item}
                                 width={(width - 45) / 3}
-                                onpress={() => navigation.navigate('.', {
+                                onpress={() => (navigation as any).navigate('.', {
                                     id: item.id,
                                 })}
 
@@ -693,7 +693,7 @@ export default function SongsScreen() {
                     </Text>
                     <TouchableOpacity
                         onPress={() => {
-                            navigation.navigate('Browsemood')
+                            (navigation as any).navigate('Browsemood')
                         }}
                         activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
                         <AppText color={'#FFB300'} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
@@ -734,7 +734,7 @@ export default function SongsScreen() {
                             onpress={() => {
 
 
-                                navigation.navigate('SongsListScreen', {
+                                (navigation as any).navigate('SongsListScreen', {
                                     songs: item,
                                     previousScreen: 'SongsScreen',
                                     filter: true
@@ -755,7 +755,7 @@ export default function SongsScreen() {
 
                     <TouchableOpacity
                         onPress={() => {
-                            navigation.navigate('SongsListScreen', {
+                            (navigation as any).navigate('SongsListScreen', {
                                 songs: songdata,
                                 previousScreen: 'SongsScreen',
                             });
@@ -779,7 +779,7 @@ export default function SongsScreen() {
                         <KaraokeCard
                             key={item.id}
                             item={item}
-                            onpress={() => navigation.navigate('.', {
+                            onpress={() => (navigation as any).navigate('.', {
                                 id: item.id,
                             })}
                         />

@@ -1,4 +1,4 @@
-import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View, RefreshControl, ActivityIndicator } from "react-native"
 import color, { useAppColors } from "../share/constants/color";
 import AppText from "../share/components/AppText";
 import MainHeader from "../share/components/MainHeader";
@@ -24,6 +24,14 @@ import { navigate } from "../navigation/NavigationService";
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { Sound } from "react-native-nitro-sound";
 import SelectedArtistScreen from "./Home/SelectedArtistScreen";
+import ArtistList from "../share/components/SelectedArtistMix";
+import SelectedArtistMix from "../share/components/SelectedArtistMix";
+import RecommendedSongs from "../share/components/RecommendedSongs";
+import PeopleWhoSang from "../share/components/PeopleWhoSang";
+import PopularSongs from "../share/components/PopularSongs";
+import ArtistRow from "../share/components/ArtistRow";
+import LinearGradient from "react-native-linear-gradient";
+
 
 const Home = () => {
   const navigation = useNavigation();
@@ -31,13 +39,50 @@ const Home = () => {
   const [profiledetail, setProfileDetail] = useState<any>(null)
   const [categories, setCategories] = useState<any[]>([])
   const [populardatas, setPopulardatas] = useState<any[]>([])
+  const [artistmixsongdata, setArtistmixsongdata] = useState<any[]>([])
+  const [artistdata, setArtistdata] = useState<any[]>([])
+  const [songsartistdata, setSongsartistdata] = useState<any[]>([])
+  const [recommendedsongdata, setRecommendedsongdata] = useState<any[]>([])
   const dispatch = useAppDispatch();
+  const [songsArtistLoading, setSongsArtistLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<'Latest' | 'Popular' | 'A-Z'>(
+    'Latest'
+  );
+  const [loader, setLoader] = useState(false)
   const playsong = useAppSelector(
     (state: any) => state.auth.playsong
   );
   const loginState = useAppSelector(
     (state: any) => state.auth.loginState
   );
+
+
+
+
+  const onRefresh = useCallback(async () => {
+    try {
+      setRefreshing(true);
+
+      await Promise.all([
+        fetchProfileData(),
+        categorydata(),
+        Dashboarddata(),
+        topmostdata(),
+        artistmixedsongfun(),
+        recommendedsongfun(),
+        getartistfun(),
+        fetchArtistsByFilter(selectedFilter),
+      ]);
+    } catch (error) {
+      console.log("Home refresh error:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [selectedFilter]);
+
+
+
 
   const fetchHomeData = async () => {
     try {
@@ -53,11 +98,11 @@ const Home = () => {
 
   const fetchProfileData = async () => {
     try {
-      dispatch(loaderstate(true));
+      setLoader(true);
 
       const response = await ApiService.get(apiUrls.profileApi)
 
-      const data = response.data
+      const data = (response as any).data
       console.log(data, "API RESPONSE")
 
       if (data?.success) {
@@ -68,7 +113,7 @@ const Home = () => {
       console.log("PROFILE ERROR:", error)
     }
     finally {
-      dispatch(loaderstate(false));
+      setLoader(false);
     }
   }
 
@@ -76,11 +121,11 @@ const Home = () => {
   const categorydata = async () => {
     console.log("category api called", apiUrls.categories)
     try {
-      dispatch(loaderstate(true));
+      setLoader(true);
 
       const response = await ApiService.get(apiUrls.categories);
 
-      const data = response.data;
+      const data = (response as any).data;
       console.log(data, 'category API RESPONSEdddd');
 
       if (data?.success) {
@@ -89,7 +134,7 @@ const Home = () => {
     } catch (error) {
       console.log('Categorydata ERROR:', error);
     } finally {
-      dispatch(loaderstate(false));
+      setLoader(false);
     }
   };
 
@@ -97,12 +142,12 @@ const Home = () => {
   const topmostdata = async () => {
     console.log("popular api called")
     try {
-      dispatch(loaderstate(true));
+      setLoader(true);
 
       const response = await ApiService.get(apiUrls.getpopularsong);
 
-      const data = response.data;
-      console.log(data, 'popular API RESPONSEdddd');
+      const data = (response as any).data;
+      console.log(data.songs, 'popular API RESPONSEdddd');
 
       if (data?.success) {
         setPopulardatas(data.songs);
@@ -110,19 +155,120 @@ const Home = () => {
     } catch (error) {
       console.log('populardata ERROR:', error);
     } finally {
-      dispatch(loaderstate(false));
+      setLoader(false);
     }
   };
 
 
-  const Dashboarddata = async () => {
-    console.log("Dashboard api called")
+  const fetchArtistsByFilter = async (
+    filter: 'Latest' | 'Popular' | 'A-Z'
+  ) => {
     try {
-      dispatch(loaderstate(true));
+      setSongsArtistLoading(true);
+
+      let url = apiUrls.artistsong;
+
+      if (filter === 'Latest') {
+        url = `${apiUrls.artistsong}/latest`;
+      } else if (filter === 'Popular') {
+        url = `${apiUrls.artistsong}/popular`;
+      }
+      // A-Z uses apiUrls.artistsong
+
+      console.log('Artist Songs API:', url);
+
+      const response = await ApiService.get(url);
+      const data = (response as any).data;
+
+      console.log(`${filter} artist songs response:`, data);
+
+      if (data?.success) {
+        setSongsartistdata(data.songs || []);
+      } else {
+        setSongsartistdata([]);
+      }
+    } catch (error) {
+      console.log(`${filter} artist songs ERROR:`, error);
+      setSongsartistdata([]);
+    } finally {
+      setSongsArtistLoading(false);
+    }
+  };
+
+
+  const artistmixedsongfun = async () => {
+    console.log("popular api called")
+    try {
+      setLoader(true);
+
+      const response = await ApiService.get(apiUrls.artistmixsong);
+
+      const data = (response as any).data;
+      console.log(data.songs, 'artistmixedsong API RESPONSE');
+
+      if (data?.success) {
+        setArtistmixsongdata(data.songs)
+      }
+    } catch (error) {
+      console.log('populardata ERROR:', error);
+    } finally {
+      setLoader(false);
+    }
+  };
+
+
+  const recommendedsongfun = async () => {
+    console.log("popular api called")
+    try {
+      setLoader(true);
+
+      const response = await ApiService.get(apiUrls.recommendedsongs);
+
+      const data = (response as any).data;
+      console.log(data.songs, 'recommendedsong API RESPONSE');
+
+      if (data?.success) {
+        setRecommendedsongdata(data.songs)
+      }
+    } catch (error) {
+      console.log('populardata ERROR:', error);
+    } finally {
+      setLoader(false);
+    }
+  };
+
+
+  const getartistfun = async () => {
+    console.log("popular api called")
+    try {
+      setLoader(true);
+
+      const response = await ApiService.get(apiUrls.selectartists);
+
+      const data = (response as any).data;
+      console.log(data.artists, 'getartist API RESPONSE');
+
+      if (data?.success) {
+        setArtistdata(data.artists)
+      }
+    } catch (error) {
+      console.log('populardata ERROR:', error);
+    } finally {
+      setLoader(false);
+    }
+  };
+
+
+
+
+  const Dashboarddata = async () => {
+    console.log("Dashboard api called");
+    try {
+      setLoader(true);
 
       const response = await ApiService.get(apiUrls.dashboard);
 
-      const data = response.data;
+      const data = (response as any).data;
       console.log(data, 'API RESPONSE Dashboard');
 
       if (data?.success) {
@@ -131,17 +277,28 @@ const Home = () => {
     } catch (error) {
       console.log('Dashboard ERROR:', error);
     } finally {
-      dispatch(loaderstate(false));
+      setLoader(false);
     }
   };
+
+
 
   useEffect(() => {
     fetchProfileData()
     categorydata()
     Dashboarddata()
     topmostdata()
+    artistmixedsongfun()
+    recommendedsongfun()
+    getartistfun()
+
     //fetchHomeData()
   }, [])
+
+
+  useEffect(() => {
+    fetchArtistsByFilter(selectedFilter);
+  }, [selectedFilter]);
 
 
   // useFocusEffect(
@@ -159,11 +316,22 @@ const Home = () => {
   //   }, [loginState])
   // )
 
+  const getInitials = (name?: string) => {
+    return name
+      ?.trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map(word => word[0])
+      .join('')
+      .toUpperCase() || '';
+  };
+
   if (loginState == 'first') {
 
     return <SelectedArtistScreen />
 
   }
+  // return <SelectedArtistScreen />
 
 
   return (
@@ -179,20 +347,34 @@ const Home = () => {
         // onChangeText={() => console.log('filter')}
         onFilterPress={() => console.log('filter')}
         onPress={() => {
-          navigation.navigate('SearchSongSecreen', { previousScreen: 'Home' })
+          ; (navigation as any).navigate('SearchSongSecreen', { previousScreen: 'Home' })
         }}
 
       />
-      <ScrollView
-        nestedScrollEnabled={true}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingVertical: 20 }}
-        style={styles.innercontainer}>
+      {
+        loader ?
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#EFCB61" />
+          </View> :
+          <ScrollView
+            nestedScrollEnabled={true}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={color.mgred}
+                colors={[color.mgred]}
+                progressBackgroundColor={color.darkgray}
+              />
+            }
+            contentContainerStyle={{ paddingVertical: 20 }}
+            style={styles.innercontainer}>
 
 
-        <HomeBanner />
-        {/* <FontDebug/> */}
-        {/* <View style={styles.filterview}>
+            <HomeBanner />
+            {/* <FontDebug/> */}
+            {/* <View style={styles.filterview}>
           <TouchableOpacity
             activeOpacity={0.3}
             style={[styles.filter, { borderColor: color.homebordercolor }]}>
@@ -262,32 +444,136 @@ const Home = () => {
         </View> */}
 
 
+            <View style={styles.titles}>
+              <AppText
+                color={color.darkthemetext}
+                fontSize={12}
+                fontWeight="500"
+                fontFamily={Inter.medium}
+              >
+                Selected Artists  -  Mix Song
+              </AppText>
 
-        <View style={styles.titles}>
-          <AppText color={color.darkthemetext} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
-            Browse moods
-          </AppText>
-          <TouchableOpacity
-            activeOpacity={0.4}
-            onPress={() => {
-              navigation.navigate('Browsemood')
-            }}
-            style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
-            <AppText color={color.mgred} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
-              See all
-            </AppText>
-            <AppImage
-              source={Images.arrow}
-              width={5}
-              height={8}
+              <TouchableOpacity
+                onPress={() => {
+                  (navigation as any).navigate('SongsListScreen', {
+                    songs: artistmixsongdata,
+                    previousScreen: 'Home',
+                  });
+                }}
+                activeOpacity={0.4}
+                style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                <AppText
+                  color={color.mgred}
+                  fontSize={12}
+                  fontWeight="500"
+                  fontFamily={Inter.medium}
+                >
+                  See all
+                </AppText>
+
+                <AppImage
+                  source={Images.arrow}
+                  width={5}
+                  height={8}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <SelectedArtistMix
+              data={artistmixsongdata}
+              onPress={(artist) => {
+                console.log('Artist selected:', artist);
+              }}
+              onPlay={(artist) => {
+                console.log('Play mix:', artist);
+                (navigation as any).navigate('.', {
+                  id: artist.id,
+                });
+              }}
             />
-          </TouchableOpacity>
+
+            <View style={styles.titles}>
+              <AppText
+                color={color.darkthemetext}
+                fontSize={12}
+                fontWeight="500"
+                fontFamily={Inter.medium}
+              >
+                Recommended Songs
+              </AppText>
+
+              <TouchableOpacity
+                onPress={() => {
+                  (navigation as any).navigate('SongsListScreen', {
+                    songs: recommendedsongdata,
+                    previousScreen: 'Home',
+                  });
+                }}
+                activeOpacity={0.4}
+                style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                <AppText
+                  color={color.mgred}
+                  fontSize={12}
+                  fontWeight="500"
+                  fontFamily={Inter.medium}
+                >
+                  See all
+                </AppText>
+
+                <AppImage
+                  source={Images.arrow}
+                  width={5}
+                  height={8}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <RecommendedSongs
+              songs={recommendedsongdata}
+              onSeeAll={() => {
+                //  navigation.navigate('RecommendedSongs');
+              }}
+              onPlay={song => {
+                console.log('Play:', song);
+
+                (navigation as any).navigate('.', {
+                  id: song.id,
+                });
+              }}
+
+              onMore={song => {
+                console.log('More:', song);
+              }}
+            />
 
 
-        </View>
-        <MusicType data={categories} />
 
-        {
+            <View style={styles.titles}>
+              <AppText color={color.darkthemetext} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
+                Browse moods
+              </AppText>
+              <TouchableOpacity
+                activeOpacity={0.4}
+                onPress={() => {
+                  (navigation as any).navigate('Browsemood')
+                }}
+                style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                <AppText color={color.mgred} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
+                  See all
+                </AppText>
+                <AppImage
+                  source={Images.arrow}
+                  width={5}
+                  height={8}
+                />
+              </TouchableOpacity>
+
+
+            </View>
+            <MusicType data={categories} />
+
+            {/* {
           playsong?.id == null ?
             null :
             <>
@@ -299,36 +585,264 @@ const Home = () => {
               </View>
               <MusicCard data={playsong} />
             </>
-        }
+        } */}
 
-        <View style={styles.titles}>
-          <AppText color={color.darkthemetext} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
-            Popular for you
-          </AppText>
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate('SongsListScreen', {
-                songs: populardatas,
-                previousScreen: 'Home',
-              });
-            }}
-            activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
-            <AppText color={color.mgred} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
-              See all
-            </AppText>
-            <AppImage
-              source={Images.arrow}
-              width={5}
-              height={8}
 
+            <View style={styles.titles}>
+              <AppText
+                color={color.darkthemetext}
+                fontSize={12}
+                fontWeight="500"
+                fontFamily={Inter.medium}
+              >
+                Selected Artists
+              </AppText>
+
+              <TouchableOpacity
+                onPress={() => {
+                  (navigation as any).navigate('AllArtistScreen')
+                }}
+                activeOpacity={0.4}
+                style={{
+                  flexDirection: 'row',
+                  gap: 5,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <AppText
+                  color={color.mgred}
+                  fontSize={12}
+                  fontWeight="500"
+                  fontFamily={Inter.medium}
+                >
+                  See all
+                </AppText>
+
+                <AppImage
+                  source={Images.arrow}
+                  width={5}
+                  height={8}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <ArtistRow
+              artists={artistdata?.slice(0, 10)}
+
+              onPress={artist => {
+                console.log('Artist selected:', artist);
+
+                (navigation as any).navigate('SongsListScreen', {
+                  artist: artist,
+                  previousScreen: 'Home',
+                });
+              }}
+              onPlay={song => {
+                console.log('Play:', song);
+
+                (navigation as any).navigate('SongsListScreen', {
+                  artist: song,
+                  previousScreen: 'Home',
+                });
+              }}
             />
-          </TouchableOpacity>
+
+            <View style={styles.titles}>
+              <AppText color={color.darkthemetext} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
+                Selected Artist - All Songs
+              </AppText>
+              <TouchableOpacity
+                onPress={() => {
+                  (navigation as any).navigate('SongsListScreen', {
+                    songs: populardatas,
+                    previousScreen: 'Home',
+                  });
+                }}
+                activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                <AppText color={color.mgred} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
+                  See all
+                </AppText>
+                <AppImage
+                  source={Images.arrow}
+                  width={5}
+                  height={8}
+
+                />
+              </TouchableOpacity>
 
 
-        </View>
-        <MusicList data={populardatas} />
-        <View style={{ height: 80 }} />
-      </ScrollView>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                marginVertical: 10,
+              }}
+            >
+              {(['Latest', 'Popular', 'A-Z'] as const).map(item => {
+                const isSelected = selectedFilter === item;
+
+                return (
+                  <TouchableOpacity
+                    key={item}
+                    activeOpacity={0.7}
+                    onPress={() => setSelectedFilter(item)}
+                    style={{
+                      borderWidth: 1,
+                      borderColor: isSelected
+                        ? color.mgyellow
+                        : color.homebordercolor,
+                      borderRadius: 29,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {isSelected ? (
+                      <LinearGradient
+                        colors={[
+                          '#FF9A01',
+                          '#CF7D00',
+                          '#A96600',
+                        ]}
+                        start={{ x: 0.2, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={{
+
+                          borderRadius: 29,
+                          alignItems: 'center'
+                        }}
+                      >
+                        <View
+                          style={{
+                            paddingHorizontal: 10,
+                            paddingVertical: 5,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <AppText
+                            color="#FFF"
+                            fontSize={12}
+                            fontWeight="500"
+                            fontFamily={Inter.medium}
+                          >
+                            {item}
+                          </AppText>
+                        </View>
+                      </LinearGradient>
+                    ) : (
+                      <View
+                        style={{
+                          paddingHorizontal: 10,
+                          paddingVertical: 5,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <AppText
+                          color={color.darkthemetext}
+                          fontSize={12}
+                          fontWeight="500"
+                          fontFamily={Inter.medium}
+                        >
+                          {item}
+                        </AppText>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <MusicList data={songsartistdata} loading={songsArtistLoading} />
+
+            <View style={styles.titles}>
+              <AppText
+                color={color.darkthemetext}
+                fontSize={12}
+                fontWeight="500"
+                fontFamily={Inter.medium}
+              >
+                Recorded Songs
+              </AppText>
+
+              <TouchableOpacity
+                activeOpacity={0.4}
+                style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                <AppText
+                  color={color.mgred}
+                  fontSize={12}
+                  fontWeight="500"
+                  fontFamily={Inter.medium}
+                >
+                  See all
+                </AppText>
+
+                <AppImage
+                  source={Images.arrow}
+                  width={5}
+                  height={8}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <PeopleWhoSang
+              artists={[]}
+              onPlay={artist => {
+                console.log('Playing:', artist.name);
+              }}
+              onSeeAll={() => {
+                //navigation.navigate('AllArtists');
+              }}
+            />
+
+            <View style={styles.titles}>
+              <AppText
+                color={color.darkthemetext}
+                fontSize={12}
+                fontWeight="500"
+                fontFamily={Inter.medium}
+              >
+                Popular Songs
+              </AppText>
+
+              <TouchableOpacity
+                activeOpacity={0.4}
+                style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                <AppText
+                  color={color.mgred}
+                  fontSize={12}
+                  fontWeight="500"
+                  fontFamily={Inter.medium}
+                >
+                  See all
+                </AppText>
+
+                <AppImage
+                  source={Images.arrow}
+                  width={5}
+                  height={8}
+                />
+              </TouchableOpacity>
+            </View>
+            <PopularSongs
+              songs={populardatas}
+              onSeeAll={() => {
+                //  navigation.navigate('PopularSongs');
+              }}
+              onPlay={song => {
+                console.log('Playing:', song);
+                (navigation as any).navigate('.', {
+                  id: song.id,
+                });
+              }}
+            />
+            <View style={{ height: 80 }} />
+          </ScrollView>
+
+      }
+
+
     </SafeAreaView>
   )
 }
@@ -354,7 +868,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     //marginTop: 10,
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
     marginVertical: 10
   },
   filter: {

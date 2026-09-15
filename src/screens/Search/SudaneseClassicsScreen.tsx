@@ -152,6 +152,7 @@ export default function SudaneseClassicsScreen() {
     const [categories, setCategories] = useState<any[]>([])
     const dispatch = useAppDispatch();
     const [loading, setLoading] = useState(false);
+    const [artisttopdata, setArtisttopdata] = useState<any[]>([]);
 
     const categorydata = async () => {
         console.log("sudanesecategory api called", apiUrls.sudanesecategory)
@@ -224,9 +225,32 @@ export default function SudaneseClassicsScreen() {
         }
     };
 
+
+
+    const gettopartistfun = async () => {
+        console.log("popular api called")
+        try {
+
+
+            const response = await ApiService.get(apiUrls.artists + '?sort=popular');
+
+            const data = (response as any).data;
+            console.log(data.artists, 'gettopartistfun API RESPONSE');
+
+            if (data?.success) {
+                setArtisttopdata(data.artists)
+            }
+        } catch (error) {
+            console.log('populardata ERROR:', error);
+        } finally {
+
+        }
+    };
+
     useEffect(() => {
         classicdata()
         categorydata()
+        gettopartistfun()
     }, [])
 
     const categoryList = [
@@ -312,19 +336,31 @@ export default function SudaneseClassicsScreen() {
                     <AppText style={styles.sectionTitle}>
                         👑 Legendary Artists
                     </AppText>
+                    <TouchableOpacity
+                        onPress={() => {
+                            (navigation as any).navigate('AllArtistScreen', { previousScreen: 'SudaneseClassicsScreen' })
+                        }}
+                    >
+                        <AppText style={styles.view}>
+                            {"  See all >"}
+                        </AppText>
+                    </TouchableOpacity>
 
-                    <AppText style={styles.view}>
-                        See all
-                    </AppText>
                 </View>
 
                 <FlatList
                     horizontal
-                    data={artists}
+                    data={artisttopdata?.slice(0, 10)}
                     keyExtractor={(i) => i.id}
                     showsHorizontalScrollIndicator={false}
                     renderItem={({ item }) => (
                         <LegendaryArtistCard item={item}
+                            onPress={() => {
+                                (navigation as any).navigate('SongsListScreen', {
+                                    artist: item,
+                                    previousScreen: 'SudaneseClassicsScreen',
+                                });
+                            }}
                         //loading={loading}
                         />
                     )}

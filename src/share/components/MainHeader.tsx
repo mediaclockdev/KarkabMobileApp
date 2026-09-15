@@ -15,6 +15,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import AppImage from './AppImage';
 import { Inter } from '../constants/fonts';
 import { GlobalImage } from '../utils/GlobalImage';
+import { useNavigation } from '@react-navigation/native';
 interface MainHeaderProps {
   user?: any
   userName?: string
@@ -30,6 +31,17 @@ const MainHeader: React.FC<MainHeaderProps> = ({
   onProfilePress,
 }) => {
   const color = useAppColors();
+  const navigation = useNavigation();
+  const getInitials = (name?: string) => {
+    return name
+      ?.trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map(word => word[0])
+      .join('')
+      .toUpperCase() || '';
+  };
+
   return (
 
     <View style={[styles.header, { backgroundColor: color.darkbackround, }]}>
@@ -46,16 +58,37 @@ const MainHeader: React.FC<MainHeaderProps> = ({
               Images.profilelogo
             }
               style={styles.profileImage}>
-              <Image
-                source={
-                  GlobalImage(user?.avatar_url)
-                }
-                style={{
-                  width: 50,
-                  height: 50,
-                  borderRadius: 100,
-                }}
-              />
+              {user?.avatar_url ? (
+                <Image
+                  source={GlobalImage(user.avatar_url)}
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 100,
+                  }}
+                />
+              ) : (
+                <LinearGradient
+                  colors={['#EB2C78', '#F8B953']}
+                  start={{ x: 0.2, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 100,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <AppText
+                    fontSize={18}
+                    color="#FFFFFF"
+                    fontFamily={Inter.regular}
+                  >
+                    {getInitials(user?.name)}
+                  </AppText>
+                </LinearGradient>
+              )}
             </ImageBackground>
 
           </TouchableOpacity>
@@ -116,6 +149,9 @@ const MainHeader: React.FC<MainHeaderProps> = ({
             }}
           >
             <TouchableOpacity
+              onPress={() => {
+                navigation.navigate('NotificationScreen')
+              }}
               activeOpacity={0.8}
               style={{
                 width: 34,

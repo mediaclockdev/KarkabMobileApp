@@ -41,11 +41,13 @@ const LegendaryArtistCard = ({ item, onPress, loading }: Props) => {
             style={styles.container}>
             <View style={styles.imageWrapper}>
                 <AppImage
-                    source={Images.profile}
+                    source={item?.artist_image || Images.profile}
                     width={88}
                     height={88}
                     borderRadius={44}
+
                 />
+
 
                 {/* <View style={styles.verify}>
                     <AppText style={styles.verifyText}>✓</AppText>
@@ -64,7 +66,7 @@ const LegendaryArtistCard = ({ item, onPress, loading }: Props) => {
 
 
             <AppText style={styles.songs}>
-                {item.songs}
+                {item?.songs_count + "songs"}
             </AppText>
 
             <View style={styles.badge}>
@@ -95,6 +97,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 12,
+        overflow: 'hidden'
     },
 
     verify: {

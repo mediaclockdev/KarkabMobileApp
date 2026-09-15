@@ -45,7 +45,7 @@ const TopArtist = ({
 
                 <AppImage
                     resizeMode='cover'
-                    source={Images.profile}
+                    source={item?.artist_image || Images.profile}
                     style={styles.artistImage}
                 />
 
@@ -58,7 +58,7 @@ const TopArtist = ({
                     numberOfLines={1}
                     style={styles.artistName}
                 >
-                    {item.name}
+                    {item?.name}
                 </AppText>
                 <AppImage
                     source={Logo.Bluetick}
@@ -71,7 +71,7 @@ const TopArtist = ({
                 numberOfLines={1}
                 style={[styles.artistName, { marginTop: 4 }]}
             >
-                {item.songs}
+                {item?.total_songs + " songs"}
             </AppText>
             <View style={{
                 height: 18,

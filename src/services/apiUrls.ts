@@ -30,8 +30,17 @@ const apiUrls = {
   sudanesecategory: '/api/categories/sudanese-cultural/subcategories',
   getsudanesesongbycategory: (categoryId: number | string) => `/api/categories/${categoryId}/songs`,
   artists: '/api/artists/active',
-  selectartists: '/api/user/artists'
-
+  selectartists: '/api/user/artists',
+  artistmixsong: '/api/songs/artist-mix',
+  recommendedsongs: '/api/songs/recommended',
+  artistSongs: (id: number | string) => `/api/artists/${id}/songs`,
+  artistlatestsong: `/api/songs/latest`,
+  artistsong: `/api/songs`,
+  adjacentsong: (id: number | string) => `/api/songs/${id}/adjacent`,
+  createplaylist: '/api/playlists',
+  deleteplaylist: (id: number | string) => `/api/playlists/${id}`,
+  playlistDetail: (id: string | number) => `/api/playlists/${id}`,
+  addSongToPlaylist: (id: string | number) => `/api/playlists/${id}/songs`,
 
 };
 

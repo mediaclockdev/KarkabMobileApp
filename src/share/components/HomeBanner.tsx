@@ -73,7 +73,9 @@ const HomeBanner = () => {
   }
 
   return (
-    <View>
+    <View style={{
+      marginBottom: 15
+    }}>
       <FlatList
         ref={flatListRef}
         data={banners}

@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import CustomTabBar from './CustomTabBar';
 import { useAppSelector } from '../share/hooks/useAppSelector';
+import MiniPlayer from '../share/components/MiniPlayer';
 
 const Tab = createBottomTabNavigator();
 
@@ -51,7 +52,18 @@ export const HideableBottomTabs = ({ screens }: Props) => {
             loginState === 'first' ||
             currentRoute === 'Recording' ||
             currentRoute === 'SearchSongSecreen' ||
-            currentRoute === 'SelectedArtistScreen'
+            currentRoute === 'SelectedArtistScreen' ||
+            currentRoute === 'AllArtistScreen' ||
+            currentRoute === 'PlayListScreen' ||
+            currentRoute === 'GenreScreen' ||
+            currentRoute === 'PerformanceScreen' ||
+            currentRoute === 'SettingScreen' ||
+            currentRoute === 'ManageProfileScreen' ||
+            currentRoute === 'NotificationScreen' ||
+            currentRoute === 'CreatePlaylist' ||
+            currentRoute === 'PlaylistDetailScreen'
+
+
           ) {
             return null;
           }
@@ -78,6 +90,7 @@ export const HideableBottomTabs = ({ screens }: Props) => {
           />
         ))}
       </Tab.Navigator>
+      <MiniPlayer />
     </View>
   );
 };

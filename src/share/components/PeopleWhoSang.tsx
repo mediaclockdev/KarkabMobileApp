@@ -1,0 +1,194 @@
+import React from 'react';
+import {
+    FlatList,
+    Image,
+    StyleSheet,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+
+import AppText from '../../share/components/AppText';
+import { Inter } from '../../share/constants/fonts';
+import { Images } from '../constants/media';
+
+interface Artist {
+    id: string;
+    name: string;
+    time: string;
+    image: string;
+}
+
+interface PeopleWhoSangProps {
+    artists?: Artist[];
+    onPlay?: (artist: Artist) => void;
+    onSeeAll?: () => void;
+}
+
+const DEFAULT_ARTISTS: Artist[] = [
+    {
+        id: '1',
+        name: 'Ahmed',
+        time: '1:42',
+        image: Images.profile,
+    },
+    {
+        id: '2',
+        name: 'Sara',
+        time: '2:15',
+        image: Images.profile,
+    },
+    {
+        id: '3',
+        name: 'Mohamed',
+        time: '3:05',
+        image: Images.profile,
+    },
+    {
+        id: '4',
+        name: 'Heba',
+        time: '1:58',
+        image: Images.profile,
+    },
+];
+
+const PeopleWhoSang = ({
+    artists = DEFAULT_ARTISTS,
+    onPlay,
+    onSeeAll,
+}: PeopleWhoSangProps) => {
+    const renderArtist = ({ item }: { item: Artist }) => {
+        return (
+            <View style={styles.artistCard}>
+                {/* Artist Image */}
+
+                <Image source={item.image} style={styles.artistImage} />
+
+                {/* Artist Info */}
+                <View style={styles.artistInfo}>
+                    <AppText
+                        fontSize={12}
+                        fontFamily={Inter.semibold}
+                        color="#FFFFFF"
+                        numberOfLines={1}>
+                        {item.name}
+                    </AppText>
+
+                    <AppText
+                        marginTop={3}
+                        fontSize={10}
+                        fontFamily={Inter.regular}
+                        color="#A9A9A9">
+                        {item.time}
+                    </AppText>
+                </View>
+
+                {/* Play Button */}
+                <TouchableOpacity
+                    activeOpacity={0.7}
+                    style={styles.playButton}
+                    onPress={() => onPlay?.(item)}>
+                    <AppText
+                        fontSize={10}
+                        fontFamily={Inter.semibold}
+                        color="#FFFFFF"
+                        style={styles.playIcon}>
+                        ▶
+                    </AppText>
+                </TouchableOpacity>
+            </View>
+        );
+    };
+
+    return (
+        <View style={styles.container}>
+            {/* Header */}
+
+
+            {/* Artists */}
+            <FlatList
+                data={DEFAULT_ARTISTS}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                renderItem={renderArtist}
+                keyExtractor={item => item.id}
+                contentContainerStyle={styles.listContent}
+            />
+        </View>
+    );
+};
+
+export default PeopleWhoSang;
+
+const styles = StyleSheet.create({
+    container: {
+        width: '100%',
+        marginBottom: 15
+    },
+
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        marginBottom: 12,
+    },
+
+    seeAllContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+
+    arrow: {
+        marginLeft: 3,
+        marginTop: -2,
+    },
+
+    listContent: {
+
+        gap: 10,
+    },
+
+    artistCard: {
+        width: 140,
+        height: 55,
+        borderRadius: 10,
+        backgroundColor: '#111111',
+        borderWidth: 1,
+        borderColor: '#252525',
+
+        flexDirection: 'row',
+        alignItems: 'center',
+
+        paddingHorizontal: 12,
+    },
+
+    artistImage: {
+        width: 34,
+        height: 34,
+        borderRadius: 32,
+    },
+
+    artistInfo: {
+        flex: 1,
+        marginLeft: 12,
+        justifyContent: 'center',
+    },
+
+    playButton: {
+        width: 22,
+        height: 22,
+        borderRadius: 21,
+
+        borderWidth: 1,
+        borderColor: '#383838',
+
+        alignItems: 'center',
+        justifyContent: 'center',
+
+        backgroundColor: '#0D0D0D',
+    },
+
+    playIcon: {
+        marginLeft: 2,
+    },
+});

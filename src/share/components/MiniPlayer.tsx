@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-
+import React, { useEffect } from 'react';
 import {
     ActivityIndicator,
     Image,
@@ -7,271 +6,439 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+
 import AppText from './AppText';
-import { Images } from '../constants/media';
-import { Inter } from '../constants/fonts';
 import AppImage from './AppImage';
-import { useAppDispatch, useAppSelector } from '../hooks/useAppSelector';
-import { GlobalImage } from '../utils/GlobalImage';
+
+import { Images } from '../constants/media';
 import { color } from '../constants/color';
-import { Sound } from 'react-native-nitro-sound';
+import { useAppSelector } from '../hooks/useAppSelector';
+import { GlobalImage } from '../utils/GlobalImage';
 
-
-
+import TrackPlayer, {
+    useIsPlaying,
+    usePlaybackState,
+    PlaybackState,
+} from '@rntp/player';
 
 interface MiniPlayerProps {
-    song: {
-        title: string;
-        artist: string;
-        image: string;
-    };
+    onNext?: () => void;
+    onPrevious?: () => void;
 }
 
+const MiniPlayer = ({
+    onNext,
+    onPrevious,
+}: MiniPlayerProps) => {
+    const playing = useIsPlaying();
+    const playbackState = usePlaybackState();
 
-const MiniPlayer = ({ song }: MiniPlayerProps) => {
-    const [isPaused, setIsPaused] = useState(false);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [loadings, setLoadings] = useState(false);
-    const dispatch = useAppDispatch();
-    const playsong = useAppSelector
-        (
-            (state: any) => state.auth.playsong
-        );
+    const buffering =
+        playbackState === PlaybackState.Loading ||
+        playbackState === PlaybackState.Buffering;
 
+    const playsong = useAppSelector(
+        (state: any) => state.auth.playsong,
+    );
 
+    /**
+     * Play the song selected in Redux.
+     *
+     * IMPORTANT:
+     * Do not reset the entire queue here if you are
+     * already maintaining a playlist queue.
+     */
+    useEffect(() => {
+        if (!playsong?.id || !playsong?.song_url) {
+            return;
+        }
 
-    const pauseAudio = async () => {
+        const activeSong =
+            TrackPlayer.getActiveMediaItem();
+
+        if (
+            activeSong?.mediaId ===
+            playsong.id.toString()
+        ) {
+            return;
+        }
+
+        playNewSong();
+    }, [playsong?.id]);
+
+    const playNewSong = () => {
         try {
-            console.log({
-                isPlaying,
-                isPaused,
-            });
-            console.log("PAUSE CLICKED");
-            await Sound.pausePlayer();
-            console.log("PAUSE SUCCESSfhfhfhfh ");
+            if (!playsong?.id || !playsong?.song_url) {
+                console.log('NO SONG DATA');
+                return;
+            }
 
-            setIsPlaying(false);
-            dispatch(isPaused(true));
-            setIsPaused(true);
+            const mediaItem = {
+                mediaId: playsong.id.toString(),
+                url: playsong.song_url,
+                title:
+                    playsong.title ||
+                    'Unknown Song',
+                artist:
+                    playsong.artist ||
+                    'Unknown Artist',
+                artworkUrl:
+                    playsong.cover_image_url ||
+                    undefined,
+                duration:
+                    Number(playsong.duration) ||
+                    undefined,
+            };
+
+            console.log(
+                'PLAYING SONG:',
+                mediaItem,
+            );
+
+            /**
+             * This creates a single-song queue.
+             *
+             * If you have a playlist, DO NOT use this.
+             * Instead, load the complete playlist into
+             * TrackPlayer.
+             */
+            TrackPlayer.setMediaItem(
+                mediaItem,
+            );
+
+            TrackPlayer.play();
         } catch (error) {
-            console.log("PAUSE ERROR", error);
+            console.log(
+                'PLAY SONG ERROR:',
+                error,
+            );
         }
     };
 
-    const resumeAudio = async () => {
+    /**
+     * Play / Pause
+     */
+    const handlePlayPause = () => {
         try {
-            await Sound.resumePlayer();
+            if (buffering) {
+                return;
+            }
 
-            setIsPlaying(true);
-            setIsPaused(false);
+            if (playing) {
+                TrackPlayer.pause();
+            } else {
+                TrackPlayer.play();
+            }
         } catch (error) {
-            console.log(error);
+            console.log(
+                'PLAY PAUSE ERROR:',
+                error,
+            );
         }
     };
+
+    /**
+     * Previous
+     *
+     * IMPORTANT:
+     * Do NOT reset the player.
+     */
+    const handlePrevious = () => {
+        try {
+            const index =
+                TrackPlayer.getActiveMediaItemIndex();
+
+            const queue =
+                TrackPlayer.getQueue();
+
+            if (
+                index !== null &&
+                index > 0 &&
+                queue.length > 1
+            ) {
+                TrackPlayer.skipToPrevious();
+                return;
+            }
+
+            /**
+             * Fallback to your existing app logic
+             * if TrackPlayer has no previous item.
+             */
+            onPrevious?.();
+        } catch (error) {
+            console.log(
+                'PREVIOUS SONG ERROR:',
+                error,
+            );
+        }
+    };
+
+    /**
+     * Next
+     *
+     * IMPORTANT:
+     * Do NOT reset the player.
+     */
+    const handleNext = () => {
+        try {
+            const index =
+                TrackPlayer.getActiveMediaItemIndex();
+
+            const queue =
+                TrackPlayer.getQueue();
+
+            if (
+                index !== null &&
+                index < queue.length - 1 &&
+                queue.length > 1
+            ) {
+                TrackPlayer.skipToNext();
+                return;
+            }
+
+            /**
+             * Fallback to your existing app logic
+             * if TrackPlayer has no next item.
+             */
+            onNext?.();
+        } catch (error) {
+            console.log(
+                'NEXT SONG ERROR:',
+                error,
+            );
+        }
+    };
+
     if (!playsong?.id) {
         return null;
     }
 
-
     return (
         <View style={styles.container}>
 
-
             {/* Album Image */}
             <Image
-                source={GlobalImage(playsong?.cover_image_url) || Images.singericon}
+                source={
+                    GlobalImage(
+                        playsong.cover_image_url,
+                    ) || Images.singericon
+                }
                 style={styles.image}
             />
 
-
-
-            {/* Song Info */}
+            {/* Song Information */}
             <View style={styles.info}>
-
                 <AppText
                     numberOfLines={1}
                     style={styles.title}
                 >
-                    {playsong?.title || 'Mohammed Wardi'}
+                    {playsong.title ||
+                        'Unknown Song'}
                 </AppText>
-
 
                 <AppText
                     numberOfLines={1}
                     style={styles.artist}
                 >
-                    {playsong?.artist || 'Sudan. 12.5K songs . 1.2 M listener'}
+                    {playsong.artist ||
+                        'Unknown Artist'}
                 </AppText>
-
-
             </View>
 
-            <AppImage
-                source={Images.like}
-                height={16}
-                width={16}
-
-            />
-
-
-            {/* Previous Button */}
-            <TouchableOpacity style={styles.playButton} onPress={() => {
-                if (isPlaying) {
-                    pauseAudio();
-                } else if (isPaused) {
-                    resumeAudio();
-                } else {
-                    pauseAudio()
-                    // playAudio();
-                }
-            }}>
-
-                {loadings ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                    <>
-                        {
-                            isPaused ?
-                                <AppImage
-                                    source={Images.playicon}
-                                    width={10}
-                                    height={10}
-                                    tintColor={color.darkthemetext}
-                                />
-                                :
-                                <View style={styles.pauseContainer}>
-                                    <View style={[styles.pauseLine, { backgroundColor: color.darkthemetext }]} />
-                                    <View style={[styles.pauseLine, { backgroundColor: color.darkthemetext }]} />
-                                </View>
-                        }
-
-                    </>)}
-
-
+            {/* Like */}
+            <TouchableOpacity
+                style={styles.smallButton}
+                activeOpacity={0.7}
+            >
+                <AppImage
+                    source={Images.like}
+                    height={16}
+                    width={16}
+                />
             </TouchableOpacity>
 
+            {/* Previous */}
+            <TouchableOpacity
+                style={styles.controlButton}
+                onPress={handlePrevious}
+                activeOpacity={0.7}
+            >
+                <AppText
+                    style={styles.previousIcon}
+                >
+                    ‹
+                </AppText>
+            </TouchableOpacity>
 
+            {/* Play / Pause */}
+            <TouchableOpacity
+                style={styles.playButton}
+                onPress={handlePlayPause}
+                activeOpacity={0.8}
+            >
+                {buffering ? (
+                    <ActivityIndicator
+                        size="small"
+                        color={
+                            color.darkthemetext
+                        }
+                    />
+                ) : playing ? (
+                    <View
+                        style={
+                            styles.pauseContainer
+                        }
+                    >
+                        <View
+                            style={[
+                                styles.pauseLine,
+                                {
+                                    backgroundColor:
+                                        color.darkthemetext,
+                                },
+                            ]}
+                        />
+
+                        <View
+                            style={[
+                                styles.pauseLine,
+                                {
+                                    backgroundColor:
+                                        color.darkthemetext,
+                                },
+                            ]}
+                        />
+                    </View>
+                ) : (
+                    <View
+                        style={
+                            styles.playTriangle
+                        }
+                    />
+                )}
+            </TouchableOpacity>
+
+            {/* Next */}
+            <TouchableOpacity
+                style={styles.controlButton}
+                onPress={handleNext}
+                activeOpacity={0.7}
+            >
+                <AppText
+                    style={styles.nextIcon}
+                >
+                    ›
+                </AppText>
+            </TouchableOpacity>
         </View>
     );
 };
 
-
 export default MiniPlayer;
 
-
-
 const styles = StyleSheet.create({
-
     container: {
         position: 'absolute',
         bottom: 78,
         left: 8,
         right: 8,
-
-        height: 47,
-
+        height: 52,
         flexDirection: 'row',
         alignItems: 'center',
-
         backgroundColor: '#111111',
-
         borderRadius: 12,
-
-        paddingHorizontal: 12,
+        paddingHorizontal: 10,
 
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
-            height: 5,
+            height: 2,
         },
         shadowOpacity: 0.25,
-        shadowRadius: 10,
-        elevation: 8,
+        shadowRadius: 3.84,
+
+        elevation: 5,
     },
-
-
 
     image: {
-        width: 34,
-        height: 34,
-        borderRadius: 22,
-        borderWidth: 2,
-        borderColor: ""
+        width: 36,
+        height: 36,
+        borderRadius: 6,
     },
-
-
 
     info: {
         flex: 1,
-        marginHorizontal: 12,
+        marginLeft: 10,
+        justifyContent: 'center',
     },
-
-
 
     title: {
-        color: '#FFFFFF',
-        fontSize: 10,
-        fontWeight: '700',
-        fontFamily: Inter.medium
+        color: '#ffffff',
+        fontSize: 13,
+        fontWeight: '600',
     },
-
-
 
     artist: {
-        color: '#6B7280',
-        fontSize: 8,
-        marginTop: 2,
+        color: '#aaaaaa',
+        fontSize: 11,
+        marginTop: 1,
     },
 
-
-
-    iconButton: {
-        width: 32,
-        height: 32,
-        alignItems: 'center',
-        justifyContent: 'center',
+    smallButton: {
+        padding: 6,
+        marginRight: 4,
     },
 
-
-
-    icon: {
-        fontSize: 16,
-        color: '#FFFFFF',
+    controlButton: {
+        padding: 8,
     },
 
+    previousIcon: {
+        color: '#ffffff',
+        fontSize: 24,
+        fontWeight: '300',
+    },
 
+    nextIcon: {
+        color: '#ffffff',
+        fontSize: 24,
+        fontWeight: '300',
+    },
 
     playButton: {
-        width: 34,
-        height: 34,
-        borderRadius: 22,
-
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: 'transparent',
         alignItems: 'center',
         justifyContent: 'center',
-        borderWidth: 1,
-        borderColor: '#F84E07',
-
-        //    backgroundColor: '#FFFFFF',
-
-        marginHorizontal: 5,
-    },
-
-
-
-    playIcon: {
-        fontSize: 18,
-        color: '#FFFFFF',
-        marginLeft: 2,
+        marginHorizontal: 4,
     },
 
     pauseContainer: {
         flexDirection: 'row',
-        gap: 4,
+        justifyContent: 'space-between',
+        width: 10,
+        height: 12,
     },
+
     pauseLine: {
         width: 3,
-        height: 14,
-        backgroundColor: '#FFF',
-        borderRadius: 10,
+        height: 12,
+        borderRadius: 1,
+    },
+
+    playTriangle: {
+        width: 0,
+        height: 0,
+        backgroundColor: 'transparent',
+        borderStyle: 'solid',
+        borderLeftWidth: 12,
+        borderTopWidth: 7,
+        borderBottomWidth: 7,
+        borderLeftColor: '#ffffff',
+        borderTopColor: 'transparent',
+        borderBottomColor: 'transparent',
+        marginLeft: 3,
     },
 });

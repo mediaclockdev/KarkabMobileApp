@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, Image, ImageBackground, TextInput, ScrollView, Alert } from "react-native"
+import { StyleSheet, Text, View, TouchableOpacity, Image, ImageBackground, TextInput, ScrollView, Alert, ActivityIndicator } from "react-native"
 import Header from "../share/components/Header";
 import color, { useAppColors } from "../share/constants/color";
 import AppText from "../share/components/AppText";
@@ -52,6 +52,7 @@ const Library = () => {
   const [currentPosition, setCurrentPosition] = useState(0);
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [loader, setLoader] = useState(false)
   const ferture = [
     {
       image: Images.music,
@@ -117,7 +118,7 @@ const Library = () => {
     console.log("songlist api called")
     try {
       setIsLoading(true)
-      // dispatch(loaderstate(true));
+      setLoader(true)
 
       const response = await ApiService.get(apiUrls.getsonglist);
 
@@ -134,7 +135,7 @@ const Library = () => {
       console.log('songlist ERROR:', error);
     } finally {
       setIsLoading(false)
-      // dispatch(loaderstate(false));
+      setLoader(false)
     }
   };
 
@@ -402,6 +403,7 @@ const Library = () => {
       {/* <Text>Library Screen</Text> */}
       <Header
         rightIcon={Images.bell}
+        onRightPress={() => { (navigation as any).navigate('NotificationScreen') }}
         rightView={
 
           <LinearGradient
@@ -456,601 +458,609 @@ const Library = () => {
 
         }
       />
-      <View style={[styles.toptitle, { backgroundColor: color.darkbackround, borderColor: '#302E2E' }]}>
-        {['Songs', 'Playlists', 'Favorites', 'Recently Played'].map(
-          (item, index) => {
-            return (
-              <TouchableOpacity
-                style={styles.tabItem}
-                onPress={() => { handlepages(item) }}>
-                <AppText
-                  key={index}
-                  color={color.darkthemetext}
-                  fontSize={12}
-                  fontWeight="500"
-                  fontFamily={Inter.medium}
+      {
+        loader ?
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#EFCB61" />
+          </View> :
+          <>
+
+            <View style={[styles.toptitle, { backgroundColor: color.darkbackround, borderColor: '#302E2E' }]}>
+              {['Songs', 'Playlists', 'Favorites', 'Recently Played'].map(
+                (item, index) => {
+                  return (
+                    <TouchableOpacity
+                      style={styles.tabItem}
+                      onPress={() => { handlepages(item) }}>
+                      <AppText
+                        key={index}
+                        color={color.darkthemetext}
+                        fontSize={12}
+                        fontWeight="500"
+                        fontFamily={Inter.medium}
+                      >
+                        {item}
+                      </AppText>
+                      {selectedTab === item && (
+                        <View style={styles.bottomLine} />
+                      )}
+                    </TouchableOpacity>
+
+                  )
+                },
+              )}
+            </View>
+
+
+            <View style={styles.filterview}>
+
+
+              <LinearGradient
+                colors={['#8E6B3E', '#292727']}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={{
+                  borderRadius: 25,
+
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() => {
+                    songlist()
+                    setVisible(true)
+                  }}
+                  style={[
+                    styles.filter,
+                    {
+                      backgroundColor: color.darkbackround,
+                      borderWidth: 0,
+                      gap: 13,
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      alignSelf: 'center',
+                      margin: 1
+                    },
+                  ]}
                 >
-                  {item}
-                </AppText>
-                {selectedTab === item && (
-                  <View style={styles.bottomLine} />
-                )}
-              </TouchableOpacity>
+                  <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center', }}>
+                    <AppImage
+                      source={Images.music}
+                      tintColor={"#ADA03E"}
+                      height={10}
+                      width={10}
+                    />
+                    <AppText
+                      color={color.darkthemetext}
+                      fontSize={8}
+                      fontWeight="500"
+                      fontFamily={Inter.medium}
+                    >
+                      All Genres
+                    </AppText>
+                  </View>
 
-            )
-          },
-        )}
-      </View>
-
-
-      <View style={styles.filterview}>
-
-
-        <LinearGradient
-          colors={['#8E6B3E', '#292727']}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={{
-            borderRadius: 25,
-
-          }}
-        >
-          <TouchableOpacity
-            onPress={() => {
-              songlist()
-              setVisible(true)
-            }}
-            style={[
-              styles.filter,
-              {
-                backgroundColor: color.darkbackround,
-                borderWidth: 0,
-                gap: 13,
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                alignSelf: 'center',
-                margin: 1
-              },
-            ]}
-          >
-            <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center', }}>
-              <AppImage
-                source={Images.music}
-                tintColor={"#ADA03E"}
-                height={10}
-                width={10}
-              />
-              <AppText
-                color={color.darkthemetext}
-                fontSize={8}
-                fontWeight="500"
-                fontFamily={Inter.medium}
-              >
-                All Genres
-              </AppText>
-            </View>
-
-
-            <AppImage
-              source={Logo.downarrow}
-              width={7}
-              height={4}
-              resizeMode="contain"
-              style={{ marginTop: 2 }}
-              tintColor={color.darkthemetext}
-            />
-          </TouchableOpacity>
-        </LinearGradient>
-
-        <LinearGradient
-          colors={['#8E6B3E', '#292727']}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={{
-            borderRadius: 25,
-
-          }}
-        >
-          <TouchableOpacity
-            style={[
-              styles.filter,
-              {
-                backgroundColor: color.darkbackround,
-                borderWidth: 0,
-                gap: 13,
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                margin: 1
-              },
-            ]}
-          >
-            <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center', }}>
-              <AppImage
-                source={Logo.glob}
-
-                height={10}
-                width={10}
-              />
-              <AppText
-                color={color.darkthemetext}
-                fontSize={8}
-                fontWeight="500"
-                fontFamily={Inter.medium}
-              >
-                Sudanese Arabic
-              </AppText>
-            </View>
-
-
-            <AppImage
-              source={Logo.downarrow}
-              width={7}
-              height={4}
-              resizeMode="contain"
-              style={{ marginTop: 2 }}
-              tintColor={color.darkthemetext}
-            />
-          </TouchableOpacity>
-        </LinearGradient>
-
-        <LinearGradient
-          colors={['#8E6B3E', '#292727']}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={{
-            borderRadius: 25,
-
-          }}
-        >
-          <TouchableOpacity
-            onPress={() =>
-              setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))
-            }
-            style={[
-              styles.filter,
-              {
-                backgroundColor: color.darkbackround,
-                borderWidth: 0,
-                gap: 13,
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                margin: 1
-              },
-            ]}
-          >
-            <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center', }}>
-              <AppImage
-                source={Logo.sort}
-
-                height={10}
-                width={10}
-              />
-              <AppText
-                color={color.darkthemetext}
-                fontSize={8}
-                fontWeight="500"
-                fontFamily={Inter.medium}
-              >
-                Sort
-              </AppText>
-            </View>
-
-
-
-          </TouchableOpacity>
-        </LinearGradient>
-
-        <LinearGradient
-          colors={['#8E6B3E', '#292727']}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={{
-            borderRadius: 25,
-
-          }}
-        >
-          <TouchableOpacity
-            style={[
-              styles.filter,
-              {
-                backgroundColor: color.darkbackround,
-                borderWidth: 0,
-                gap: 13,
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                margin: 1
-              },
-            ]}
-          >
-            <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center', }}>
-              <AppImage
-                source={Logo.lfilter}
-
-                height={10}
-                width={10}
-              />
-              <AppText
-                color={color.darkthemetext}
-                fontSize={8}
-                fontWeight="500"
-                fontFamily={Inter.medium}
-              >
-                Filter
-              </AppText>
-            </View>
-
-
-
-          </TouchableOpacity>
-        </LinearGradient>
-      </View>
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        style={{
-          flex: 1,
-
-        }}
-        contentContainerStyle={{
-          // paddingHorizontal: 16,
-          paddingTop: 16,
-          // paddingBottom: 30,
-          gap: 20,
-        }}
-      >
-
-
-
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          {
-            ferture.map((item, index) => ((
-              <View style={{
-                borderColor: '#9D3F00',
-                borderWidth: 1,
-                justifyContent: 'center',
-                alignItems: 'center',
-                width: '23.6%',
-                flexDirection: 'row',
-                gap: 6,
-                paddingHorizontal: 10,
-                paddingVertical: 10,
-                borderRadius: 8
-              }}>
-                <View style={{
-                  borderWidth: 1,
-                  borderColor: item.bordercolor,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  padding: 6,
-                  borderRadius: 50
-                }}>
 
                   <AppImage
-                    source={item.image}
-                    height={20}
-                    width={20}
-                  />
-                </View>
-
-                <View>
-                  <AppText fontSize={7} fontFamily={Inter.regular} color={color.darkthemetext}>
-                    {item.title}
-                  </AppText>
-                  <AppText fontSize={16} fontFamily={Inter.regular} color={color.darkthemetext}>
-                    {item.number}
-                  </AppText>
-                </View>
-
-              </View>
-            )))
-          }
-
-        </View>
-
-
-        {
-          visible ?
-            <>
-              <View style={[styles.titles, { width: '100%' }]}>
-                <View style={{ flexDirection: 'row', gap: 5, justifyContent: "center", alignItems: 'center' }}>
-                  <AppText color={'#FB6B01'} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
-                    Continue Singing
-                  </AppText>
-                  <AppImage
-                    source={Banner.brightstar}
-
-                    height={12}
-                    width={12}
-                  />
-                </View>
-
-                <TouchableOpacity style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
-                  <AppText color={color.darkthemetext} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
-                    View all
-                  </AppText>
-                  <AppImage
-                    source={Images.arrow}
-                    width={5}
-                    height={8}
+                    source={Logo.downarrow}
+                    width={7}
+                    height={4}
+                    resizeMode="contain"
+                    style={{ marginTop: 2 }}
                     tintColor={color.darkthemetext}
                   />
                 </TouchableOpacity>
+              </LinearGradient>
 
+              <LinearGradient
+                colors={['#8E6B3E', '#292727']}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={{
+                  borderRadius: 25,
+
+                }}
+              >
+                <TouchableOpacity
+                  style={[
+                    styles.filter,
+                    {
+                      backgroundColor: color.darkbackround,
+                      borderWidth: 0,
+                      gap: 13,
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      margin: 1
+                    },
+                  ]}
+                >
+                  <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center', }}>
+                    <AppImage
+                      source={Logo.glob}
+
+                      height={10}
+                      width={10}
+                    />
+                    <AppText
+                      color={color.darkthemetext}
+                      fontSize={8}
+                      fontWeight="500"
+                      fontFamily={Inter.medium}
+                    >
+                      Sudanese Arabic
+                    </AppText>
+                  </View>
+
+
+                  <AppImage
+                    source={Logo.downarrow}
+                    width={7}
+                    height={4}
+                    resizeMode="contain"
+                    style={{ marginTop: 2 }}
+                    tintColor={color.darkthemetext}
+                  />
+                </TouchableOpacity>
+              </LinearGradient>
+
+              <LinearGradient
+                colors={['#8E6B3E', '#292727']}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={{
+                  borderRadius: 25,
+
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() =>
+                    setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))
+                  }
+                  style={[
+                    styles.filter,
+                    {
+                      backgroundColor: color.darkbackround,
+                      borderWidth: 0,
+                      gap: 13,
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      margin: 1
+                    },
+                  ]}
+                >
+                  <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center', }}>
+                    <AppImage
+                      source={Logo.sort}
+
+                      height={10}
+                      width={10}
+                    />
+                    <AppText
+                      color={color.darkthemetext}
+                      fontSize={8}
+                      fontWeight="500"
+                      fontFamily={Inter.medium}
+                    >
+                      Sort
+                    </AppText>
+                  </View>
+
+
+
+                </TouchableOpacity>
+              </LinearGradient>
+
+              <LinearGradient
+                colors={['#8E6B3E', '#292727']}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={{
+                  borderRadius: 25,
+
+                }}
+              >
+                <TouchableOpacity
+                  style={[
+                    styles.filter,
+                    {
+                      backgroundColor: color.darkbackround,
+                      borderWidth: 0,
+                      gap: 13,
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      margin: 1
+                    },
+                  ]}
+                >
+                  <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center', }}>
+                    <AppImage
+                      source={Logo.lfilter}
+
+                      height={10}
+                      width={10}
+                    />
+                    <AppText
+                      color={color.darkthemetext}
+                      fontSize={8}
+                      fontWeight="500"
+                      fontFamily={Inter.medium}
+                    >
+                      Filter
+                    </AppText>
+                  </View>
+
+
+
+                </TouchableOpacity>
+              </LinearGradient>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{
+                flex: 1,
+
+              }}
+              contentContainerStyle={{
+                // paddingHorizontal: 16,
+                paddingTop: 16,
+                // paddingBottom: 30,
+                gap: 20,
+              }}
+            >
+
+
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                {
+                  ferture.map((item, index) => ((
+                    <View style={{
+                      borderColor: '#9D3F00',
+                      borderWidth: 1,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      width: '23.6%',
+                      flexDirection: 'row',
+                      gap: 6,
+                      paddingHorizontal: 10,
+                      paddingVertical: 10,
+                      borderRadius: 8
+                    }}>
+                      <View style={{
+                        borderWidth: 1,
+                        borderColor: item.bordercolor,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        padding: 6,
+                        borderRadius: 50
+                      }}>
+
+                        <AppImage
+                          source={item.image}
+                          height={20}
+                          width={20}
+                        />
+                      </View>
+
+                      <View>
+                        <AppText fontSize={7} fontFamily={Inter.regular} color={color.darkthemetext}>
+                          {item.title}
+                        </AppText>
+                        <AppText fontSize={16} fontFamily={Inter.regular} color={color.darkthemetext}>
+                          {item.number}
+                        </AppText>
+                      </View>
+
+                    </View>
+                  )))
+                }
 
               </View>
-              {singing?.length ? (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {singing?.slice(0, 4)?.map((item, index) => (
+
+
+              {
+                visible ?
+                  <>
+                    <View style={[styles.titles, { width: '100%' }]}>
+                      <View style={{ flexDirection: 'row', gap: 5, justifyContent: "center", alignItems: 'center' }}>
+                        <AppText color={'#FB6B01'} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
+                          Continue Singing
+                        </AppText>
+                        <AppImage
+                          source={Banner.brightstar}
+
+                          height={12}
+                          width={12}
+                        />
+                      </View>
+
+                      <TouchableOpacity style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                        <AppText color={color.darkthemetext} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
+                          View all
+                        </AppText>
+                        <AppImage
+                          source={Images.arrow}
+                          width={5}
+                          height={8}
+                          tintColor={color.darkthemetext}
+                        />
+                      </TouchableOpacity>
+
+
+                    </View>
+                    {singing?.length ? (
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                        {singing?.slice(0, 4)?.map((item, index) => (
+                          <View
+                            key={index}
+                            style={{
+                              borderWidth: 1,
+                              borderColor: 'brown',
+                              borderRadius: 8,
+                              width: '23%',
+                              height: 116,
+                              overflow: 'hidden',
+                            }}
+                          >
+                            <ImageBackground
+                              source={Images.singericon}
+                              resizeMode="cover"
+                              style={{
+                                flex: 1,
+                                padding: 8,
+                                justifyContent: 'space-between',
+                              }}
+                            >
+                              {/* Play Button */}
+                              <TouchableOpacity
+                                // onPress={() => {
+                                //   playingId === item.id
+                                //     ? stopRecording()
+                                //     : playRecording(item)
+                                // }}
+                                // onPress={() => {
+                                //   playingId === item.id
+                                //     ? pauseAudio()
+                                //     : resumeAudio(item)
+                                // }}
+                                style={{
+                                  height: 27,
+                                  width: 27,
+                                  borderRadius: 20,
+                                  borderWidth: 1,
+                                  borderColor: '#40413E',
+                                  backgroundColor: '#050808',
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                  alignSelf: 'flex-end'
+                                }}
+                              >
+                                {
+                                  playingId == item.id ?
+                                    <AppImage
+                                      source={Images.playicon}
+                                      height={10}
+                                      width={10}
+                                    />
+                                    :
+
+                                    <View style={styles.pauseContainer}>
+                                      <View style={styles.pauseLine} />
+                                      <View style={styles.pauseLine} />
+                                    </View>
+                                }
+                              </TouchableOpacity>
+
+                              {/* Bottom Content */}
+                              <View>
+                                <AppText
+                                  fontSize={11}
+                                  fontFamily={Inter.regular}
+                                  color="#FFFFFF"
+                                  numberOfLines={1}
+                                >
+                                  {item.title}
+                                </AppText>
+
+                                <AppText
+                                  fontSize={10}
+                                  fontFamily={Inter.regular}
+                                  color="#C0C2C1"
+                                  numberOfLines={1}
+                                >
+                                  {item.status}
+                                </AppText>
+
+                                {/* Progress Bar at Bottom-most */}
+                                <View
+                                  style={{
+                                    height: 4,
+                                    backgroundColor: 'rgba(255,255,255,0.3)',
+                                    borderRadius: 4,
+                                    marginTop: 6,
+                                  }}
+                                >
+                                  <View
+                                    style={{
+
+                                      width: `${progressMap[item.id] || 0}%`,
+
+                                      height: '100%',
+                                      backgroundColor: '#F3870C',
+                                      borderRadius: 4,
+                                    }}
+                                  />
+                                </View>
+                              </View>
+                            </ImageBackground>
+                          </View>
+                        ))}
+                      </View>
+
+
+                    ) : (
+                      <AppText fontFamily={Inter.regular} fontSize={12} color="#C0C2C1">
+                        [ No Data Found ]
+                      </AppText>
+                    )}
+
+
+
+
                     <View
-                      key={index}
                       style={{
                         borderWidth: 1,
                         borderColor: 'brown',
-                        borderRadius: 8,
-                        width: '23%',
-                        height: 116,
+                        height: 133,
+                        borderRadius: 10,
                         overflow: 'hidden',
                       }}
                     >
                       <ImageBackground
-                        source={Images.singericon}
+                        source={Banner.addbanner}
                         resizeMode="cover"
                         style={{
                           flex: 1,
-                          padding: 8,
-                          justifyContent: 'space-between',
+                          width: '100%',
+
                         }}
                       >
-                        {/* Play Button */}
-                        <TouchableOpacity
-                          // onPress={() => {
-                          //   playingId === item.id
-                          //     ? stopRecording()
-                          //     : playRecording(item)
-                          // }}
-                          // onPress={() => {
-                          //   playingId === item.id
-                          //     ? pauseAudio()
-                          //     : resumeAudio(item)
-                          // }}
-                          style={{
-                            height: 27,
-                            width: 27,
-                            borderRadius: 20,
-                            borderWidth: 1,
-                            borderColor: '#40413E',
-                            backgroundColor: '#050808',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            alignSelf: 'flex-end'
-                          }}
-                        >
-                          {
-                            playingId == item.id ?
-                              <AppImage
-                                source={Images.playicon}
-                                height={10}
-                                width={10}
-                              />
-                              :
 
-                              <View style={styles.pauseContainer}>
-                                <View style={styles.pauseLine} />
-                                <View style={styles.pauseLine} />
-                              </View>
-                          }
-                        </TouchableOpacity>
+                        <View style={{ paddingVertical: 10, marginHorizontal: 35 }}>
 
-                        {/* Bottom Content */}
-                        <View>
-                          <AppText
-                            fontSize={11}
-                            fontFamily={Inter.regular}
-                            color="#FFFFFF"
-                            numberOfLines={1}
-                          >
-                            {item.title}
+
+                          <AppText color="#fff" fontSize={16} fontFamily={Inter.bold}>
+                            Featured Sudanese
+                          </AppText>
+                          <AppText color="#F29803" fontSize={16} fontFamily={Inter.bold}>
+                            Karaoke
+                          </AppText>
+                          <AppText color="#FFFFFF" fontSize={10} fontFamily={Inter.bold}>
+                            Made for your next gathering
                           </AppText>
 
-                          <AppText
-                            fontSize={10}
-                            fontFamily={Inter.regular}
-                            color="#C0C2C1"
-                            numberOfLines={1}
-                          >
-                            {item.status}
-                          </AppText>
+                          <TouchableOpacity
+                            style={{ height: 29, width: 105, }}
 
-                          {/* Progress Bar at Bottom-most */}
-                          <View
-                            style={{
-                              height: 4,
-                              backgroundColor: 'rgba(255,255,255,0.3)',
-                              borderRadius: 4,
-                              marginTop: 6,
-                            }}
-                          >
-                            <View
+                            onPress={() => {
+                              navigation.navigate('Recording');
+                            }}>
+                            <LinearGradient
+                              colors={['#F36902', '#E04A0F', '#BD1221']}
+                              start={{ x: 0.2, y: 0 }}
+                              end={{ x: 1, y: 1 }}
                               style={{
+                                width: 105,
+                                height: 29,
+                                borderRadius: 10,
+                                // padding: 2,
+                                overflow: 'hidden',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                borderWidth: 1,
+                                borderColor: '#D86F0C',
 
-                                width: `${progressMap[item.id] || 0}%`,
+                                //paddingHorizontal: 8,
+                                marginTop: 8
 
-                                height: '100%',
-                                backgroundColor: '#F3870C',
-                                borderRadius: 4,
+
                               }}
-                            />
-                          </View>
+                            >
+                              <View style={{ paddingHorizontal: 8, justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center', width: 105, }}>
+                                <AppImage
+                                  source={Images.hmic}
+                                  height={14.58}
+                                  width={14.58}
+                                />
+
+                                <AppText color="#FFFFFF" fontSize={11} fontFamily={Inter.bold}>
+                                  Sing Now
+                                </AppText>
+                                <AppImage
+                                  source={Images.arrow}
+                                  height={8}
+                                  width={9}
+                                  tintColor={"#FFFFFF"}
+                                />
+                              </View>
+
+                            </LinearGradient>
+                          </TouchableOpacity>
+
                         </View>
                       </ImageBackground>
                     </View>
-                  ))}
-                </View>
-
-
-              ) : (
-                <AppText fontFamily={Inter.regular} fontSize={12} color="#C0C2C1">
-                  [ No Data Found ]
-                </AppText>
-              )}
 
 
 
 
-              <View
-                style={{
-                  borderWidth: 1,
-                  borderColor: 'brown',
-                  height: 133,
-                  borderRadius: 10,
-                  overflow: 'hidden',
-                }}
-              >
-                <ImageBackground
-                  source={Banner.addbanner}
-                  resizeMode="cover"
-                  style={{
-                    flex: 1,
-                    width: '100%',
-
-                  }}
-                >
-
-                  <View style={{ paddingVertical: 10, marginHorizontal: 35 }}>
 
 
-                    <AppText color="#fff" fontSize={16} fontFamily={Inter.bold}>
-                      Featured Sudanese
-                    </AppText>
-                    <AppText color="#F29803" fontSize={16} fontFamily={Inter.bold}>
-                      Karaoke
-                    </AppText>
-                    <AppText color="#FFFFFF" fontSize={10} fontFamily={Inter.bold}>
-                      Made for your next gathering
-                    </AppText>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <View style={{ flexDirection: 'row' }}>
+                        <AppText color="#F46E00" fontSize={12} fontFamily={Inter.regular}>
+                          {"All Songs"}
+                        </AppText>
+                        <AppText color="#CDCECB" fontSize={12} fontFamily={Inter.regular}>
+                          {" (" + numberofsong + ")"}
+                        </AppText>
+                      </View>
 
-                    <TouchableOpacity
-                      style={{ height: 29, width: 105, }}
-
-                      onPress={() => {
-                        navigation.navigate('Recording');
-                      }}>
-                      <LinearGradient
-                        colors={['#F36902', '#E04A0F', '#BD1221']}
-                        start={{ x: 0.2, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={{
-                          width: 105,
-                          height: 29,
-                          borderRadius: 10,
-                          // padding: 2,
-                          overflow: 'hidden',
-                          justifyContent: 'center',
-                          alignItems: 'center',
+                      <View style={{ flexDirection: 'row', gap: 10, }}>
+                        <View style={{
+                          flexDirection: 'row',
                           borderWidth: 1,
-                          borderColor: '#D86F0C',
+                          borderColor: '#242424',
+                          alignItems: 'center',
+                          borderRadius: 12,
+                          width: 204,
+                          gap: 5,
+                          paddingHorizontal: 10,
 
-                          //paddingHorizontal: 8,
-                          marginTop: 8
-
-
-                        }}
-                      >
-                        <View style={{ paddingHorizontal: 8, justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center', width: 105, }}>
+                        }}>
                           <AppImage
-                            source={Images.hmic}
-                            height={14.58}
-                            width={14.58}
+                            source={BottomIcons.search}
+                            height={14}
+                            width={14}
+                            tintColor={"#CDCECB"}
+                          />
+                          <TextInput
+                            value={searchText}
+                            onChangeText={setSearchText}
+                            placeholder="Search songs, artists..."
+                            placeholderTextColor={"#CDCECB"}
+                            style={{ fontSize: 10, color: '#FFFF', flex: 1 }}
                           />
 
-                          <AppText color="#FFFFFF" fontSize={11} fontFamily={Inter.bold}>
-                            Sing Now
-                          </AppText>
-                          <AppImage
-                            source={Images.arrow}
-                            height={8}
-                            width={9}
-                            tintColor={"#FFFFFF"}
-                          />
                         </View>
 
-                      </LinearGradient>
-                    </TouchableOpacity>
-
-                  </View>
-                </ImageBackground>
-              </View>
-
-
-
-
+                        <TouchableOpacity style={{ padding: 10, borderWidth: 1, borderColor: '#303030', borderRadius: 12 }}>
+                          <AppImage
+                            source={Logo.gfilter}
+                            height={12}
+                            width={25}
+                          />
+                        </TouchableOpacity>
+                      </View>
 
 
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <View style={{ flexDirection: 'row' }}>
-                  <AppText color="#F46E00" fontSize={12} fontFamily={Inter.regular}>
-                    {"All Songs"}
-                  </AppText>
-                  <AppText color="#CDCECB" fontSize={12} fontFamily={Inter.regular}>
-                    {" (" + numberofsong + ")"}
-                  </AppText>
-                </View>
+                    </View>
+                  </>
+                  : null
+              }
 
-                <View style={{ flexDirection: 'row', gap: 10, }}>
-                  <View style={{
-                    flexDirection: 'row',
-                    borderWidth: 1,
-                    borderColor: '#242424',
-                    alignItems: 'center',
-                    borderRadius: 12,
-                    width: 204,
-                    gap: 5,
-                    paddingHorizontal: 10,
+              <Librarylist
+                onLikePress={() => {
+                  songlist()
+                }}
+                onDislikePress={() => {
+                  songlist()
+                }}
+                musicData={filteredSongs}
+                loading={isLoading} />
+              <View style={{ height: 100 }} />
 
-                  }}>
-                    <AppImage
-                      source={BottomIcons.search}
-                      height={14}
-                      width={14}
-                      tintColor={"#CDCECB"}
-                    />
-                    <TextInput
-                      value={searchText}
-                      onChangeText={setSearchText}
-                      placeholder="Search songs, artists..."
-                      placeholderTextColor={"#CDCECB"}
-                      style={{ fontSize: 10, color: '#FFFF', flex: 1 }}
-                    />
-
-                  </View>
-
-                  <TouchableOpacity style={{ padding: 10, borderWidth: 1, borderColor: '#303030', borderRadius: 12 }}>
-                    <AppImage
-                      source={Logo.gfilter}
-                      height={12}
-                      width={25}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-
-              </View>
-            </>
-            : null
-        }
-
-        <Librarylist
-          onLikePress={() => {
-            songlist()
-          }}
-          onDislikePress={() => {
-            songlist()
-          }}
-          musicData={filteredSongs}
-          loading={isLoading} />
-        <View style={{ height: 100 }} />
-
-      </ScrollView>
+            </ScrollView>
+          </>}
       {/* {
         playsong?.id == null ?
           null :

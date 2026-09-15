@@ -1,118 +1,108 @@
-import React from 'react'
+import React from 'react';
 import {
-  View,
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  Pressable,
-} from 'react-native'
+  View,
+} from 'react-native';
 
-import AppImage from './AppImage'
-import color, { useAppColors } from '../constants/color'
-import { BottomIcons, Images } from '../constants/media'
-import { Inter } from '../constants/fonts'
-import AppText from './AppText'
+import AppImage from './AppImage';
+import { useAppColors } from '../constants/color';
+import { BottomIcons } from '../constants/media';
+import { Inter } from '../constants/fonts';
+import AppText from './AppText';
 
 interface SearchBarProps {
-  value?: string
-  onChangeText?: (text: string) => void
-  placeholder?: string
-  onFilterPress?: () => void
-  title?: string
-  onPress?: () => void
-  IsPressable?: boolean
+  value?: string;
+  onChangeText?: (text: string) => void;
+  placeholder?: string;
+  onFilterPress?: () => void;
+  title?: string;
+  onPress?: () => void;
+  IsPressable?: boolean;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
-  value,
+  value = '',
   onChangeText,
-  placeholder = 'Search songs,artists  or lyrics...',
-  onFilterPress,
-  title = '',
+  placeholder = 'Search songs, artists or lyrics...',
   onPress,
-  IsPressable = true
+  IsPressable = true,
 }) => {
   const color = useAppColors();
+
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={[styles.searchContainer, { backgroundColor: color.darkbackround, borderColor: color.searhbarbordercolor }]}>
+    <View
+      style={[
+        styles.searchContainer,
+        {
+          backgroundColor: color.darkbackround,
+          borderColor: color.searhbarbordercolor,
+        },
+      ]}
+    >
       <AppImage
         source={BottomIcons.search}
         width={18}
         height={18}
-        tintColor={"#EEA75E"}
+        tintColor="#EEA75E"
       />
-      {
-        IsPressable ?
 
-
-          <Pressable>
-            <AppText>Search songs,artists  or lyrics...</AppText>
-          </Pressable>
-
-
-          :
-          <TextInput
-            value={value}
-            onChangeText={onChangeText}
-            editable={false}
-            placeholder={'Search songs,artists  or lyrics...'}
-            placeholderTextColor={'#777'}
-            style={[styles.input, { color: color.darkthemetext, }]}
-
-          />
-
-
-      }
-
-      {/*  removed for now  */}
-      {/* <TouchableOpacity
-        style={styles.filterButton}
-        onPress={onFilterPress}
-      >
-        <AppImage
-          source={Images.playlist}
-          width={18}
-          height={18}
-          tintColor={title == 'search' ? '#FF3F44' : "#EEA75E"}
-          resizeMode="contain"
+      {IsPressable ? (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={onPress}
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            height: '100%',
+          }}
+        >
+          <AppText
+            color={'#777'}
+            fontSize={12}
+            fontFamily={Inter.regular}
+          >
+            {placeholder}
+          </AppText>
+        </TouchableOpacity>
+      ) : (
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor="#777"
+          style={[
+            styles.input,
+            {
+              color: color.darkthemetext,
+            },
+          ]}
         />
-      </TouchableOpacity> */}
-    </TouchableOpacity>
-  )
-}
+      )}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   searchContainer: {
     width: '100%',
     height: 55,
     borderRadius: 16,
-
     borderWidth: 0.5,
-    borderColor: '#31200E',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
     gap: 10,
-    elevation: 5
+    elevation: 5,
   },
 
   input: {
     flex: 1,
-
+    height: '100%',
     fontSize: 12,
-    fontFamily: Inter.regular
+    fontFamily: Inter.regular,
   },
+});
 
-  filterButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    // backgroundColor: '#2A2A2A',
-  },
-})
-
-export default SearchBar
+export default SearchBar;

@@ -80,7 +80,7 @@ export default function Browsemood() {
 
             const response = await ApiService.get(apiUrls.categories);
 
-            const data = response?.data;
+            const data = (response as any)?.data;
             console.log(data?.categories, 'category API RESPONSEdddd');
 
             if (data?.success) {
@@ -96,14 +96,14 @@ export default function Browsemood() {
     const filteredCategories = categories.filter((item: any) => {
         const search = searchText.trim().toLowerCase();
 
-        // Search filter
+
         const matchesSearch =
             !search ||
             item.name?.toLowerCase().includes(search) ||
             item.title?.toLowerCase().includes(search) ||
             item.description?.toLowerCase().includes(search);
 
-        // Category filter
+
         const matchesCategory =
             selected === 'All' ||
             item.name === selected ||
@@ -139,14 +139,14 @@ export default function Browsemood() {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 120 }}>
 
-                {/* HEADER */}
+
 
                 <View style={styles.header}>
 
                     <TouchableOpacity
                         onPress={() => {
 
-                            navigation.navigate('Home')
+                            (navigation as any).navigate('Home')
                         }}
                     >
 
@@ -199,7 +199,7 @@ export default function Browsemood() {
 
                 </View>
 
-                {/* SEARCH */}
+
 
                 <View style={styles.searchBox}>
                     <AppImage
@@ -227,7 +227,7 @@ export default function Browsemood() {
 
                 </View>
 
-                {/* CATEGORY */}
+
 
                 <ScrollView
                     horizontal
@@ -274,7 +274,7 @@ export default function Browsemood() {
 
                 </ScrollView>
 
-                {/* BANNER */}
+
 
 
                 <FlatList
@@ -294,7 +294,7 @@ export default function Browsemood() {
                     renderItem={({ item }) => (
                         <TouchableOpacity
                             onPress={() => {
-                                navigation.navigate('SongsListScreen', {
+                                (navigation as any).navigate('SongsListScreen', {
                                     songs: item,
                                     previousScreen: 'Browsemood',
                                 });

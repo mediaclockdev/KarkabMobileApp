@@ -144,7 +144,7 @@ const ClassicSongItem = ({ item, onPress }: Props) => {
                 </AppText>
 
                 <AppText style={styles.info}>
-                    {item.duration}
+                    {Number(item.duration || 0).toFixed(2) || '00:00'}
                 </AppText>
 
                 <View
