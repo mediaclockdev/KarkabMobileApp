@@ -77,6 +77,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
           && route.name !== 'NotificationScreen'
           && route.name !== 'CreatePlaylist'
           && route.name !== 'PlaylistDetailScreen'
+          && route.name !== 'RecordingList'
 
         )
         .map((route, index) => {

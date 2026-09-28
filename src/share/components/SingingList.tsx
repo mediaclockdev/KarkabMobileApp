@@ -7,9 +7,10 @@ import { Images } from "../constants/media";
 import { useState } from "react";
 import { Sound } from "react-native-nitro-sound";
 import { useAppSelector } from "../hooks/useAppSelector";
+import { useNavigation } from "@react-navigation/native";
 
-export default function SingingList() {
-
+export default function SingingList(populardatas: any) {
+    const navigation = useNavigation();
     const colors = useAppColors();
     const [isPaused, setIsPaused] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -163,7 +164,15 @@ export default function SingingList() {
                                             padding: 10,
                                             width: '22.4%',
                                         }}
-                                    // onPress={() => navigation.navigate("SingingDetails", { item })}
+                                        onPress={() => {
+                                            if (item.id == 2) {
+                                                (navigation as any).navigate('SongsListScreen', {
+                                                    songs: populardatas,
+                                                    previousScreen: 'Search',
+                                                });
+                                            }
+
+                                        }}
                                     >
                                         <AppImage
                                             source={item.image}

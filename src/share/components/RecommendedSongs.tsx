@@ -8,8 +8,10 @@ import {
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { Images } from '../constants/media';
+import { Images, Logo } from '../constants/media';
 import AppImage from './AppImage';
+import color from '../constants/color';
+import AppText from './AppText';
 
 interface Song {
   id: string;
@@ -113,10 +115,24 @@ const RecommendedSongs = ({
   };
   const renderEmpty = () => {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>
-          No recommended songs available
-        </Text>
+      <View style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 40,
+      }}>
+        <AppImage
+          source={Logo.ymusic}
+          width={20}
+          height={20}
+        />
+        <AppText
+          color={color.darkthemetext}
+          fontSize={14}
+          marginTop={10}
+        >
+          No songs found
+        </AppText>
       </View>
     );
   };

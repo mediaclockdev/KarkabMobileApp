@@ -307,7 +307,7 @@ const Library = () => {
 
       const response = await ApiService.get(apiUrls.getrecording)
 
-      const data = response.data
+      const data = (response as any).data
       console.log(data, "getrecording API RESPONSE")
 
       if (data?.success) {
@@ -762,7 +762,7 @@ const Library = () => {
                   <>
                     <View style={[styles.titles, { width: '100%' }]}>
                       <View style={{ flexDirection: 'row', gap: 5, justifyContent: "center", alignItems: 'center' }}>
-                        <AppText color={'#FB6B01'} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
+                        <AppText color={'#FB6B01'} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
                           Continue Singing
                         </AppText>
                         <AppImage
@@ -773,8 +773,16 @@ const Library = () => {
                         />
                       </View>
 
-                      <TouchableOpacity style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
-                        <AppText color={color.darkthemetext} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          (navigation as any).navigate('RecordingList', {
+                            recordings: recdata,
+                            previousScreen: 'Home',
+                          });
+                        }}
+
+                        style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                        <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
                           View all
                         </AppText>
                         <AppImage
@@ -787,9 +795,9 @@ const Library = () => {
 
 
                     </View>
-                    {singing?.length ? (
+                    {recdata?.length ? (
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                        {singing?.slice(0, 4)?.map((item, index) => (
+                        {recdata?.slice(0, 4)?.map((item, index) => (
                           <View
                             key={index}
                             style={{
@@ -898,9 +906,20 @@ const Library = () => {
 
 
                     ) : (
-                      <AppText fontFamily={Inter.regular} fontSize={12} color="#C0C2C1">
-                        [ No Data Found ]
-                      </AppText>
+                      <View style={styles.centerContainer}>
+                        <AppImage
+                          source={Logo.ymusic}
+                          width={20}
+                          height={20}
+                        />
+                        <AppText
+                          color={color.darkthemetext}
+                          fontSize={14}
+                          marginTop={10}
+                        >
+                          No recording found
+                        </AppText>
+                      </View>
                     )}
 
 
@@ -1440,6 +1459,12 @@ const styles = StyleSheet.create({
     height: 2,
     backgroundColor: '#F66A01',
     borderRadius: 2,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
   },
 
 })

@@ -19,6 +19,7 @@ interface AuthState {
     playsong: any | null,
     toast: ToastState
     isPaused: boolean,
+    hideMiniPlayer: boolean,
 }
 
 const initialState: AuthState = {
@@ -40,7 +41,8 @@ const initialState: AuthState = {
         message: '',
         type: 'success',
     },
-    playsong: null
+    playsong: null,
+    hideMiniPlayer: false,
 }
 
 const authSlice = createSlice({
@@ -98,6 +100,9 @@ const authSlice = createSlice({
         addsong: (state, action) => {
             state.playsong = action.payload
         },
+        setHideMiniPlayer: (state, action) => {
+            state.hideMiniPlayer = action.payload;
+        },
         showToast(state, action) {
             state.toast = {
                 visible: true,
@@ -127,6 +132,7 @@ export const {
     addsong,
     showToast,
     hideToast,
+    setHideMiniPlayer
 } = authSlice.actions
 
 export default authSlice.reducer

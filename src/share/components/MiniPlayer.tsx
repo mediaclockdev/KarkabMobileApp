@@ -1,335 +1,358 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Image,
     StyleSheet,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     View,
 } from 'react-native';
-
-import AppText from './AppText';
-import AppImage from './AppImage';
-
-import { Images } from '../constants/media';
-import { color } from '../constants/color';
-import { useAppSelector } from '../hooks/useAppSelector';
-import { GlobalImage } from '../utils/GlobalImage';
-
+import { useNavigation } from '@react-navigation/native';
 import TrackPlayer, {
     useIsPlaying,
     usePlaybackState,
     PlaybackState,
 } from '@rntp/player';
 
+import AppText from './AppText';
+import AppImage from './AppImage';
+import { Images } from '../constants/media';
+import { useAppDispatch, useAppSelector } from '../hooks/useAppSelector';
+
+import ApiService from '../../services/api';
+
+import { GlobalImage } from '../utils/GlobalImage';
+import { addsong, showToast } from '../../auth/redux/authSlice';
+import apiUrls from '../../services/apiUrls';
+
 interface MiniPlayerProps {
     onNext?: () => void;
     onPrevious?: () => void;
+    bottomOffset?: number;
 }
 
-const MiniPlayer = ({
-    onNext,
-    onPrevious,
-}: MiniPlayerProps) => {
+const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) => {
+    const navigation = useNavigation<any>();
+    const dispatch = useAppDispatch();
     const playing = useIsPlaying();
     const playbackState = usePlaybackState();
+
+    const hideMiniPlayer = useAppSelector(
+        (state: any) => state.auth.hideMiniPlayer
+    );
+    const playsong = useAppSelector((state: any) => state.auth.playsong);
 
     const buffering =
         playbackState === PlaybackState.Loading ||
         playbackState === PlaybackState.Buffering;
 
-    const playsong = useAppSelector(
-        (state: any) => state.auth.playsong,
-    );
+    // Real-time progress state
+    const [currentPosition, setCurrentPosition] = useState(0);
+    const [trackDuration, setTrackDuration] = useState(0);
+    const [switchingTrack, setSwitchingTrack] = useState(false);
+    const isAutoNextingRef = useRef(false);
 
     /**
-     * Play the song selected in Redux.
-     *
-     * IMPORTANT:
-     * Do not reset the entire queue here if you are
-     * already maintaining a playlist queue.
+     * 1. ACTIVE PROGRESS POLLING + AUTO NEXT SONG ON FINISH
      */
     useEffect(() => {
-        if (!playsong?.id || !playsong?.song_url) {
-            return;
-        }
+        if (!playsong?.id || hideMiniPlayer) return;
 
-        const activeSong =
-            TrackPlayer.getActiveMediaItem();
+        const interval = setInterval(async () => {
+            try {
+                const progress = await TrackPlayer.getProgress();
+                if (progress) {
+                    const pos = progress.position > 10000 ? progress.position / 1000 : progress.position;
+                    const dur = progress.duration > 10000 ? progress.duration / 1000 : progress.duration;
 
+                    setCurrentPosition(pos || 0);
+                    if (dur && dur > 0) {
+                        setTrackDuration(dur);
+                    }
+
+                    // Trigger Next Track when song reaches the end
+                    if (dur > 0 && pos >= dur - 0.6 && !isAutoNextingRef.current) {
+                        handleNext();
+                    }
+                }
+            } catch (e) { }
+        }, 250);
+
+        return () => clearInterval(interval);
+    }, [playsong?.id, hideMiniPlayer]);
+
+    // Handle Playback State Ended
+    useEffect(() => {
         if (
-            activeSong?.mediaId ===
-            playsong.id.toString()
+            (playbackState === PlaybackState.Ended || (playbackState as any) === 'ended') &&
+            !isAutoNextingRef.current
         ) {
-            return;
+            handleNext();
         }
+    }, [playbackState]);
 
-        playNewSong();
+    /**
+     * 2. LOAD & PLAY SONG WHEN REDUX SONG CHANGES
+     */
+    useEffect(() => {
+        if (!playsong?.id || !playsong?.song_url) return;
+
+        try {
+            const activeSong = TrackPlayer.getActiveMediaItem();
+            if (activeSong?.mediaId === playsong.id.toString()) return;
+
+            playSongItem(playsong);
+        } catch (e) {
+            playSongItem(playsong);
+        }
     }, [playsong?.id]);
 
-    const playNewSong = () => {
+    const playSongItem = async (song: any) => {
         try {
-            if (!playsong?.id || !playsong?.song_url) {
-                console.log('NO SONG DATA');
-                return;
+            if (!song?.id || !song?.song_url) return;
+
+            const dur = Number(song.duration) || 0;
+            if (dur > 0) {
+                setTrackDuration(dur > 1000 ? dur / 1000 : dur);
             }
 
             const mediaItem = {
-                mediaId: playsong.id.toString(),
-                url: playsong.song_url,
-                title:
-                    playsong.title ||
-                    'Unknown Song',
-                artist:
-                    playsong.artist ||
-                    'Unknown Artist',
-                artworkUrl:
-                    playsong.cover_image_url ||
-                    undefined,
-                duration:
-                    Number(playsong.duration) ||
-                    undefined,
+                mediaId: song.id.toString(),
+                url: song.song_url,
+                title: song.title || 'Unknown Song',
+                artist: song.artist || 'Unknown Artist',
+                artworkUrl: song.cover_image_url || undefined,
+                duration: dur || undefined,
             };
 
-            console.log(
-                'PLAYING SONG:',
-                mediaItem,
-            );
-
-            /**
-             * This creates a single-song queue.
-             *
-             * If you have a playlist, DO NOT use this.
-             * Instead, load the complete playlist into
-             * TrackPlayer.
-             */
-            TrackPlayer.setMediaItem(
-                mediaItem,
-            );
-
-            TrackPlayer.play();
+            await TrackPlayer.setMediaItem(mediaItem);
+            await TrackPlayer.play();
         } catch (error) {
-            console.log(
-                'PLAY SONG ERROR:',
-                error,
-            );
+            console.log('PLAY SONG ERROR:', error);
         }
     };
 
     /**
-     * Play / Pause
+     * 3. PLAY / PAUSE
      */
     const handlePlayPause = () => {
-        try {
-            if (buffering) {
-                return;
-            }
-
-            if (playing) {
-                TrackPlayer.pause();
-            } else {
-                TrackPlayer.play();
-            }
-        } catch (error) {
-            console.log(
-                'PLAY PAUSE ERROR:',
-                error,
-            );
+        if (buffering) return;
+        if (playing) {
+            TrackPlayer.pause();
+        } else {
+            TrackPlayer.play();
         }
     };
 
     /**
-     * Previous
-     *
-     * IMPORTANT:
-     * Do NOT reset the player.
+     * 4. PREVIOUS SONG
      */
-    const handlePrevious = () => {
+    const handlePrevious = async () => {
+        if (switchingTrack || !playsong?.id) return;
+
         try {
-            const index =
-                TrackPlayer.getActiveMediaItemIndex();
-
-            const queue =
-                TrackPlayer.getQueue();
-
-            if (
-                index !== null &&
-                index > 0 &&
-                queue.length > 1
-            ) {
+            // 1. Try TrackPlayer queue first if available
+            const index = TrackPlayer.getActiveMediaItemIndex();
+            const queue = TrackPlayer.getQueue();
+            if (index !== null && index > 0 && queue.length > 1) {
                 TrackPlayer.skipToPrevious();
                 return;
             }
 
-            /**
-             * Fallback to your existing app logic
-             * if TrackPlayer has no previous item.
-             */
-            onPrevious?.();
+            // 2. Fetch Previous Song from API
+            setSwitchingTrack(true);
+            const res = await ApiService.get(apiUrls.adjacentsong(playsong.id));
+            if ((res as any).data?.success) {
+                const prevSong = (res as any).data.previousSong;
+                if (prevSong?.id) {
+                    const detailRes = await ApiService.get(apiUrls.singlesongdetail(prevSong.id));
+                    if ((detailRes as any).data?.success) {
+                        const song = (detailRes as any).data.song;
+                        dispatch(addsong(song));
+                        await playSongItem(song);
+                    }
+                } else {
+                    onPrevious?.();
+                    dispatch(
+                        showToast({
+                            visible: true,
+                            message: 'No previous track available',
+                            type: 'info',
+                        })
+                    );
+                }
+            }
         } catch (error) {
-            console.log(
-                'PREVIOUS SONG ERROR:',
-                error,
-            );
+            console.log('PREVIOUS SONG ERROR:', error);
+            onPrevious?.();
+        } finally {
+            setSwitchingTrack(false);
         }
     };
 
     /**
-     * Next
-     *
-     * IMPORTANT:
-     * Do NOT reset the player.
+     * 5. NEXT SONG
      */
-    const handleNext = () => {
+    const handleNext = async () => {
+        if (switchingTrack || isAutoNextingRef.current || !playsong?.id) return;
+
         try {
-            const index =
-                TrackPlayer.getActiveMediaItemIndex();
+            isAutoNextingRef.current = true;
+            setSwitchingTrack(true);
 
-            const queue =
-                TrackPlayer.getQueue();
-
-            if (
-                index !== null &&
-                index < queue.length - 1 &&
-                queue.length > 1
-            ) {
+            // 1. Try TrackPlayer queue first if available
+            const index = TrackPlayer.getActiveMediaItemIndex();
+            const queue = TrackPlayer.getQueue();
+            if (index !== null && index < queue.length - 1 && queue.length > 1) {
                 TrackPlayer.skipToNext();
                 return;
             }
 
-            /**
-             * Fallback to your existing app logic
-             * if TrackPlayer has no next item.
-             */
-            onNext?.();
+            // 2. Fetch Next Song from API
+            const res = await ApiService.get(apiUrls.adjacentsong(playsong.id));
+            if ((res as any).data?.success) {
+                const nextSong = (res as any).data.nextSong;
+                if (nextSong?.id) {
+                    const detailRes = await ApiService.get(apiUrls.singlesongdetail(nextSong.id));
+                    if ((detailRes as any).data?.success) {
+                        const song = (detailRes as any).data.song;
+                        dispatch(addsong(song));
+                        await playSongItem(song);
+                    }
+                } else {
+                    onNext?.();
+                    dispatch(
+                        showToast({
+                            visible: true,
+                            message: 'No next track available',
+                            type: 'info',
+                        })
+                    );
+                }
+            }
         } catch (error) {
-            console.log(
-                'NEXT SONG ERROR:',
-                error,
-            );
+            console.log('NEXT SONG ERROR:', error);
+            onNext?.();
+        } finally {
+            setSwitchingTrack(false);
+            setTimeout(() => {
+                isAutoNextingRef.current = false;
+            }, 1000);
         }
     };
 
-    if (!playsong?.id) {
-        return null;
-    }
+    // Navigate to full player
+    const openFullPlayer = () => {
+        if (playsong?.id) {
+            navigation.navigate('.', { id: playsong.id });
+        }
+    };
+
+    if (!playsong?.id || hideMiniPlayer) return null;
+
+    const effectiveDuration =
+        trackDuration > 0
+            ? trackDuration
+            : Number(playsong?.duration) > 0
+                ? Number(playsong.duration) > 1000
+                    ? Number(playsong.duration) / 1000
+                    : Number(playsong.duration)
+                : 1;
+
+    const progressPercent =
+        effectiveDuration > 0
+            ? Math.min(100, Math.max(0, (currentPosition / effectiveDuration) * 100))
+            : 0;
 
     return (
-        <View style={styles.container}>
-
-            {/* Album Image */}
-            <Image
-                source={
-                    GlobalImage(
-                        playsong.cover_image_url,
-                    ) || Images.singericon
-                }
-                style={styles.image}
-            />
-
-            {/* Song Information */}
-            <View style={styles.info}>
-                <AppText
-                    numberOfLines={1}
-                    style={styles.title}
-                >
-                    {playsong.title ||
-                        'Unknown Song'}
-                </AppText>
-
-                <AppText
-                    numberOfLines={1}
-                    style={styles.artist}
-                >
-                    {playsong.artist ||
-                        'Unknown Artist'}
-                </AppText>
-            </View>
-
-            {/* Like */}
+        <View style={[styles.container, { bottom: bottomOffset }]}>
+            {/* 1. Clickable Info area to open AudioRec */}
             <TouchableOpacity
-                style={styles.smallButton}
-                activeOpacity={0.7}
-            >
-                <AppImage
-                    source={Images.like}
-                    height={16}
-                    width={16}
-                />
-            </TouchableOpacity>
-
-            {/* Previous */}
-            <TouchableOpacity
-                style={styles.controlButton}
-                onPress={handlePrevious}
-                activeOpacity={0.7}
-            >
-                <AppText
-                    style={styles.previousIcon}
-                >
-                    ‹
-                </AppText>
-            </TouchableOpacity>
-
-            {/* Play / Pause */}
-            <TouchableOpacity
-                style={styles.playButton}
-                onPress={handlePlayPause}
                 activeOpacity={0.8}
+                onPress={openFullPlayer}
+                style={styles.infoTouchArea}
             >
-                {buffering ? (
-                    <ActivityIndicator
-                        size="small"
-                        color={
-                            color.darkthemetext
-                        }
-                    />
-                ) : playing ? (
-                    <View
-                        style={
-                            styles.pauseContainer
-                        }
-                    >
-                        <View
-                            style={[
-                                styles.pauseLine,
-                                {
-                                    backgroundColor:
-                                        color.darkthemetext,
-                                },
-                            ]}
-                        />
+                <Image
+                    source={GlobalImage(playsong.cover_image_url) || Images.singericon}
+                    style={styles.image}
+                />
 
-                        <View
-                            style={[
-                                styles.pauseLine,
-                                {
-                                    backgroundColor:
-                                        color.darkthemetext,
-                                },
-                            ]}
+                <View style={styles.info}>
+                    <AppText numberOfLines={1} style={styles.title}>
+                        {playsong.title || 'Unknown Song'}
+                    </AppText>
+                    <AppText numberOfLines={1} style={styles.artist}>
+                        {playsong.artist || 'Unknown Artist'}
+                    </AppText>
+                </View>
+            </TouchableOpacity>
+
+            {/* 2. Controls Row */}
+            <View style={styles.actionsRow}>
+                {/* Previous Track */}
+                <TouchableOpacity
+                    style={styles.controlButton}
+                    onPress={handlePrevious}
+                    disabled={switchingTrack}
+                    hitSlop={{ top: 12, bottom: 12, left: 10, right: 8 }}
+                >
+                    <AppImage
+                        source={Images.leftarrow}
+                        width={12}
+                        height={14}
+                        tintColor="#FFFFFF"
+                    />
+                </TouchableOpacity>
+
+                {/* Play / Pause */}
+                <TouchableOpacity
+                    style={styles.playButton}
+                    onPress={handlePlayPause}
+                    hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+                >
+                    {buffering || switchingTrack ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : playing ? (
+                        <View style={styles.pauseContainer}>
+                            <View style={styles.pauseLine} />
+                            <View style={styles.pauseLine} />
+                        </View>
+                    ) : (
+                        <AppImage
+                            source={Images.playicon}
+                            width={16}
+                            height={16}
+                            tintColor="#FFFFFF"
+                        />
+                    )}
+                </TouchableOpacity>
+
+                {/* Next Track */}
+                <TouchableOpacity
+                    style={styles.controlButton}
+                    onPress={handleNext}
+                    disabled={switchingTrack}
+                    hitSlop={{ top: 12, bottom: 12, left: 8, right: 10 }}
+                >
+                    <View style={{ transform: [{ rotate: '180deg' }] }}>
+                        <AppImage
+                            source={Images.leftarrow}
+                            width={12}
+                            height={14}
+                            tintColor="#FFFFFF"
                         />
                     </View>
-                ) : (
-                    <View
-                        style={
-                            styles.playTriangle
-                        }
-                    />
-                )}
-            </TouchableOpacity>
+                </TouchableOpacity>
+            </View>
 
-            {/* Next */}
-            <TouchableOpacity
-                style={styles.controlButton}
-                onPress={handleNext}
-                activeOpacity={0.7}
-            >
-                <AppText
-                    style={styles.nextIcon}
-                >
-                    ›
-                </AppText>
-            </TouchableOpacity>
+            {/* 3. Live Apple Music Progress Line */}
+            <TouchableWithoutFeedback onPress={openFullPlayer}>
+                <View style={styles.bottomProgressTrack}>
+                    <View
+                        style={[styles.bottomProgressFill, { width: `${progressPercent}%` }]}
+                    />
+                </View>
+            </TouchableWithoutFeedback>
         </View>
     );
 };
@@ -339,106 +362,90 @@ export default MiniPlayer;
 const styles = StyleSheet.create({
     container: {
         position: 'absolute',
-        bottom: 78,
-        left: 8,
-        right: 8,
-        height: 52,
+        left: 10,
+        right: 10,
+        height: 58,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#111111',
-        borderRadius: 12,
-        paddingHorizontal: 10,
-
+        backgroundColor: '#181620',
+        borderRadius: 14,
+        paddingLeft: 10,
+        paddingRight: 6,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.08)',
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-
-        elevation: 5,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 6,
+        elevation: 8,
+        zIndex: 999,
     },
-
+    infoTouchArea: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        height: '100%',
+    },
     image: {
-        width: 36,
-        height: 36,
-        borderRadius: 6,
+        width: 40,
+        height: 40,
+        borderRadius: 8,
+        backgroundColor: '#222',
     },
-
     info: {
         flex: 1,
-        marginLeft: 10,
+        marginLeft: 12,
         justifyContent: 'center',
+        paddingRight: 6,
     },
-
     title: {
-        color: '#ffffff',
+        color: '#FFFFFF',
         fontSize: 13,
-        fontWeight: '600',
+        fontWeight: '700',
     },
-
     artist: {
-        color: '#aaaaaa',
+        color: 'rgba(255, 255, 255, 0.55)',
         fontSize: 11,
-        marginTop: 1,
+        marginTop: 2,
     },
-
-    smallButton: {
-        padding: 6,
-        marginRight: 4,
+    actionsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
     },
-
     controlButton: {
         padding: 8,
     },
-
-    previousIcon: {
-        color: '#ffffff',
-        fontSize: 24,
-        fontWeight: '300',
-    },
-
-    nextIcon: {
-        color: '#ffffff',
-        fontSize: 24,
-        fontWeight: '300',
-    },
-
     playButton: {
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: 'transparent',
+        backgroundColor: 'rgba(255, 255, 255, 0.12)',
         alignItems: 'center',
         justifyContent: 'center',
-        marginHorizontal: 4,
+        marginHorizontal: 2,
     },
-
     pauseContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: 10,
-        height: 12,
+        gap: 3,
     },
-
     pauseLine: {
         width: 3,
         height: 12,
-        borderRadius: 1,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 1.5,
     },
-
-    playTriangle: {
-        width: 0,
-        height: 0,
-        backgroundColor: 'transparent',
-        borderStyle: 'solid',
-        borderLeftWidth: 12,
-        borderTopWidth: 7,
-        borderBottomWidth: 7,
-        borderLeftColor: '#ffffff',
-        borderTopColor: 'transparent',
-        borderBottomColor: 'transparent',
-        marginLeft: 3,
+    bottomProgressTrack: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 3,
+        backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    },
+    bottomProgressFill: {
+        height: 3,
+        backgroundColor: '#FF2D55',
     },
 });

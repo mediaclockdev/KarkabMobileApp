@@ -14,6 +14,7 @@ import { Images, Logo } from '../constants/media'
 import { Inter } from '../constants/fonts'
 import AppImage from './AppImage'
 import LinearGradient from 'react-native-linear-gradient'
+import { navigate } from '../../navigation/NavigationService'
 
 interface HeaderProps {
   headername?: string
@@ -21,6 +22,7 @@ interface HeaderProps {
   rightIcon?: any
   onRightPress?: () => void
   rightView?: any
+  backpress?: () => void
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -29,6 +31,7 @@ const Header: React.FC<HeaderProps> = ({
   rightIcon,
   onRightPress,
   rightView,
+  backpress,
 }) => {
   const color = useAppColors();
   return (
@@ -67,7 +70,23 @@ const Header: React.FC<HeaderProps> = ({
       <View style={[styles.header]}>
         {/* Left Content */}
 
-
+        {
+          headername == 'Playlists' ?
+            <TouchableOpacity
+              onPress={backpress}
+            >
+              <AppImage
+                source={
+                  Logo.arrowline
+                }
+                height={25}
+                width={19}
+                resizeMode="cover"
+                tintColor="#FFFF"
+                style={{ marginRight: 20 }}
+              />
+            </TouchableOpacity> : null
+        }
 
 
 

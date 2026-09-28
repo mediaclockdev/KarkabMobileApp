@@ -138,9 +138,13 @@ const ManageProfileScreen = () => {
                 setUsername(user?.username || '');
                 setBio(user?.bio || '');
                 setGender(user?.gender || '');
-                setDateOfBirth(
-                    parseDateOfBirth(user?.date_of_birth)
-                );
+                console.log('DOB VALUE:', user?.date_of_birth);
+
+                const parsedDob = parseDateOfBirth(user?.date_of_birth);
+
+                console.log('PARSED DOB:', parsedDob);
+
+                setDateOfBirth(parsedDob);
                 setEmail(user?.email || '');
                 setCreatedAt(user?.created_at || '');
                 setAvatarUrl(user?.avatar_url || '');
@@ -292,29 +296,29 @@ const ManageProfileScreen = () => {
             .toUpperCase() || '';
     };
 
-    const parseDateOfBirth = (value?: string): Date | null => {
+    const parseDateOfBirth = (value?: string | null): Date | null => {
         if (!value) return null;
 
-        // Handles API format: YYYY-MM-DD
-        const parts = value.split('-');
+        try {
+            // API: YYYY-MM-DD
+            if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                const [year, month, day] = value.split('-').map(Number);
 
-        if (parts.length === 3) {
-            const year = Number(parts[0]);
-            const month = Number(parts[1]);
-            const day = Number(parts[2]);
-
-            if (
-                !isNaN(year) &&
-                !isNaN(month) &&
-                !isNaN(day)
-            ) {
                 return new Date(year, month - 1, day);
             }
+
+            // API: ISO format, e.g. 2000-05-12T00:00:00.000Z
+            const date = new Date(value);
+
+            if (!isNaN(date.getTime())) {
+                return date;
+            }
+
+            return null;
+        } catch (error) {
+            console.log('DATE PARSE ERROR:', error);
+            return null;
         }
-
-        const parsed = new Date(value);
-
-        return isNaN(parsed.getTime()) ? null : parsed;
     };
 
     const formatDateOfBirth = (date: Date | null) => {
@@ -345,11 +349,10 @@ const ManageProfileScreen = () => {
                 value: currentDate,
                 mode: 'date',
                 display: 'calendar',
-
                 minimumDate: new Date(1900, 0, 1),
                 maximumDate: new Date(),
 
-                onValueChange: (event, selectedDate) => {
+                onChange: (event, selectedDate) => {
                     if (event.type === 'set' && selectedDate) {
                         setDateOfBirth(selectedDate);
                     }

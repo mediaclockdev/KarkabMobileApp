@@ -606,6 +606,11 @@ const CreatePlaylist = () => {
                         'NotificationScreen',
                     );
                 }}
+                backpress={() => {
+                    navigation.navigate('Profile')
+                }
+
+                }
             />
 
             {/* Search */}
@@ -1132,7 +1137,7 @@ const styles = StyleSheet.create({
     createButton: {
         minWidth: 82,
         height: 34,
-        paddingHorizontal: 14,
+        // paddingHorizontal: 14,
         borderRadius: 18,
         justifyContent: 'center',
         alignItems: 'center',

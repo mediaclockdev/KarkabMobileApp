@@ -28,6 +28,7 @@ const Search = () => {
 
 
   const [populardatas, setPopulardatas] = useState<any[]>([])
+  const [topdatas, setTopdatas] = useState<any[]>([])
   const trandindata = [
     {
       image: Images.tbanner,
@@ -56,6 +57,7 @@ const Search = () => {
   ]
 
   const navigation = useNavigation();
+
   const trandingdata = async () => {
     console.log("popular api called")
     try {
@@ -79,6 +81,7 @@ const Search = () => {
 
   useEffect(() => {
     trandingdata()
+    topmostdata()
   }, [])
 
 
@@ -106,7 +109,21 @@ const Search = () => {
   }
 
 
+  const topmostdata = async () => {
+    try {
+      setLoader(true);
+      const response = await ApiService.get(apiUrls.getpopularsong);
+      const data = (response as any).data;
+      if (data?.success) {
 
+        setTopdatas(data.songs);
+      }
+    } catch (error) {
+      console.log('populardata ERROR:', error);
+    } finally {
+      setLoader(false);
+    }
+  };
 
   const browesdata = [
     {
@@ -207,10 +224,10 @@ const Search = () => {
                 <ActivityIndicator size="large" color="#EFCB61" />
               </View> :
               <ScrollView showsVerticalScrollIndicator={false} style={{ gap: 20, marginVertical: 10 }}>
-                <View style={styles.titles}>
+                {/* <View style={styles.titles}>
                   <AppText
                     color={color.darkthemetext}
-                    fontSize={12}
+                    fontSize={14}
                     fontWeight="500"
                     fontFamily={Inter.regular}
                   >
@@ -286,11 +303,11 @@ const Search = () => {
 
                     </View>
                   )}
-                />
+                /> */}
                 <View style={styles.titles}>
                   <AppText
                     color={color.darkthemetext}
-                    fontSize={12}
+                    fontSize={14}
                     fontWeight="500"
                     fontFamily={Inter.regular}
                   >
@@ -308,7 +325,7 @@ const Search = () => {
                   >
                     <AppText
                       color={'#F6A202'}
-                      fontSize={12}
+                      fontSize={14}
                       fontWeight="500"
                       fontFamily={Inter.regular}
                     >
@@ -326,12 +343,12 @@ const Search = () => {
                 </View>
 
 
-                <SingingList />
+                <SingingList populardatas={topdatas} />
 
                 <View style={styles.titles}>
                   <AppText
                     color={color.darkthemetext}
-                    fontSize={12}
+                    fontSize={14}
                     fontWeight="500"
                     fontFamily={Inter.regular}
                   >
@@ -355,7 +372,7 @@ const Search = () => {
                   >
                     <AppText
                       color={'#F6A202'}
-                      fontSize={12}
+                      fontSize={14}
                       fontWeight="500"
                       fontFamily={Inter.regular}
                     >
@@ -378,7 +395,7 @@ const Search = () => {
 
                 <TrandingList data={populardatas} />
 
-                <AppText color={color.darkthemetext} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
+                <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
                   Browse by category
                 </AppText>
 

@@ -22,6 +22,7 @@ import ManageProfileScreen from '../screens/Profile/ManageProfileScreen';
 import NotificationScreen from '../screens/Profile/NotificationScreen';
 import CreatePlaylist from '../screens/Profile/CreatePlaylist';
 import PlaylistDetailScreen from '../screens/Profile/PlaylistDetailScreen';
+import RecordingList from '../screens/Home/RecordingList';
 export const Tabs = () => {
 
     const screens = [
@@ -47,6 +48,7 @@ export const Tabs = () => {
         { name: 'NotificationScreen', component: NotificationScreen },
         { name: 'CreatePlaylist', component: CreatePlaylist },
         { name: 'PlaylistDetailScreen', component: PlaylistDetailScreen },
+        { name: 'RecordingList', component: RecordingList },
 
 
     ];

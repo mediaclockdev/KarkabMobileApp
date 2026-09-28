@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   StyleSheet,
   Platform,
@@ -8,8 +8,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import CustomTabBar from './CustomTabBar';
-import { useAppSelector } from '../share/hooks/useAppSelector';
+import { useAppDispatch, useAppSelector } from '../share/hooks/useAppSelector';
 import MiniPlayer from '../share/components/MiniPlayer';
+import { getLastPlayed } from '../services/lastPlayed';
+import { addsong } from '../auth/redux/authSlice';
 
 const Tab = createBottomTabNavigator();
 
@@ -23,13 +25,25 @@ type Props = {
 export const HideableBottomTabs = ({ screens }: Props) => {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-
+  const dispatch = useAppDispatch();
+  const playsong = useAppSelector((state: any) => state.auth.playsong);
   const loginState = useAppSelector(
     (state: any) => state.auth.loginState
   );
 
   const isTablet = width >= 768;
   const TAB_HEIGHT = isTablet ? 85 : 65;
+  useEffect(() => {
+    const restoreSession = async () => {
+      const lastSong = await getLastPlayed();
+      if (lastSong && !playsong?.id) {
+        // Restore to Redux so MiniPlayer shows it
+        dispatch(addsong(lastSong));
+        // Don't auto-play — just restore state like Spotify
+      }
+    };
+    restoreSession();
+  }, []);
 
   return (
     <View style={styles.root}>
@@ -61,7 +75,8 @@ export const HideableBottomTabs = ({ screens }: Props) => {
             currentRoute === 'ManageProfileScreen' ||
             currentRoute === 'NotificationScreen' ||
             currentRoute === 'CreatePlaylist' ||
-            currentRoute === 'PlaylistDetailScreen'
+            currentRoute === 'PlaylistDetailScreen' ||
+            currentRoute === 'RecordingList'
 
 
           ) {
@@ -90,7 +105,7 @@ export const HideableBottomTabs = ({ screens }: Props) => {
           />
         ))}
       </Tab.Navigator>
-      <MiniPlayer />
+      <MiniPlayer bottomOffset={78} />
     </View>
   );
 };

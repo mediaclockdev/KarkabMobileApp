@@ -1,0 +1,663 @@
+import React, { useCallback, useState } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    SafeAreaView,
+    TouchableOpacity,
+    ScrollView,
+    TextInput,
+    Dimensions,
+} from 'react-native';
+
+import AppImage from '../../share/components/AppImage';
+import { BottomIcons, Images, Logo } from '../../share/constants/media';
+import { Inter } from '../../share/constants/fonts';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import apiUrls from '../../services/apiUrls';
+import ApiService from '../../services/api';
+import AppText from '../../share/components/AppText';
+import Librarylist from '../../share/components/Librarylist';
+
+const { width } = Dimensions.get('window');
+
+const COLORS = {
+    bg: '#090909',
+    card: '#151515',
+    border: '#242424',
+    primary: '#FF2D55',
+    yellow: '#FFB300',
+    white: '#fff',
+    gray: '#888',
+};
+
+export default function RecordingList() {
+    const navigation = useNavigation();
+    const route = useRoute();
+
+    const {
+        songs,
+        previousScreen,
+        filter = false,
+        artist,
+        recordings,
+    } = route.params as {
+        songs?: any;
+        previousScreen?: string;
+        filter?: boolean;
+        artist?: any;
+        recordings?: any[];
+    };
+
+    const [songdata, setSongdata] = useState<any[]>([]);
+    const [numberofsong, setNumberofsong] = useState(0);
+    const [searchText, setSearchText] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+    /**
+     * -----------------------------------------
+     * FETCH ARTIST SONGS
+     * -----------------------------------------
+     */
+    const fetchArtistSongs = async (
+        artistId: number | string
+    ) => {
+        setIsLoading(true);
+
+        try {
+            console.log(
+                'ARTIST SONGS API:',
+                apiUrls.artistSongs(artistId)
+            );
+
+            const response = await ApiService.get(
+                apiUrls.artistSongs(artistId)
+            );
+
+            const data = (response as any)?.data;
+
+            console.log(
+                'ARTIST SONGS RESPONSE:',
+                data
+            );
+
+            if (data?.success) {
+                const songsList = Array.isArray(data?.songs)
+                    ? data.songs
+                    : [];
+
+                setSongdata(songsList);
+
+                setNumberofsong(
+                    data?.total_songs ?? songsList.length
+                );
+            } else {
+                setSongdata([]);
+                setNumberofsong(0);
+            }
+        } catch (error) {
+            console.log(
+                'ARTIST SONGS API ERROR:',
+                error
+            );
+
+            setSongdata([]);
+            setNumberofsong(0);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    /**
+     * -----------------------------------------
+     * FETCH CATEGORY SONGS
+     * -----------------------------------------
+     */
+    const songlist = async () => {
+        setIsLoading(true);
+
+        try {
+            console.log(
+                'getsongcategorieslist API called'
+            );
+
+            if (!songs?.id) {
+                setSongdata([]);
+                setNumberofsong(0);
+                setIsLoading(false);
+                return;
+            }
+
+            const response = await ApiService.get(
+                apiUrls.getsongcategorieslist(songs.id)
+            );
+
+            const data = (response as any)?.data;
+
+            console.log(
+                'getsongcategorieslist RESPONSE:',
+                data
+            );
+
+            if (data?.success) {
+                const songsList = Array.isArray(data?.songs)
+                    ? data.songs
+                    : [];
+
+                setSongdata(songsList);
+
+                setNumberofsong(
+                    data?.total_songs ?? songsList.length
+                );
+            } else {
+                setSongdata([]);
+                setNumberofsong(0);
+            }
+        } catch (error) {
+            console.log(
+                'songlist ERROR:',
+                error
+            );
+
+            setSongdata([]);
+            setNumberofsong(0);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    /**
+     * -----------------------------------------
+     * LOAD DATA WHEN SCREEN FOCUSES
+     * -----------------------------------------
+     */
+    useFocusEffect(
+        useCallback(() => {
+            let cancelled = false;
+
+            const loadSongs = async () => {
+                console.log(
+                    'RecordingList focused'
+                );
+
+                setSearchText('');
+                setIsLoading(true);
+
+                /**
+                 * -----------------------------------------
+                 * RECORDINGS
+                 * -----------------------------------------
+                 *
+                 * If recordings are passed, use recordings
+                 * instead of songs.
+                 */
+                if (Array.isArray(recordings)) {
+                    const recordingList = recordings.map(
+                        (item: any) => ({
+                            ...item,
+                            isRecording: true,
+                        })
+                    );
+
+                    console.log(
+                        'RECORDING LIST:',
+                        recordingList
+                    );
+
+                    if (!cancelled) {
+                        setSongdata(recordingList);
+                        setNumberofsong(
+                            recordingList.length
+                        );
+                        setIsLoading(false);
+                    }
+
+                    return;
+                }
+
+                /**
+                 * -----------------------------------------
+                 * ARTIST SONGS
+                 * -----------------------------------------
+                 */
+                if (artist?.id) {
+                    await fetchArtistSongs(
+                        artist.id
+                    );
+
+                    return;
+                }
+
+                /**
+                 * -----------------------------------------
+                 * BROWSE MOOD
+                 * -----------------------------------------
+                 */
+                if (
+                    previousScreen === 'Browsemood'
+                ) {
+                    await songlist();
+
+                    return;
+                }
+
+                /**
+                 * -----------------------------------------
+                 * SONGS SCREEN + FILTER
+                 * -----------------------------------------
+                 */
+                if (
+                    filter &&
+                    previousScreen === 'SongsScreen'
+                ) {
+                    await songlist();
+
+                    return;
+                }
+
+                /**
+                 * -----------------------------------------
+                 * NORMAL SONGS
+                 * -----------------------------------------
+                 */
+                const songsList = Array.isArray(songs)
+                    ? songs
+                    : [];
+
+                if (!cancelled) {
+                    setSongdata(songsList);
+                    setNumberofsong(
+                        songsList.length
+                    );
+                    setIsLoading(false);
+                }
+            };
+
+            loadSongs();
+
+            return () => {
+                cancelled = true;
+            };
+        }, [
+            artist?.id,
+            previousScreen,
+            filter,
+            songs?.id,
+            recordings,
+        ])
+    );
+
+    /**
+     * -----------------------------------------
+     * SEARCH + SORT
+     * -----------------------------------------
+     */
+    const filteredSongs = (songdata || [])
+        .filter((song: any) => {
+            const search =
+                searchText
+                    .toLowerCase()
+                    .trim();
+
+            const title =
+                String(
+                    song?.title ||
+                    song?.song?.title ||
+                    song?.name ||
+                    ''
+                );
+
+            const artistName =
+                typeof song?.artist === 'object'
+                    ? String(
+                        song?.artist?.name || ''
+                    )
+                    : String(
+                        song?.artist ||
+                        song?.song?.artist?.name ||
+                        ''
+                    );
+
+            const category =
+                String(
+                    song?.categoryName ||
+                    song?.category?.name ||
+                    ''
+                );
+
+            return (
+                title
+                    .toLowerCase()
+                    .includes(search) ||
+                artistName
+                    .toLowerCase()
+                    .includes(search) ||
+                category
+                    .toLowerCase()
+                    .includes(search)
+            );
+        })
+        .sort(
+            (
+                a: any,
+                b: any
+            ) => {
+                const titleA = String(
+                    a?.title ||
+                    a?.song?.title ||
+                    a?.name ||
+                    ''
+                );
+
+                const titleB = String(
+                    b?.title ||
+                    b?.song?.title ||
+                    b?.name ||
+                    ''
+                );
+
+                const comparison =
+                    titleA.localeCompare(
+                        titleB,
+                        ['ar', 'en'],
+                        {
+                            sensitivity:
+                                'base',
+                        }
+                    );
+
+                return sortOrder === 'asc'
+                    ? comparison
+                    : -comparison;
+            }
+        );
+
+    return (
+        <SafeAreaView
+            style={styles.container}
+        >
+            <ScrollView
+                showsVerticalScrollIndicator={
+                    false
+                }
+                contentContainerStyle={{
+                    paddingBottom: 120,
+                }}
+            >
+                {/* HEADER */}
+                <View style={styles.header}>
+                    <TouchableOpacity
+                        onPress={() => {
+                            if (previousScreen) {
+                                (
+                                    navigation as any
+                                ).navigate(
+                                    previousScreen
+                                );
+                            } else {
+                                navigation.goBack();
+                            }
+                        }}
+                    >
+                        <AppImage
+                            source={
+                                Logo.arrowline
+                            }
+                            height={25}
+                            width={19}
+                            resizeMode="cover"
+                            tintColor="#FFFF"
+                        />
+                    </TouchableOpacity>
+
+                    <View
+                        style={{
+                            flex: 1,
+                            marginLeft: 15,
+                        }}
+                    >
+                        <View
+                            style={{
+                                flexDirection:
+                                    'row',
+                                alignItems:
+                                    'center',
+                            }}
+                        >
+                            <AppImage
+                                source={
+                                    Logo.ymusic
+                                }
+                                height={28}
+                                width={28}
+                                tintColor="#E52450"
+                            />
+
+                            <View>
+                                <Text
+                                    style={
+                                        styles.title
+                                    }
+                                >
+                                    {' '}Recordings
+                                </Text>
+
+                                <Text
+                                    style={
+                                        styles.subtitle
+                                    }
+                                >
+                                    {' '}Your recorded
+                                    <Text
+                                        style={{
+                                            color:
+                                                '#D4AF37',
+                                        }}
+                                    >
+                                        {' '}songs
+                                    </Text>
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+
+                    <TouchableOpacity
+                        style={
+                            styles.settingBtn
+                        }
+                    >
+                        <AppImage
+                            source={
+                                Images.playlist
+                            }
+                            height={16}
+                            width={16}
+                        />
+                    </TouchableOpacity>
+                </View>
+
+                {/* CONTENT */}
+                <View
+                    style={{
+                        marginHorizontal: 15,
+                    }}
+                >
+                    {/* SECTION HEADER */}
+                    <View
+                        style={{
+                            flexDirection:
+                                'row',
+                            alignItems:
+                                'center',
+                            justifyContent:
+                                'space-between',
+                            marginBottom: 20,
+                            marginTop: 10,
+                        }}
+                    >
+                        <View
+                            style={{
+                                flexDirection:
+                                    'row',
+                            }}
+                        >
+                            <AppText
+                                color="#F46E00"
+                                fontSize={12}
+                                fontFamily={
+                                    Inter.regular
+                                }
+                            >
+                                All Recordings
+                            </AppText>
+
+                            <AppText
+                                color="#CDCECB"
+                                fontSize={12}
+                                fontFamily={
+                                    Inter.regular
+                                }
+                            >
+                                {' (' +
+                                    filteredSongs.length +
+                                    ')'}
+                            </AppText>
+                        </View>
+
+                        {/* SEARCH */}
+                        <View
+                            style={{
+                                flexDirection:
+                                    'row',
+                                alignItems:
+                                    'center',
+                                gap: 10,
+                            }}
+                        >
+                            <View
+                                style={{
+                                    flexDirection:
+                                        'row',
+                                    borderWidth: 1,
+                                    borderColor:
+                                        '#242424',
+                                    alignItems:
+                                        'center',
+                                    borderRadius: 12,
+                                    width: 204,
+                                    height: 36,
+                                    gap: 5,
+                                    paddingHorizontal: 10,
+                                }}
+                            >
+                                <AppImage
+                                    source={
+                                        BottomIcons.search
+                                    }
+                                    height={14}
+                                    width={14}
+                                    tintColor="#CDCECB"
+                                />
+
+                                <TextInput
+                                    value={
+                                        searchText
+                                    }
+                                    onChangeText={
+                                        setSearchText
+                                    }
+                                    placeholder="Search recordings..."
+                                    placeholderTextColor="#CDCECB"
+                                    style={{
+                                        fontSize: 10,
+                                        color: '#FFFF',
+                                        flex: 1,
+                                        paddingVertical: 0,
+                                    }}
+                                />
+                            </View>
+
+                            <TouchableOpacity
+                                style={{
+                                    padding: 10,
+                                    borderWidth: 1,
+                                    borderColor:
+                                        '#303030',
+                                    borderRadius: 12,
+                                }}
+                                onPress={() => {
+                                    setSortOrder(
+                                        prev =>
+                                            prev ===
+                                                'asc'
+                                                ? 'desc'
+                                                : 'asc'
+                                    );
+                                }}
+                            >
+                                <AppImage
+                                    source={
+                                        Logo.gfilter
+                                    }
+                                    height={12}
+                                    width={25}
+                                />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    {/* RECORDING LIST */}
+                    <Librarylist
+                        musicData={
+                            filteredSongs
+                        }
+                        loading={
+                            isLoading
+                        }
+                    />
+                </View>
+            </ScrollView>
+        </SafeAreaView>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor:
+            COLORS.bg,
+    },
+
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 15,
+        paddingTop: 10,
+        marginBottom: 15,
+    },
+
+    title: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: '#FFFF',
+        fontFamily: Inter.bold,
+    },
+
+    subtitle: {
+        color: '#999',
+        marginTop: 2,
+        fontSize: 10,
+        fontFamily: Inter.regular,
+    },
+
+    settingBtn: {
+        height: 32,
+        width: 32,
+        borderRadius: 21,
+        borderWidth: 1,
+        borderColor: '#FF2D55',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+});

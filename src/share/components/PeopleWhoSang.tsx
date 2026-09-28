@@ -10,6 +10,7 @@ import {
 import AppText from '../../share/components/AppText';
 import { Inter } from '../../share/constants/fonts';
 import { Images } from '../constants/media';
+import { GlobalImage } from '../utils/GlobalImage';
 
 interface Artist {
     id: string;
@@ -22,6 +23,7 @@ interface PeopleWhoSangProps {
     artists?: Artist[];
     onPlay?: (artist: Artist) => void;
     onSeeAll?: () => void;
+    profileimage?: any;
 }
 
 const DEFAULT_ARTISTS: Artist[] = [
@@ -52,16 +54,30 @@ const DEFAULT_ARTISTS: Artist[] = [
 ];
 
 const PeopleWhoSang = ({
-    artists = DEFAULT_ARTISTS,
+    artists,
     onPlay,
     onSeeAll,
+    profileimage,
 }: PeopleWhoSangProps) => {
+    const formatCreatedAt = (dateString?: string) => {
+        if (!dateString) return '';
+
+        const date = new Date(dateString);
+
+        if (isNaN(date.getTime())) return '';
+
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+        });
+    };
     const renderArtist = ({ item }: { item: Artist }) => {
         return (
             <View style={styles.artistCard}>
                 {/* Artist Image */}
 
-                <Image source={item.image} style={styles.artistImage} />
+                <Image source={GlobalImage(profileimage?.avatar_url)} style={styles.artistImage} />
 
                 {/* Artist Info */}
                 <View style={styles.artistInfo}>
@@ -70,15 +86,16 @@ const PeopleWhoSang = ({
                         fontFamily={Inter.semibold}
                         color="#FFFFFF"
                         numberOfLines={1}>
-                        {item.name}
+                        {item?.title}
                     </AppText>
 
                     <AppText
                         marginTop={3}
                         fontSize={10}
                         fontFamily={Inter.regular}
-                        color="#A9A9A9">
-                        {item.time}
+                        color="#A9A9A9"
+                    >
+                        {formatCreatedAt(item?.created_at)}
                     </AppText>
                 </View>
 
@@ -106,7 +123,7 @@ const PeopleWhoSang = ({
 
             {/* Artists */}
             <FlatList
-                data={DEFAULT_ARTISTS}
+                data={artists}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 renderItem={renderArtist}

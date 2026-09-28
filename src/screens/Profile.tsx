@@ -5,7 +5,6 @@ import { Banner, BottomIcons, Images, Logo } from "../share/constants/media";
 import color, { useAppColors } from "../share/constants/color";
 import AppImage from "../share/components/AppImage";
 import AppText from "../share/components/AppText";
-
 import LinearGradient from "react-native-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Inter } from "../share/constants/fonts";
@@ -44,7 +43,8 @@ const Profile = () => {
     } | null>(null);
     const [recdata, setRecdata] = useState(null);
     const [playingId, setPlayingId] = useState<string | null>(null);
-    const [loader, setLoader] = useState(false)
+    const [loader, setLoader] = useState(false);
+    const [favorites, setFavorites] = useState<string | null>(null);
 
     const fetchProfileData = async () => {
         try {
@@ -69,6 +69,7 @@ const Profile = () => {
     useEffect(() => {
         fetchProfileData()
         getRecording()
+        getFavorites()
     }, [])
 
 
@@ -207,6 +208,13 @@ const Profile = () => {
         if (index == 1) {
             navigation.navigate('CreatePlaylist')
         }
+        if (index == 0) {
+            (navigation as any).navigate('SongsListScreen', {
+                songs: favorites,
+                previousScreen: 'Profile',
+            });
+        }
+
     };
 
     const playRecording = async (item: any) => {
@@ -449,6 +457,29 @@ const Profile = () => {
         })}`;
     };
 
+    const getFavorites = async () => {
+        try {
+
+            const response = await ApiService.get(apiUrls.favorites)
+
+            const data = (response as any).data
+            console.log(data, "profilefavorate API RESPONSE")
+
+            if (data?.success) {
+                console.log(data.songs, "inside API RESPONSE")
+                setFavorites(data.songs)
+
+            }
+
+        } catch (error) {
+            console.log("PROFILE ERROR:", error)
+        }
+        finally {
+
+        }
+    }
+
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: color.darkbackround }]}>
             <Header
@@ -683,7 +714,7 @@ const Profile = () => {
                                             </AppText>
                                             <AppText
                                                 color={color.darkthemetext}
-                                                fontSize={10}
+                                                fontSize={12}
                                                 fontWeight="500"
                                                 fontFamily={Inter.regular}>
                                                 {item.title}
@@ -698,11 +729,13 @@ const Profile = () => {
                         <View style={{ borderColor: '#121212', borderWidth: 1, borderRadius: 12, width: '100%', padding: 10 }} >
 
                             <View style={[styles.titles, { width: '100%' }]}>
-                                <AppText color={color.darkthemetext} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
+                                <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
                                     Achievments
                                 </AppText>
-                                <TouchableOpacity style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
-                                    <AppText color={color.mgred} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
+                                <TouchableOpacity
+
+                                    style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                                    <AppText color={color.mgred} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
                                         View all
                                     </AppText>
                                     <AppImage
@@ -772,11 +805,18 @@ const Profile = () => {
 
 
                         <View style={[styles.titles]}>
-                            <AppText color={color.darkthemetext} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
+                            <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
                                 Recent Perfomance
                             </AppText>
-                            <TouchableOpacity style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
-                                <AppText color={color.mgred} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    (navigation as any).navigate('RecordingList', {
+                                        recordings: recdata,
+                                        previousScreen: 'Home',
+                                    });
+                                }}
+                                style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                                <AppText color={color.mgred} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
                                     See all
                                 </AppText>
                                 <AppImage
@@ -791,7 +831,7 @@ const Profile = () => {
 
 
                         <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: 10 }}>
-                            {recentactivitydata?.slice(0, 3).map((item, index) => (
+                            {recdata?.slice(0, 3).map((item, index) => (
                                 <View key={index} style={{
                                     height: 111,
                                     width: '30%',
@@ -806,7 +846,7 @@ const Profile = () => {
 
                                 }}>
                                     <ImageBackground
-                                        source={Banner.recentperfbaneer}
+                                        source={GlobalImage(profiledetail?.avatar_url)}
                                         resizeMode="cover"
                                         style={{
                                             width: '100%',
@@ -916,11 +956,11 @@ const Profile = () => {
 
 
                         <View style={[styles.titles]}>
-                            <AppText color={color.darkthemetext} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
+                            <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
                                 Recent activity
                             </AppText>
                             <TouchableOpacity style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
-                                <AppText color={color.mgred} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
+                                <AppText color={color.mgred} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
                                     See all
                                 </AppText>
                                 <AppImage

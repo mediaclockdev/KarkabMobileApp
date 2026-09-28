@@ -33,6 +33,8 @@ AppRegistry.registerComponent(appName, () => App);
 
 
 
+
+// 3. Setup Audio Player
 setupAudioPlayer();
 
 if (shouldRestart) {

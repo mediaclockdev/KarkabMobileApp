@@ -1,0 +1,1519 @@
+import { ActivityIndicator, Alert, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View, PanResponder, Animated, } from "react-native"
+import color, { useAppColors } from "../share/constants/color";
+import { Banner, Images } from "../share/constants/media";
+import AppImage from "../share/components/AppImage";
+import AppText from "../share/components/AppText";
+import LinearGradient from "react-native-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Inter } from "../share/constants/fonts";
+// import AudioRecorderPlayer from 'react-native-nitro-sound';
+import { useCallback, useEffect, useRef, useState } from "react";
+import Sound, {
+    AudioEncoderAndroidType,
+    AudioSourceAndroidType,
+    AVEncoderAudioQualityIOSType,
+    AVEncodingOption,
+    RecordBackType,
+    PlayBackType,
+} from 'react-native-nitro-sound';
+import { requestMicPermission } from "../share/utils/requestMicPermission";
+import ApiService from '../services/api';
+import apiUrls, { BASE_URL } from "../services/apiUrls";
+import { GlobalImage } from "../share/utils/GlobalImage";
+import { useFocusEffect, useNavigation, useRoute, useRoutePath } from "@react-navigation/native";
+import GradientText from '../share/components/GradientText'
+import { useAppDispatch } from "../share/hooks/useAppSelector";
+import { addsong, isPausesd, showToast } from "../auth/redux/authSlice";
+
+const AudioRec = () => {
+    const color = useAppColors();
+    const route = useRoute();
+
+    const { id } = route?.params as {
+        id: number;
+    } || 1;
+
+    // console.log(id, "djehehejdhhdhdeh")
+    const lyrics = [
+        "Mabrook mabrook ya alel hob",
+        "Mabrook mabrook ya game",
+        "Wajamal ya sabah el khair",
+        "Dumtek hiya ya amar",
+        "Mabrook mabrook",
+        "Alf mabrook ya habibi",
+    ];
+    const dispatch = useAppDispatch();
+    const [recording, setRecording] = useState(false);
+    const [path, setPath] = useState('')
+    const [songdetail, setSongDetail] = useState(null)
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [progressWidth, setProgressWidth] = useState(0);
+    const [screenLoading, setScreenLoading] = useState(true);
+    const progressTrackRef = useRef<View>(null);
+    const progressAnim = useRef(new Animated.Value(0)).current;
+    const progressStartRef = useRef(0);
+    const animationFrameRef = useRef<number | null>(null);
+    const isDraggingRef = useRef(false);
+    const dragProgressRef = useRef(0);
+    const totalDurationRef = useRef(0);
+    const [currentTime, setCurrentTime] = useState('00:00');
+    const [totalTime, setTotalTime] = useState('00:00');
+    const navigation = useNavigation();
+    const [loadings, setLoadings] = useState(false);
+    const [loadingst, setLoadingst] = useState(false);
+    const [lyricsLines, setLyricsLines] = useState<
+        { text: string; start: number; end: number }[]
+    >([]);
+    const lyricsListRef = useRef<FlatList>(null);
+    const lyricsLinesRef = useRef<
+        { text: string; start: number; end: number }[]
+    >([]);
+    const [activeLyricIndex, setActiveLyricIndex] = useState(0);
+    const dragStartProgressRef = useRef(0);
+    const dragStartXRef = useRef(0);
+    const progressWidthRef = useRef(0);
+    const [adjectprevdata, setAdjectprevdata] = useState(null)
+    const [adjectnextdata, setAdjectnextvdata] = useState(null)
+    const isAutoNextingRef = useRef(false);
+
+    useEffect(() => {
+        getSongDetail(id)
+    }, [id])
+
+
+
+    const setProgressSmoothly = (value: number) => {
+        const clamped = Math.max(0, Math.min(100, value));
+
+        dragProgressRef.current = clamped;
+
+        if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+        }
+
+        animationFrameRef.current = requestAnimationFrame(() => {
+            setProgress(clamped);
+
+            progressAnim.setValue(clamped);
+        });
+    };
+
+    const playNextSong = async () => {
+        if (isAutoNextingRef.current) {
+            return;
+        }
+
+        if (!adjectnextdata?.id) {
+            // No next song available
+            try {
+                await Sound.stopPlayer();
+                await Sound.removePlayBackListener();
+            } catch (error) {
+                console.log('Stop player error:', error);
+            }
+
+            setIsPlaying(false);
+            setIsPaused(false);
+            setProgress(100);
+
+            return;
+        }
+
+        try {
+            isAutoNextingRef.current = true;
+
+            console.log(
+                'Current song finished. Playing next song:',
+                adjectnextdata.id
+            );
+
+            // Stop current player without resetting UI manually first
+            try {
+                await Sound.stopPlayer();
+            } catch (error) {
+                console.log('Previous player already stopped');
+            }
+
+            await Sound.removePlayBackListener();
+
+            // Fetch next song and play it
+            await getSongDetail(adjectnextdata.id);
+
+        } catch (error) {
+            console.log('Auto next song error:', error);
+        } finally {
+            isAutoNextingRef.current = false;
+        }
+    };
+
+
+    const playAudio = async (path: any) => {
+        if (!path?.song_url) {
+            console.log('Song URL not found');
+            return;
+        }
+
+        try {
+            setLoadings(true);
+
+            console.log('Playing path:', path.song_url);
+
+            await dispatch(isPausesd(true));
+
+            await dispatch(
+                addsong({
+                    ...path,
+                })
+            );
+
+            await Sound.removePlayBackListener();
+
+            try {
+                await Sound.stopPlayer();
+            } catch (e) {
+                console.log('No previous player to stop');
+            }
+
+            await Sound.startPlayer(path.song_url);
+
+            setIsPlaying(true);
+            setIsPaused(false);
+
+            Sound.removePlayBackListener();
+
+            Sound.addPlayBackListener((e: PlayBackType) => {
+                totalDurationRef.current = e.duration;
+
+                if (!isDraggingRef.current) {
+                    const percentage =
+                        e.duration > 0
+                            ? (e.currentPosition / e.duration) * 100
+                            : 0;
+
+                    setProgress(percentage);
+
+                    setCurrentTime(
+                        Sound.mmssss(Math.floor(e.currentPosition))
+                    );
+
+                    setTotalTime(
+                        Sound.mmssss(Math.floor(e.duration))
+                    );
+
+                    const currentLyrics = lyricsLinesRef.current;
+
+                    if (currentLyrics.length > 0) {
+                        const currentLyricIndex =
+                            currentLyrics.findIndex(
+                                lyric =>
+                                    e.currentPosition >= lyric.start &&
+                                    e.currentPosition < lyric.end
+                            );
+
+                        if (currentLyricIndex !== -1) {
+                            setActiveLyricIndex(prev =>
+                                prev !== currentLyricIndex
+                                    ? currentLyricIndex
+                                    : prev
+                            );
+                        }
+                    }
+                }
+
+                if (
+                    e.duration > 0 &&
+                    e.currentPosition >= e.duration
+                ) {
+                    playNextSong()
+                    stopAudio();
+                }
+            });
+        } catch (error) {
+            console.log('Play audio error:', error);
+
+            setIsPlaying(false);
+            setIsPaused(false);
+
+            dispatch(
+                showToast({
+                    visible: true,
+                    message: 'Unable to play this song.',
+                    type: 'error',
+                })
+            );
+        } finally {
+            setLoadings(false);
+        }
+    };
+
+    const stopAudio = async () => {
+        try {
+            setLoadingst(true);
+
+            await Sound.stopPlayer();
+            Sound.removePlayBackListener();
+
+            await dispatch(isPausesd(true));
+
+            setIsPlaying(false);
+            setIsPaused(false);
+            setProgress(0);
+            setCurrentTime('00:00');
+            setTotalTime('00:00');
+        } catch (error) {
+            console.log('Stop audio error:', error);
+        } finally {
+            setLoadingst(false);
+        }
+    };
+
+
+
+    const pauseAudio = async () => {
+        try {
+            console.log({
+                isPlaying,
+                isPaused,
+            });
+            console.log("PAUSE CLICKED");
+            await Sound.pausePlayer();
+            console.log("PAUSE SUCCESSfhfhfhfh ");
+
+            setIsPlaying(false);
+            setIsPaused(true);
+        } catch (error) {
+            console.log("PAUSE ERROR", error);
+        }
+    };
+
+    const prepareLyrics = (song: any) => {
+        if (!song?.lyrics) {
+            setLyricsLines([]);
+            lyricsLinesRef.current = [];
+            return;
+        }
+
+        const lines: { text: string; start: number; end: number }[] = [];
+
+        const lyricRows = song.lyrics
+            .split('\n')
+            .map((line: string) => line.trim())
+            .filter(Boolean);
+
+        lyricRows.forEach((line: string, index: number) => {
+            const match = line.match(/^\[(\d{2}):(\d{2}(?:\.\d+)?)\](.*)$/);
+
+            if (!match) return;
+
+            const minutes = Number(match[1]);
+            const seconds = Number(match[2]);
+
+            const start = (minutes * 60 + seconds) * 1000;
+
+            const nextLine = lyricRows[index + 1];
+            let end = start + 3000;
+
+            if (nextLine) {
+                const nextMatch = nextLine.match(
+                    /^\[(\d{2}):(\d{2}(?:\.\d+)?)\]/
+                );
+
+                if (nextMatch) {
+                    const nextMinutes = Number(nextMatch[1]);
+                    const nextSeconds = Number(nextMatch[2]);
+
+                    end = (nextMinutes * 60 + nextSeconds) * 1000;
+                }
+            }
+
+            const text = match[3].trim();
+
+            if (text) {
+                lines.push({
+                    text,
+                    start,
+                    end,
+                });
+            }
+        });
+
+        lyricsLinesRef.current = lines;
+        setLyricsLines(lines);
+
+        // Reset active lyric
+        setActiveLyricIndex(0);
+    };
+
+
+    const updateProgress = async (percentage: number) => {
+        const clampedProgress = Math.max(
+            0,
+            Math.min(100, percentage)
+        );
+
+        dragProgressRef.current = clampedProgress;
+        setProgress(clampedProgress);
+    };
+
+
+    const progressPanResponder = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+
+            onMoveShouldSetPanResponder: () => true,
+
+            onPanResponderGrant: (evt) => {
+                if (!progressWidthRef.current) return;
+
+                isDraggingRef.current = true;
+
+                const x = evt.nativeEvent.locationX;
+
+                const percentage =
+                    (x / progressWidthRef.current) * 100;
+
+                const clamped = Math.max(
+                    0,
+                    Math.min(100, percentage)
+                );
+
+                progressStartRef.current = clamped;
+                dragProgressRef.current = clamped;
+
+                setProgressSmoothly(clamped);
+            },
+
+            onPanResponderMove: (_evt, gestureState) => {
+                if (!progressWidthRef.current) return;
+
+                const dx = gestureState.dx;
+
+                const progressPerPixel =
+                    100 / progressWidthRef.current;
+
+                const newProgress =
+                    progressStartRef.current +
+                    dx * progressPerPixel;
+
+                const clamped = Math.max(
+                    0,
+                    Math.min(100, newProgress)
+                );
+
+                dragProgressRef.current = clamped;
+
+                setProgressSmoothly(clamped);
+            },
+
+            onPanResponderRelease: async () => {
+                isDraggingRef.current = false;
+
+                const percentage = dragProgressRef.current;
+                const duration = totalDurationRef.current;
+
+                if (!duration) return;
+
+                const position =
+                    (percentage / 100) * duration;
+
+                console.log("SEEK:", {
+                    percentage,
+                    position,
+                    duration,
+                });
+
+                try {
+                    await Sound.seekToPlayer(position);
+
+                    // Immediately sync playback position
+                    setProgress(percentage);
+                } catch (error) {
+                    console.log("Seek error:", error);
+                }
+            },
+
+            onPanResponderTerminate: () => {
+                isDraggingRef.current = false;
+            },
+        })
+    ).current;
+
+
+
+    const startRecording = async () => {
+        const hasPermission = await requestMicPermission();
+
+        if (!hasPermission) {
+            console.log('Microphone permission denied');
+            return;
+        }
+
+        // Set up recording progress listener
+        try {
+            Sound.addRecordBackListener((e: RecordBackType) => {
+                console.log('Recording progress:', e.currentPosition, e.currentMetering);
+
+                // setRecordSecs(e.currentPosition);
+                // setRecordTime(Sound.mmssss(Math.floor(e.currentPosition)));
+            });
+
+            const result = await Sound.startRecorder();
+            setRecording(true);
+            console.log('Recording started:', result);
+        }
+        catch (e) {
+            console.log(e);
+        }
+    };
+
+    const stopRecording = async () => {
+        const result = await Sound.stopRecorder();
+        Sound.removeRecordBackListener();
+        console.log('Recording stopped:', result);
+        setPath(result);
+        setRecording(false);
+        Sound.removeRecordBackListener();
+        Sound.stopPlayer();
+        Sound.removePlayBackListener();
+        Sound.removePlaybackEndListener();
+    };
+
+    // const playRecording = async () => {
+    //   try {
+    //     await Sound.startPlayer(
+    //       'file:///data/user/0/com.karkab/files/sound_1780969747801.mp4'
+    //     );
+
+    //     Sound.addPlayBackListener((e) => {
+    //       console.log('Current:', e.currentPosition);
+    //       console.log('Duration:', e.duration);
+
+    //       if (e.currentPosition >= e.duration) {
+    //         Sound.stopPlayer();
+    //         Sound.removePlayBackListener();
+    //       }
+    //     });
+    //   } catch (error) {
+    //     console.log('Play Error:', error);
+    //   }
+    // };
+
+    const playRecording = async () => {
+        console.log("path", BASE_URL + '/uploads/songs/songFile-1781140344510-316584059.mp3')
+        try {
+            const result = await Sound.startPlayer(
+                BASE_URL + '/uploads/songs/songFile-1781140272878-969611845.mp3'
+            );
+
+            console.log('Playing:', result);
+
+            Sound.addPlayBackListener((e) => {
+                console.log(
+                    'Current:',
+                    Sound.mmssss(Math.floor(e.currentPosition)),
+                );
+
+                if (e.currentPosition >= e.duration) {
+                    Sound.stopPlayer();
+                    Sound.removePlayBackListener();
+                }
+            });
+        } catch (error) {
+            console.log('Play error:', error);
+        }
+    };
+
+
+    const resumeAudio = async () => {
+        try {
+            await Sound.resumePlayer();
+
+            setIsPlaying(true);
+            setIsPaused(false);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const getSongDetail = async (songid: any,) => {
+
+        try {
+            setScreenLoading(true);
+            const response = await ApiService.get(
+                apiUrls.singlesongdetail(songid)
+            );
+
+            console.log('Song Detail:', response.data);
+
+            if ((response as any).data.success) {
+                const song = (response as any).data.song;
+
+                setSongDetail(song);
+
+                // Prepare synced lyrics
+                prepareLyrics(song);
+
+                playAudio(song);
+                getSongadjacent(song.id)
+            }
+        } catch (error: any) {
+            dispatch(
+                showToast({
+                    visible: true,
+                    message:
+                        error.response?.data?.message ||
+                        error.message ||
+                        'Something went wrong.',
+                    type: 'error',
+                })
+            );
+            console.log('Error:', error);
+        }
+        finally {
+            setScreenLoading(false);
+        }
+    };
+
+
+
+    const getSongadjacent = async (songid: any) => {
+        console.log(songid)
+        try {
+
+            const response = await ApiService.get(
+                apiUrls.adjacentsong(songid)
+            );
+
+            console.log('Song Detail:', response.data);
+
+            if ((response as any).data.success) {
+                const song = (response as any).data;
+
+                setAdjectprevdata(song.previousSong);
+                setAdjectnextvdata(song.nextSong);
+                console.log(song, "jjjjj")
+
+            }
+        } catch (error: any) {
+            dispatch(
+                showToast({
+                    visible: true,
+                    message:
+                        error.response?.data?.message ||
+                        error.message ||
+                        'Something went wrong.',
+                    type: 'error',
+                })
+            );
+            console.log('Error:', error);
+        }
+        finally {
+
+        }
+    };
+
+
+
+
+    useEffect(() => {
+        if (
+            lyricsLines.length > 0 &&
+            activeLyricIndex >= 0 &&
+            activeLyricIndex < lyricsLines.length
+        ) {
+            const timer = setTimeout(() => {
+                lyricsListRef.current?.scrollToIndex({
+                    index: activeLyricIndex,
+                    animated: true,
+                    viewPosition: 0.5,
+                });
+            }, 100);
+
+            return () => clearTimeout(timer);
+        }
+    }, [activeLyricIndex, lyricsLines.length]);
+
+    const formatTime = (
+        value: number | string | null | undefined
+    ): string => {
+        if (value === null || value === undefined || value === '') {
+            return '00:00';
+        }
+
+        // Already formatted like "03:45"
+        if (typeof value === 'string' && value.includes(':')) {
+            const parts = value.split(':');
+
+            const minutes = Number(parts[0]) || 0;
+            const seconds = Number(parts[1]) || 0;
+
+            return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        const milliseconds = Number(value);
+
+        if (!Number.isFinite(milliseconds) || milliseconds < 0) {
+            return '00:00';
+        }
+
+        const totalSeconds = Math.floor(milliseconds / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+
+        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    };
+
+    return (
+        <SafeAreaView style= { [styles.container, { backgroundColor: color.darkbackround }]} >
+        {/* <Text>AudioRec Screen</Text> */ }
+        < View style = { styles.header } >
+            <TouchableOpacity
+          onPress={ () => { navigation.goBack() } }
+    style = { styles.sideButton } >
+        <AppImage
+            source={ Images.leftarrow }
+    width = { 8}
+    height = { 16}
+        />
+        </TouchableOpacity>
+
+        < View style = { styles.titleContainer } >
+            <AppText
+            color={ color.darkthemetext }
+    fontSize = { 19}
+    fontWeight = "500"
+    fontFamily = { Inter.medium }
+        >
+        Live Session
+            </AppText>
+
+            < LinearGradient
+    colors = { ['#D4344F', '#E79156']}
+    start = {{ x: 0.2, y: 0 }
+}
+end = {{ x: 1, y: 1 }}
+style = { styles.lineview }
+    />
+    </View>
+
+    < TouchableOpacity style = { styles.effectsButton } >
+        <AppImage
+            source={ Images.playlist }
+width = { 15}
+height = { 15}
+tintColor = "#F34C2B"
+    />
+
+    <AppText
+            color={ color.darkthemetext }
+fontSize = { 10}
+fontWeight = "400"
+fontFamily = { Inter.regular }
+
+    >
+    Effects
+    </AppText>
+    </TouchableOpacity>
+    </View>
+
+{
+    screenLoading ? (
+        <View style= { styles.screenLoader } >
+        <ActivityIndicator
+            size="large"
+    color = "#F1A03F"
+        />
+
+        <AppText
+            color="#FFFFFF"
+    fontSize = { 14}
+    fontFamily = { Inter.regular }
+    style = {{ marginTop: 12 }
+}
+          >
+    Loading song...
+</AppText>
+    </View>
+      ) : (
+    <>
+    <View style= { styles.songview } >
+    <LinearGradient
+              colors={ ['#8A5300', '#F47921', '#BA5100'] }
+start = {{ x: 0.2, y: 0 }}
+end = {{ x: 1, y: 1 }}
+style = { styles.songBorder }
+    >
+    <View style={ { backgroundColor: color.darkbackround, margin: 1, borderRadius: 17 } }>
+        <View style={ [styles.songContent, { backgroundColor: color.darkbackround, }] }>
+            {/* Music Icon */ }
+{/* <View
+        style={styles.iconview}
+      > */}
+{/* <AppImage
+                source={GlobalImage(songdetail?.cover_image_url)}
+                width={57}
+                height={61}
+              // tintColor="#FFFFFF"
+              /> */}
+<View
+                    style={
+    {
+        width: 57,
+            height: 61,
+                borderRadius: 8,
+                    overflow: 'hidden',
+                        justifyContent: 'center',
+                            alignItems: 'center',
+                    }
+}>
+    <AppImage
+                      source={ GlobalImage(songdetail?.cover_image_url) }
+width = { 57}
+height = { 100}
+    // tintColor="#FFFFFF"
+    />
+    </View>
+
+{/* Center Content */ }
+<View style={ styles.songInfo }>
+    <AppText
+                      color={ color.darkthemetext }
+fontSize = { 14}
+fontWeight = "600"
+fontFamily = { Inter.bold }
+    >
+    { songdetail?.artist || 'Mabrook'}
+</AppText>
+
+    < AppText
+color = { '#FA8744'}
+fontSize = { 12}
+fontWeight = "400"
+fontFamily = { Inter.regular }
+    >
+    { songdetail?.title || 'Hozan Yosif'}
+</AppText>
+
+
+
+    < View style = { styles.progressRow } >
+        <AppText color={ color.darkthemetext } fontSize = { 10} fontFamily = { Inter.regular } >
+            { currentTime.slice(0, 5) || "00:00" }
+            </AppText>
+
+            < View
+style = { styles.progressTrack }
+onLayout = {(event) => {
+    const width = event.nativeEvent.layout.width;
+    progressWidthRef.current = width;
+}}
+{...progressPanResponder.panHandlers }
+                      >
+    {/* UNFILLED / BACKGROUND BAR */ }
+    < View style = { styles.progressBackground } />
+
+        {/* FILLED PROGRESS */ }
+        < View
+style = {
+    [
+    styles.progressFill,
+    {
+        width: `${progress}%`,
+    },
+                          ]}
+    />
+
+    {/* THUMB */ }
+    < View
+style = {
+    [
+    styles.progressThumb,
+    {
+        left: `${progress}%`,
+        transform: [{ translateX: -5 }],
+    },
+                          ]}
+    />
+    </View>
+
+    < AppText color = { color.darkthemetext } fontSize = { 10} fontFamily = { Inter.regular } >
+        { formatTime(totalTime) }
+        </AppText>
+        </View>
+        </View>
+
+{/* Right Icons */ }
+<View style={ styles.rightIcons }>
+    <TouchableOpacity>
+    <AppImage
+                        source={ Images.like }
+width = { 18}
+height = { 18}
+tintColor = { "#EB0836"}
+    />
+    </TouchableOpacity>
+
+
+    < AppImage
+source = { Images.equalizer }
+width = { 18}
+height = { 18}
+    />
+    </View>
+
+
+    </View>
+    < View style = {{
+    flexDirection: 'row',
+        justifyContent: 'space-between',
+            alignItems: 'center',
+                borderWidth: 1,
+                    borderColor: '#4A4A4A',
+                        paddingVertical: 4,
+                            paddingHorizontal: 10,
+                                borderRadius: 7,
+                                    margin: 10,
+                }} >
+    <View style={ { flexDirection: 'row', alignItems: 'center', gap: 4 } }>
+        <View style={ { height: 6, width: 6, backgroundColor: '#DA3B58', borderRadius: 20 } } />
+            < AppText color = "#FFF" fontSize = { 10} fontFamily = { Inter.regular } >
+                Verse 2
+                    </AppText>
+                    </View>
+                    < View style = {{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <AppText color="#FFF" fontSize = { 10} fontFamily = { Inter.regular } >
+                            { currentTime.slice(0, 5) || "00:00" } /
+                            </AppText>
+                            < AppText color = "#F1A03F" fontSize = { 10} fontFamily = { Inter.regular } >
+                                { formatTime(totalTime) || "00:00"}
+</AppText>
+    </View>
+    < AppText color = "#F1A03F" fontSize = { 10} fontFamily = { Inter.regular } >
+        {`${Number(progress).toFixed(0)}%`}
+</AppText>
+    </View>
+    </View>
+
+
+    </LinearGradient>
+    </View>
+    < View style = { styles.songNavigation } >
+
+        {/* Previous */ }
+        < TouchableOpacity
+activeOpacity = { 0.7}
+disabled = {!adjectprevdata?.id}
+onPress = {() => {
+    if (adjectprevdata?.id) {
+        getSongDetail(adjectprevdata.id);
+    }
+}}
+style = {
+    [
+    styles.navigationButton,
+    !adjectprevdata?.id && styles.navigationButtonDisabled,
+              ]}
+    >
+    <AppImage
+                source={ Images.leftarrow }
+width = { 7}
+height = { 13}
+tintColor = { adjectprevdata?.id? '#F1A03F': '#4A4A4A' }
+    />
+
+    <View style={ styles.navigationTextContainer }>
+        <AppText
+                  color={ adjectprevdata?.id ? '#F1A03F' : '#4A4A4A' }
+fontSize = { 9}
+fontWeight = "500"
+fontFamily = { Inter.medium }
+    >
+    PREVIOUS
+    </AppText>
+
+    < AppText
+color = { adjectprevdata?.id? '#FFFFFF': '#4A4A4A' }
+fontSize = { 11}
+fontWeight = "400"
+fontFamily = { Inter.regular }
+numberOfLines = { 1}
+style = { styles.navigationSongTitle }
+    >
+    { adjectprevdata?.title || 'No previous song'}
+</AppText>
+    </View>
+    </TouchableOpacity>
+
+
+{/* Center divider */ }
+<View style={ styles.navigationDivider } />
+
+
+{/* Next */ }
+<TouchableOpacity
+              activeOpacity={ 0.7 }
+disabled = {!adjectnextdata?.id}
+onPress = {() => {
+    if (adjectnextdata?.id) {
+        getSongDetail(adjectnextdata.id);
+    }
+}}
+style = {
+    [
+    styles.navigationButton,
+    styles.nextNavigationButton,
+    !adjectnextdata?.id && styles.navigationButtonDisabled,
+              ]}
+    >
+    <View style={ styles.navigationTextContainer }>
+        <AppText
+                  color={ adjectnextdata?.id ? '#F1A03F' : '#4A4A4A' }
+fontSize = { 9}
+fontWeight = "500"
+fontFamily = { Inter.medium }
+textAlign = "right"
+    >
+    NEXT
+    </AppText>
+
+    < AppText
+color = { adjectnextdata?.id? '#FFFFFF': '#4A4A4A' }
+fontSize = { 11}
+fontWeight = "400"
+fontFamily = { Inter.regular }
+numberOfLines = { 1}
+textAlign = "right"
+style = { styles.navigationSongTitle }
+    >
+    { adjectnextdata?.title || 'No next song'}
+</AppText>
+    </View>
+
+    < View style = { styles.nextArrow } >
+        <AppImage
+                  source={ Images.leftarrow }
+width = { 7}
+height = { 13}
+tintColor = { adjectnextdata?.id? '#F1A03F': '#4A4A4A' }
+    />
+    </View>
+    </TouchableOpacity>
+
+    </View>
+
+    < LinearGradient
+colors = { ['#1D1916', '#FF8F03', '#1D1916']}
+locations = { [0, 0.5, 1]}
+start = {{ x: 0, y: 0.5 }}
+end = {{ x: 1, y: 0.5 }}
+style = { styles.navigationGradientLine }
+    />
+
+
+
+
+
+    <View style={ styles.lyricsContainer }>
+        {
+            lyricsLines.length > 0 ? (
+                <FlatList
+                ref= { lyricsListRef }
+                data={ lyricsLines }
+                keyExtractor={(item, index) =>
+                  `${item.start}-${index}`
+                }
+onScrollToIndexFailed = {(info) => {
+    console.log('scrollToIndex failed:', info);
+
+    // First scroll close to the requested item
+    lyricsListRef.current?.scrollToOffset({
+        offset: info.averageItemLength * info.index,
+        animated: false,
+    });
+
+    // Retry after FlatList has rendered the item
+    setTimeout(() => {
+        lyricsListRef.current?.scrollToIndex({
+            index: info.index,
+            animated: true,
+            viewPosition: 0.5,
+        });
+    }, 300);
+}}
+showsVerticalScrollIndicator = { false}
+contentContainerStyle = {{
+    paddingVertical: 80,
+        alignItems: 'center',
+                }}
+renderItem = {({ item, index }) => {
+    const isActive = index === activeLyricIndex;
+
+    return (
+        <TouchableOpacity
+                      activeOpacity= { 0.8}
+    onPress = { async() => {
+        try {
+            await Sound.seekToPlayer(item.start);
+
+            setActiveLyricIndex(index);
+        } catch (error) {
+            console.log(
+                'Lyric seek error:',
+                error
+            );
+        }
+    }
+}
+style = { styles.lyricItem }
+    >
+{
+    isActive?(
+                        <GradientText>
+    { item.text }
+    </GradientText>
+                      ) : (
+    <AppText
+                          color= "#7A7A7A"
+fontSize = { 16}
+fontWeight = "400"
+fontFamily = { Inter.regular }
+style = { styles.lyricText }
+    >
+    { item.text }
+    </AppText>
+                      )}
+</TouchableOpacity>
+                  );
+                }}
+ListEmptyComponent = {
+                  < AppText
+color = "#7A7A7A"
+fontSize = { 15}
+fontFamily = { Inter.regular }
+    >
+    Lyrics not available
+        </AppText>
+                }
+              />
+            ) : (
+    <AppText
+                color= "#7A7A7A"
+fontSize = { 15}
+fontFamily = { Inter.regular }
+    >
+    Lyrics not available
+        </AppText>
+            )}
+</View>
+
+{/* <View style={{flexDirection:'row',alignItems:'center',alignSelf:'center',gap:4}}>
+  <View style={{height:7,width:7,borderRadius:7,backgroundColor:'#DA3B58'}} />
+
+
+ <AppText color="#FFF" fontSize={14}  fontFamily={Inter.regular}>
+            01:24
+          </AppText>
+</View> */}
+
+
+<View style={ { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', alignSelf: 'center', } }>
+{/* <AppImage
+          source={Images.wavesl}
+          width={88}
+          height={88}
+          //tintColor={"#DFB355"}
+        /> */}
+    < AppImage
+source = { Banner.linewave }
+width = { '100%'}
+height = { 88}
+resizeMode = "cover"
+
+    />
+{/* <AppImage
+          source={Images.wavesr}
+          width={88}
+          height={88}
+          
+        /> */}
+    </View>
+
+
+
+
+    < AppText
+color = { "#EBC975"}
+fontSize = { 14}
+fontWeight = "400"
+textAlign = { "center"}
+fontFamily = { Inter.regular }
+    > Own the moment </AppText>
+
+        < View style = { styles.commandview } >
+            <View style={ { justifyContent: 'center', alignItems: 'center', gap: 10 } }>
+                <TouchableOpacity style={ styles.viewicon }
+
+//  onPress={()=>{playRecording()}
+onPress = {() => { playAudio(songdetail) }
+
+                }>
+{
+    loadings?(
+                  <ActivityIndicator size = "small" color = "#FFFFFF" />
+                ): (
+            <AppImage
+                    source = {Images.restart}
+width = { 24}
+height = { 24}
+tintColor = "#CB4F00"
+    />)}
+</TouchableOpacity>
+    < AppText
+color = { color.darkthemetext }
+fontSize = { 10}
+fontWeight = "400"
+fontFamily = { Inter.regular }
+    >
+    Restart
+    </AppText>
+    </View>
+    < View style = {{ justifyContent: 'center', alignItems: 'center', gap: 10 }}>
+        <TouchableOpacity
+
+                //  onPress={recording ? stopRecording : startRecording}
+                onPress={
+    () => {
+        if (isPlaying) {
+            pauseAudio();
+        } else if (isPaused) {
+            resumeAudio();
+        } else {
+            playAudio(songdetail);
+        }
+    }
+}
+              >
+    <LinearGradient
+                  colors={ ['#C30050', '#DF551A'] }
+start = {{ x: 0.2, y: 0 }}
+end = {{ x: 1, y: 1 }}
+style = {{ height: 58, width: 58, borderRadius: 32.5, justifyContent: 'center', alignItems: 'center' }}
+                >
+
+{
+    isPaused?
+        <AppImage
+                      source = {Images.playicon
+}
+width = { 21}
+height = { 21}
+tintColor = { color.darkthemetext }
+    />
+                    :
+<View style={ { height: 21, width: 21, backgroundColor: '#ffff', borderRadius: 3 } }>
+
+    </View>
+                  }
+
+
+</LinearGradient>
+    </TouchableOpacity>
+
+    < AppText
+color = { color.darkthemetext }
+fontSize = { 10}
+fontWeight = "400"
+fontFamily = { Inter.regular }
+    >
+{
+    isPaused?
+                  "PLay":
+        "Pause"
+}
+    </AppText>
+
+    </View>
+
+    < View style = {{ justifyContent: 'center', alignItems: 'center', gap: 10 }}>
+        <TouchableOpacity style={ styles.viewicon }
+
+// onPress={() => stopRecording()}
+
+onPress = {() => stopAudio()}
+
+              >
+{
+    loadingst?(
+                  <ActivityIndicator size = "small" color = "#FFFFFF" />
+                ): (
+            <AppImage
+                    source = {Images.tick}
+width = { 24}
+height = { 24}
+tintColor = "#CB4F00"
+    />)}
+</TouchableOpacity>
+    < AppText
+color = { color.darkthemetext }
+fontSize = { 10}
+fontWeight = "400"
+fontFamily = { Inter.regular }
+    >
+    Finish
+    </AppText>
+    </View>
+
+    </View>
+    < View style = {{ height: 60 }} />
+        </>
+      )}
+</SafeAreaView>
+  )
+}
+const styles = StyleSheet.create({
+    container: {
+        backgroundColor: color.darkbackround,
+        flex: 1,
+        paddingHorizontal: 10,
+        gap: 20
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingTop: 15,
+        // paddingBottom: 10,
+    },
+
+    sideButton: {
+        width: 70,
+        justifyContent: 'center',
+    },
+
+    titleContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    effectsButton: {
+        width: 70,
+        height: 33,
+        borderWidth: 1,
+        borderColor: '#642F08',
+        borderRadius: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+    },
+
+    lineview: {
+        width: 87,
+        height: 4,
+        marginTop: 4,
+        borderRadius: 2,
+    },
+    songview: {
+        marginTop: 20,
+    },
+
+    songBorder: {
+        borderRadius: 18,
+        //padding: 1,
+    },
+
+    songContent: {
+
+        borderRadius: 17,
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+
+    },
+
+    iconview: {
+        width: 52,
+        height: 52,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    songInfo: {
+        flex: 1,
+        marginLeft: 12,
+    },
+
+    progressRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 8,
+    },
+
+
+
+    // progressFill: {
+    //   //width: '40%',
+    //   height: 2,
+    //   backgroundColor: '#FF6B8A',
+    // },
+
+    // progressThumb: {
+    //   width: 10,
+    //   height: 10,
+    //   borderRadius: 5,
+    //   backgroundColor: '#F1B465',
+    //   position: 'absolute',
+    //   left: '40%',
+    //   top: -4,
+    // },
+
+    rightIcons: {
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        height: 52,
+        marginLeft: 12,
+    },
+
+    commandview: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 40,
+        flexDirection: 'row',
+        alignSelf: 'center',
+    },
+    viewicon: {
+        borderWidth: 1,
+        borderColor: '#CB4F00',
+        borderRadius: 29,
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: 58,
+        width: 58
+    },
+    lyricsContainer: {
+        flex: 1,
+        width: '100%',
+    },
+
+    lyricItem: {
+        width: '100%',
+        paddingVertical: 9,
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+
+    lyricText: {
+        textAlign: 'center',
+    },
+
+    progressBackground: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        top: 14,
+        height: 3,
+        borderRadius: 2,
+        backgroundColor: '#4A4A4A',
+    },
+
+    progressFill: {
+        position: 'absolute',
+        left: 0,
+        top: 14,
+        height: 3,
+        borderRadius: 2,
+        backgroundColor: '#FF6B8A',
+    },
+
+    progressThumb: {
+        position: 'absolute',
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: '#F1B465',
+        top: 10,
+    },
+
+    progressTrack: {
+        flex: 1,
+        height: 30,
+        justifyContent: 'center',
+        marginHorizontal: 8,
+        position: 'relative',
+
+    },
+
+
+
+    screenLoader: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    songNavigation: {
+        width: '100%',
+        minHeight: 58,
+        marginTop: 4,
+        paddingHorizontal: 4,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: '#100F0E',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#292624',
+        paddingVertical: 8,
+    },
+
+    navigationButton: {
+        flex: 1,
+        minWidth: 0,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 8,
+        paddingVertical: 5,
+    },
+
+    nextNavigationButton: {
+        justifyContent: 'flex-end',
+    },
+
+    navigationButtonDisabled: {
+        opacity: 0.5,
+    },
+
+    navigationTextContainer: {
+        flex: 1,
+        minWidth: 0,
+        marginLeft: 8,
+    },
+
+    navigationSongTitle: {
+        marginTop: 3,
+        maxWidth: 110,
+    },
+
+    navigationDivider: {
+        width: 1,
+        height: 32,
+        backgroundColor: '#3A3633',
+        marginHorizontal: 5,
+    },
+
+    nextArrow: {
+        marginLeft: 8,
+        transform: [{ rotate: '180deg' }],
+    },
+
+    navigationGradientLine: {
+        height: 1,
+        width: '100%',
+        borderRadius: 1,
+        marginTop: 8,
+        marginBottom: 4,
+    },
+})
+export default AudioRec;

@@ -1,12 +1,13 @@
 import React, { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { LogBox, StatusBar } from 'react-native';
+import { AppState, LogBox, StatusBar } from 'react-native';
 
 import Providers from './providers';
 import RootNavigator from '../navigation/RootNavigator';
 import { storage } from '../share/storage/mmkv';
 
 import { setupAudioPlayer } from '../services/player';
+import TrackPlayer from '@rntp/player';
 
 LogBox.ignoreAllLogs(true);
 
@@ -44,6 +45,16 @@ const App = () => {
         return () => {
             mounted = false;
         };
+    }, []);
+    useEffect(() => {
+        const sub = AppState.addEventListener('change', async (state) => {
+            console.log(state, "whwdsjdjb")
+            if (state === 'unknown') {
+                // Optional: pause when app backgrounds (remove if you want background play)
+                await TrackPlayer.pause();
+            }
+        });
+        return () => sub.remove();
     }, []);
 
     return (
