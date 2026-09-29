@@ -2232,7 +2232,7 @@ PODS:
     - ReactNativeDependencies
     - RNFBApp
     - Yoga
-  - RNGestureHandler (2.32.0):
+  - RNGestureHandler (2.33.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2278,7 +2278,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNLocalize (3.7.0):
+  - RNLocalize (3.7.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2300,7 +2300,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNScreens (4.27.0):
+  - RNScreens (4.28.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2322,9 +2322,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNScreens/common (= 4.27.0)
+    - RNScreens/common (= 4.28.0)
     - Yoga
-  - RNScreens/common (4.27.0):
+  - RNScreens/common (4.28.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2764,7 +2764,7 @@ SPEC CHECKSUMS:
   GoogleUtilities: 4e0c2ad9fa0d0d18b5c4df8bf57b461cba35b0bb
   GTMAppAuth: 217a876b249c3c585a54fd6f73e6b58c4f5c4238
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
-  hermes-engine: ec428aefdfe87d2c7f99d0d95b0ff5bc5c8ed5a2
+  hermes-engine: 75f93c737573a4ba99e5a0cf33d664bfa0eea96f
   libavif: 84bbb62fb232c3018d6f1bab79beea87e35de7b7
   libdav1d: 23581a4d8ec811ff171ed5e2e05cd27bad64c39f
   libwebp: af5937a13536ef73f3784d69cc342b98961acf33
@@ -2782,7 +2782,7 @@ SPEC CHECKSUMS:
   React: e2dc35338068bbd299c66f043ae0d7f25de8499e
   React-callinvoker: 28b25d21b124c26cebaea713ba7d801b9351dc48
   React-Core: 02ed7d2ffb70437bdf2aba074a13078a7b0b9ff0
-  React-Core-prebuilt: c9abc96a4dc7899576c7087c73f10ed92f23ae00
+  React-Core-prebuilt: bc0d9fa67859992bc40c9aa47cb39acff0235265
   React-CoreModules: b3a5a42dadcde3b5d47b325bd912eb2ced89e146
   React-cxxreact: fe8f88dda044e5905e99a00f41b7a874c3908716
   React-debug: 9af1e96a6069c996e3d9f1e493603e74bc9f1593
@@ -2850,7 +2850,7 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: 25c9c516839be2c5e3d3344f95dc7da5f7e63fc2
   ReactCodegen: 7016a2114079361a2f1536b3c91a15ceb8eb7ca4
   ReactCommon: 7dfc3250793bf36cf221096ff59e1179e13eef7f
-  ReactNativeDependencies: e5a3fdccd1511cef09e5f50a744ec6f69b5caa86
+  ReactNativeDependencies: 6353b8293ba9f33c5d65af11015f4ac3cef74b36
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   RNAppleAuthentication: a89c9804592b38ed4ab11f0aee68d05ba12ad432
   RNCMaskedView: 8069b4d4e23b3d28b4fcac70bf266be43ffc3d2e
@@ -2858,10 +2858,10 @@ SPEC CHECKSUMS:
   RNFastImage: 14580cef91660b889645fb9e87f58a53621db993
   RNFBApp: ab502c911e5203f22a56998b7ed22e5ecf436da4
   RNFBAuth: e7b937855c4b575cf2d35cb27f1d990b50bcc71c
-  RNGestureHandler: 2e2ad64376d02421ebe334144981448f59cc941d
+  RNGestureHandler: a75fec9fcef282c848fc0f3082c98895b1cfa0ff
   RNGoogleSignin: ec9aa83655ffbb5d606ac9420be9bcdaa119439f
-  RNLocalize: 17bce0556e2d33fe1201c8cef53b3b7786e07612
-  RNScreens: b2e46935230f4877eed4985c259e52bbe0b03aa7
+  RNLocalize: bc9074f04742d49e569009ad7a965027aaa9f438
+  RNScreens: 8708989f700bdc3dc5abc3c77aa3b5f3e73ce2b2
   RNSVG: 8efa5ad14ceb98fe56c03793bd55bc4bd30ad84b
   RNTPPlayer: 3bb0b2f14975f6f6c110427379146a1bc2361562
   SDWebImage: e9fc87c1aab89a8ab1bbd74eba378c6f53be8abf
@@ -2872,4 +2872,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: ecc72a24c569612ad0e41b306e1b4f936ce361c6
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.17.0

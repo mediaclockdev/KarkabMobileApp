@@ -334,7 +334,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 4;
-				DEVELOPMENT_TEAM = Y24285WK65;
+				DEVELOPMENT_TEAM = B24VX7ZP8T;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = KarKab/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = KARKAB;
@@ -350,7 +350,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.karkab.au.dev;
+				PRODUCT_BUNDLE_IDENTIFIER = com.karKab.au;
 				PRODUCT_NAME = KarKab;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -375,7 +375,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 4;
-				DEVELOPMENT_TEAM = Y24285WK65;
+				DEVELOPMENT_TEAM = B24VX7ZP8T;
 				INFOPLIST_FILE = KarKab/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = KARKAB;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
@@ -390,7 +390,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.karkab.au.dev;
+				PRODUCT_BUNDLE_IDENTIFIER = com.karKab.au;
 				PRODUCT_NAME = KarKab;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
