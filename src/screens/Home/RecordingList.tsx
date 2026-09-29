@@ -615,6 +615,7 @@ export default function RecordingList() {
                         loading={
                             isLoading
                         }
+                        type={'recordings'}
                     />
                 </View>
             </ScrollView>

@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
 
     sectionTitle: {
         color: '#fff',
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: '600',
         fontFamily: Inter.medium
     },
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
 
     view: {
         color: '#F6A202',
-        fontSize: 10,
+        fontSize: 14,
         fontFamily: Inter.regular
     }
 

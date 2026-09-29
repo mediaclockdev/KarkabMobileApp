@@ -75,10 +75,10 @@ export default function SearchSongSecreen() {
         try {
             setIsLoading(true);
 
-            const response = await ApiService.get(apiUrls.getsonglist);
+            const response = await ApiService.get(apiUrls.allsongs);
 
             const data = response.data;
-
+            console.log(data, "hhlllllvhvh")
             if (data?.success) {
                 setSongdata(data.songs);
                 setNumberofsong(data.total_songs);
@@ -168,7 +168,7 @@ export default function SearchSongSecreen() {
                         />
 
                         <AppText
-                            fontSize={20}
+                            fontSize={22}
                             fontFamily={Inter.bold}
                             color="#FFF"
                         >
@@ -176,7 +176,7 @@ export default function SearchSongSecreen() {
                         </AppText>
 
                         <AppText
-                            fontSize={10}
+                            fontSize={12}
                             color="#8A8A8A"
                             style={{ marginTop: 4 }}>
                             Find your favorite songs & artists
@@ -219,7 +219,7 @@ export default function SearchSongSecreen() {
                                 placeholderTextColor="#CDCECB"
                                 style={{
                                     flex: 1,
-                                    fontSize: 10,
+                                    fontSize: 14,
                                     color: '#FFF',
                                     marginLeft: 8,
                                 }}

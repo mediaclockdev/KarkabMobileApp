@@ -37,6 +37,7 @@ type MusicItem = {
   song_url: string;
   onLikePress?: () => void;
   onDislikePress?: () => void;
+  type?: string;
 
 };
 
@@ -46,6 +47,7 @@ interface LibrarylistProps {
   loading: boolean;
   onLikePress?: () => void;
   onDislikePress?: () => void;
+  type?: string;
 }
 
 const musicDatas: MusicItem[] = [
@@ -76,7 +78,8 @@ const musicDatas: MusicItem[] = [
 const Librarylist = ({ musicData,
   loading,
   onLikePress,
-  onDislikePress, }: LibrarylistProps) => {
+  onDislikePress,
+  type }: LibrarylistProps) => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const color = useAppColors();
@@ -284,7 +287,7 @@ const Librarylist = ({ musicData,
         {/* Image */}
         <TouchableOpacity
           onPress={() => (navigation as any).navigate('.', {
-            id: item.id,
+            id: item.id, type: type
           })}
         >
 
@@ -310,7 +313,7 @@ const Librarylist = ({ musicData,
         {/* Content */}
         <TouchableOpacity
           onPress={() => (navigation as any).navigate('.', {
-            id: item.id,
+            id: item.id, type: type
           })}
           style={styles.content}>
           <AppText

@@ -60,7 +60,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         >
           <AppText
             color={'#777'}
-            fontSize={12}
+            fontSize={14}
             fontFamily={Inter.regular}
           >
             {placeholder}

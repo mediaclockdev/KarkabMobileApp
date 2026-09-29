@@ -41,8 +41,10 @@ const AudioRec = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const dispatch = useAppDispatch();
-
-  const { id } = (route?.params as { id: number }) || { id: 1 };
+  const { id = 1, type } = (route?.params as {
+    id?: number;
+    type?: string;
+  }) ?? {};
 
   // @rntp/player States
   const playing = useIsPlaying();
@@ -82,6 +84,12 @@ const AudioRec = () => {
   const [dragProgress, setDragProgress] = useState<number | null>(null);
   const isDraggingRef = useRef(false);
   const progressWidthRef = useRef(0);
+  const isSeekingRef = useRef(false);
+  const seekPositionRef = useRef(0);
+  const progressPageXRef = useRef(0);
+  const scrubberRef = useRef<View>(null);
+  const dragProgressRef = useRef<number | null>(null);
+  const effectiveDurationRef = useRef(0);
   const lyricsListRef = useRef<FlatList>(null);
   const [lyricsLines, setLyricsLines] = useState<
     { text: string; start: number; end: number }[]
@@ -157,7 +165,13 @@ const AudioRec = () => {
   );
 
   useEffect(() => {
-    getSongDetail(id);
+    if (type == 'recordings') {
+      getrecDetail(id)
+    }
+    else {
+      getSongDetail(id);
+    }
+
   }, [id]);
 
   /**
@@ -218,34 +232,31 @@ const AudioRec = () => {
     const interval = setInterval(async () => {
       try {
         const progress = await TrackPlayer.getProgress();
-        if (progress) {
-          if (!isDraggingRef.current) {
-            const posSec =
-              progress.position > 10000
-                ? progress.position / 1000
-                : progress.position;
-            const durSec =
-              progress.duration > 10000
-                ? progress.duration / 1000
-                : progress.duration;
 
-            setCurrentPosition(posSec || 0);
+        if (!progress) return;
 
-            if (durSec && durSec > 0) {
-              setTrackDuration(durSec);
-            }
+        const posSec = Number(progress.position) || 0;
+        const durSec = Number(progress.duration) || 0;
 
-            if (
-              durSec > 0 &&
-              posSec >= durSec - 0.6 &&
-              !isAutoNextingRef.current
-            ) {
-              handleAutoNextSong();
-            }
+        if (!isDraggingRef.current) {
+          setCurrentPosition(posSec);
+
+          if (durSec > 0) {
+            setTrackDuration(durSec);
+          }
+
+          if (
+            durSec > 0 &&
+            posSec >= durSec - 0.6 &&
+            !isAutoNextingRef.current
+          ) {
+            handleAutoNextSong();
           }
         }
-      } catch (e) { }
-    }, 250);
+      } catch (e) {
+        console.log('Progress error:', e);
+      }
+    }, 150);
 
     return () => clearInterval(interval);
   }, []);
@@ -326,33 +337,46 @@ const AudioRec = () => {
   };
 
   const playSongItem = async (song: any) => {
-    if (!song?.song_url) return;
+    if (!song?.id) return;
 
     try {
       await dispatch(addsong(song));
       await saveLastPlayed(song);
 
       const activeItem = TrackPlayer.getActiveMediaItem();
+
+      // DO NOT reload the same song.
+      // Reloading it resets position to 0.
       if (activeItem?.mediaId === song.id.toString()) {
+        console.log('Same track - keeping current position');
         return;
       }
 
       const dur = Number(song.duration) || 0;
+
       if (dur > 0) {
-        setTrackDuration(dur > 1000 ? dur / 1000 : dur);
+        setTrackDuration(
+          dur > 1000 ? dur / 1000 : dur
+        );
       }
 
       const mediaItem = {
         mediaId: song.id.toString(),
-        url: song.song_url,
+        url: song.song_url || song.recording_url,
         title: song.title || 'Unknown Title',
         artist: song.artist || 'Unknown Artist',
         artworkUrl: song.cover_image_url || undefined,
-        duration: dur || undefined,
+        duration: dur > 0
+          ? dur > 1000
+            ? dur / 1000
+            : dur
+          : undefined,
       };
 
       await TrackPlayer.setMediaItem(mediaItem);
+
       await TrackPlayer.play();
+
     } catch (error) {
       console.log('PLAY ERROR:', error);
     }
@@ -364,6 +388,60 @@ const AudioRec = () => {
       const response = await ApiService.get(apiUrls.singlesongdetail(songid));
       if ((response as any).data?.success) {
         const song = (response as any).data.song;
+        setSongDetail(song);
+        prepareLyrics(song);
+        await playSongItem(song);
+        getSongadjacent(song.id);
+      }
+    } catch (error: any) {
+      getrendomsong()
+      dispatch(
+        showToast({
+          visible: true,
+          message: error?.message || 'Failed to load track.',
+          type: 'error',
+        })
+      );
+    } finally {
+      getrendomsong()
+      setScreenLoading(false);
+    }
+  };
+
+  const getrecDetail = async (songid: any) => {
+    try {
+      setScreenLoading(true);
+      const response = await ApiService.get(apiUrls.singlerecdetail(songid));
+      if ((response as any).data?.success) {
+        const song = (response as any).data.recording;
+        setSongDetail(song);
+        prepareLyrics(song);
+        await playSongItem(song);
+        getSongadjacent(song.id);
+      }
+    } catch (error: any) {
+      getrendomsong()
+      dispatch(
+        showToast({
+          visible: true,
+          message: error?.message || 'Failed to load track.',
+          type: 'error',
+        })
+      );
+    } finally {
+      getrendomsong()
+      setScreenLoading(false);
+    }
+  };
+
+
+  const getrendomsong = async () => {
+    try {
+      setScreenLoading(true);
+      const response = await ApiService.get(apiUrls.randomsong);
+      if ((response as any).data?.success) {
+        console.log(response, "hbbjbknk")
+        const song = (response as any).data.songs[0];
         setSongDetail(song);
         prepareLyrics(song);
         await playSongItem(song);
@@ -430,38 +508,123 @@ const AudioRec = () => {
   };
 
   // Scrubber PanResponder
+  // Scrubber PanResponder (updated)
+  // ───────────────────────────────────────────────────────────────
+  // Scrubber PanResponder (replace the previous definition entirely)
+  // ───────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────
+  // Updated scrubber PanResponder (only the release handler changes)
+  // ───────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────
+  // Scrubber PanResponder (replace the previous definition)
+  // ───────────────────────────────────────────────────────────────
   const progressPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt) => {
-        if (!progressWidthRef.current) return;
-        isDraggingRef.current = true;
-        const x = evt.nativeEvent.locationX;
-        const pct = Math.max(0, Math.min(100, (x / progressWidthRef.current) * 100));
-        setDragProgress(pct);
-      },
-      onPanResponderMove: (_evt, gestureState) => {
-        if (!progressWidthRef.current) return;
-        const x = gestureState.dx + (progressWidthRef.current * (currentPercent / 100));
-        const pct = Math.max(0, Math.min(100, (x / progressWidthRef.current) * 100));
-        setDragProgress(pct);
-      },
-      onPanResponderRelease: async () => {
-        const dur = effectiveDuration;
-        if (dragProgress !== null && dur > 0) {
-          const seekPosition = (dragProgress / 100) * dur;
-          setCurrentPosition(seekPosition);
-          await TrackPlayer.seekTo(seekPosition);
+
+      onPanResponderGrant: async (evt) => {
+        const width = progressWidthRef.current;
+
+        if (!width || effectiveDuration <= 0) {
+          return;
         }
-        isDraggingRef.current = false;
-        setDragProgress(null);
+
+        isDraggingRef.current = true;
+        isSeekingRef.current = true;
+
+        const x = Math.max(
+          0,
+          Math.min(width, evt.nativeEvent.locationX),
+        );
+
+        const percent = x / width;
+        const position = percent * effectiveDuration;
+
+        seekPositionRef.current = position;
+
+        setDragProgress(percent * 100);
+        setCurrentPosition(position);
       },
+
+      onPanResponderMove: (evt) => {
+        const width = progressWidthRef.current;
+
+        if (!width || effectiveDuration <= 0) {
+          return;
+        }
+
+        const x = Math.max(
+          0,
+          Math.min(width, evt.nativeEvent.locationX),
+        );
+
+        const percent = x / width;
+        const position = percent * effectiveDuration;
+
+        seekPositionRef.current = position;
+
+        // Only update UI while dragging.
+        setDragProgress(percent * 100);
+        setCurrentPosition(position);
+      },
+
+      onPanResponderRelease: async (evt) => {
+        const width = progressWidthRef.current;
+
+        if (!width) return;
+
+        const x = Math.max(
+          0,
+          Math.min(width, evt.nativeEvent.locationX),
+        );
+
+        const percent = x / width;
+
+        isDraggingRef.current = true;
+        isSeekingRef.current = true;
+
+        try {
+          const progress = await TrackPlayer.getProgress();
+
+          const duration =
+            Number(progress.duration) ||
+            effectiveDuration;
+
+          if (!duration) return;
+
+          const seekPosition = percent * duration;
+
+          console.log('Seeking to:', seekPosition);
+          console.log('Duration:', duration);
+
+          setCurrentPosition(seekPosition);
+          setDragProgress(percent * 100);
+
+          await TrackPlayer.seekTo(seekPosition);
+
+          if (isPlayingActive) {
+            await TrackPlayer.play();
+          }
+
+        } catch (error) {
+          console.log('Seek error:', error);
+
+        } finally {
+          setTimeout(() => {
+            isDraggingRef.current = false;
+            isSeekingRef.current = false;
+            setDragProgress(null);
+          }, 150);
+        }
+      },
+
       onPanResponderTerminate: () => {
         isDraggingRef.current = false;
+        isSeekingRef.current = false;
         setDragProgress(null);
       },
-    })
+    }),
   ).current;
 
   const effectiveDuration =
@@ -495,7 +658,7 @@ const AudioRec = () => {
   return (
     <View style={styles.screen}>
       <LinearGradient
-        colors={['#3B1425', '#1B0E2A', '#0D0814', '#000000']}
+        colors={['#3B1425', '#010101', '#0D0814', '#000000']}
         locations={[0, 0.45, 0.8, 1]}
         style={StyleSheet.absoluteFillObject}
       />
@@ -522,7 +685,7 @@ const AudioRec = () => {
           <View style={styles.audioFormatBadge}>
             <AppText
               color="#D1D1D6"
-              fontSize={10}
+              fontSize={14}
               fontWeight="700"
               fontFamily={Inter.bold}
               style={{ letterSpacing: 1 }}
@@ -761,19 +924,35 @@ const AudioRec = () => {
               {/* Scrubber Slider */}
               <View style={styles.scrubberContainer}>
                 <View
+                  ref={scrubberRef}
+                  collapsable={false}
                   style={styles.scrubberHitArea}
                   onLayout={(e) => {
-                    progressWidthRef.current = e.nativeEvent.layout.width;
+                    const width = e.nativeEvent.layout.width;
+
+                    progressWidthRef.current = width;
+
+                    scrubberRef.current?.measureInWindow(
+                      (x, _y, measuredWidth) => {
+                        progressPageXRef.current = x;
+
+                        if (measuredWidth > 0) {
+                          progressWidthRef.current = measuredWidth;
+                        }
+                      },
+                    );
                   }}
                   {...progressPanResponder.panHandlers}
                 >
                   <View style={styles.scrubberBg} />
+
                   <View
                     style={[
                       styles.scrubberFill,
                       { width: `${currentPercent}%` },
                     ]}
                   />
+
                   <View
                     style={[
                       styles.scrubberKnob,
@@ -784,20 +963,22 @@ const AudioRec = () => {
                     ]}
                   />
                 </View>
+
                 <View style={styles.timeRow}>
                   <AppText
-                    color="rgba(255, 255, 255, 0.4)"
+                    color="rgba(255,255,255,0.65)"
                     fontSize={11}
                     fontFamily={Inter.regular}
                   >
                     {formatSecs(
                       dragProgress !== null
                         ? (dragProgress / 100) * effectiveDuration
-                        : currentPosition
+                        : currentPosition,
                     )}
                   </AppText>
+
                   <AppText
-                    color="rgba(255, 255, 255, 0.4)"
+                    color="rgba(255,255,255,0.65)"
                     fontSize={11}
                     fontFamily={Inter.regular}
                   >

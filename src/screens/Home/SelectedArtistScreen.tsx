@@ -712,7 +712,7 @@ const styles = StyleSheet.create({
     },
 
     listContainer: {
-        paddingBottom: 120,
+        paddingBottom: 20,
     },
 
     columnWrapper: {

@@ -214,7 +214,7 @@ const Search = () => {
             onFilterPress={() => console.log('filter')}
             title="search"
             onPress={() => {
-              (navigation as any).navigate('SearchSongSecreen', { previousScreen: 'Home' })
+              (navigation as any).navigate('SearchSongSecreen', { previousScreen: 'Search' })
             }}
 
           />

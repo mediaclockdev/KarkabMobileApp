@@ -190,6 +190,18 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
         }
     };
 
+    const handleCloseMiniPlayer = async () => {
+        try {
+            // Stop audio completely
+            await TrackPlayer.stop();
+
+            // Hide MiniPlayer
+            dispatch(addsong(''));
+        } catch (error) {
+            console.log('CLOSE MINI PLAYER ERROR:', error);
+        }
+    };
+
     /**
      * 5. NEXT SONG
      */
@@ -288,13 +300,14 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
             </TouchableOpacity>
 
             {/* 2. Controls Row */}
+            {/* Controls Row */}
             <View style={styles.actionsRow}>
-                {/* Previous Track */}
+
+                {/* Previous */}
                 <TouchableOpacity
                     style={styles.controlButton}
                     onPress={handlePrevious}
                     disabled={switchingTrack}
-                    hitSlop={{ top: 12, bottom: 12, left: 10, right: 8 }}
                 >
                     <AppImage
                         source={Images.leftarrow}
@@ -308,7 +321,6 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                 <TouchableOpacity
                     style={styles.playButton}
                     onPress={handlePlayPause}
-                    hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
                 >
                     {buffering || switchingTrack ? (
                         <ActivityIndicator size="small" color="#FFFFFF" />
@@ -327,12 +339,11 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                     )}
                 </TouchableOpacity>
 
-                {/* Next Track */}
+                {/* Next */}
                 <TouchableOpacity
                     style={styles.controlButton}
                     onPress={handleNext}
                     disabled={switchingTrack}
-                    hitSlop={{ top: 12, bottom: 12, left: 8, right: 10 }}
                 >
                     <View style={{ transform: [{ rotate: '180deg' }] }}>
                         <AppImage
@@ -343,7 +354,26 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                         />
                     </View>
                 </TouchableOpacity>
+
             </View>
+
+            {/* Close */}
+            <TouchableOpacity
+                style={styles.closeButton}
+                onPress={handleCloseMiniPlayer}
+                hitSlop={{
+                    top: 12,
+                    bottom: 12,
+                    left: 12,
+                    right: 12,
+                }}
+                activeOpacity={0.7}
+            >
+                <View style={styles.closeIcon}>
+                    <View style={styles.closeLineOne} />
+                    <View style={styles.closeLineTwo} />
+                </View>
+            </TouchableOpacity>
 
             {/* 3. Live Apple Music Progress Line */}
             <TouchableWithoutFeedback onPress={openFullPlayer}>
@@ -447,5 +477,37 @@ const styles = StyleSheet.create({
     bottomProgressFill: {
         height: 3,
         backgroundColor: '#FF2D55',
+    },
+    closeButton: {
+        width: 30,
+        height: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft: 2,
+    },
+
+    closeIcon: {
+        width: 18,
+        height: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    closeLineOne: {
+        position: 'absolute',
+        width: 14,
+        height: 2,
+        borderRadius: 1,
+        backgroundColor: 'rgba(255,255,255,0.65)',
+        transform: [{ rotate: '45deg' }],
+    },
+
+    closeLineTwo: {
+        position: 'absolute',
+        width: 14,
+        height: 2,
+        borderRadius: 1,
+        backgroundColor: 'rgba(255,255,255,0.65)',
+        transform: [{ rotate: '-45deg' }],
     },
 });

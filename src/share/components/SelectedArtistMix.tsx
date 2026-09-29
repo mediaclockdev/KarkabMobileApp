@@ -62,7 +62,7 @@ const SelectedArtistMix = ({
             fontSize={14}
             fontFamily={Inter.medium}
           >
-            No artist mixe song available
+            No songs available
           </AppText>
         </View>
       }

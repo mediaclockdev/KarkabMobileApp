@@ -100,9 +100,9 @@ const MainHeader: React.FC<MainHeaderProps> = ({
 
             />
             <AppText
-              fontSize={16}
+              fontSize={18}
               color={color.darkthemetext}
-              fontFamily={Inter.regular}
+              fontFamily={Inter.bold}
               numberOfLines={2}
               ellipsizeMode="tail"
               style={{ flexShrink: 1, width: 135, flexWrap: 'wrap', }}
@@ -113,7 +113,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({
                 : ''}
             </AppText>
             <AppText
-              fontSize={10}
+              fontSize={12}
               color={color.lgyellow}
               fontFamily={Inter.regular}
               marginTop={5}

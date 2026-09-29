@@ -9,8 +9,10 @@ import {
 
 import AppText from '../../share/components/AppText';
 import { Inter } from '../../share/constants/fonts';
-import { Images } from '../constants/media';
+import { Images, Logo } from '../constants/media';
 import { GlobalImage } from '../utils/GlobalImage';
+import AppImage from './AppImage';
+import color from '../constants/color';
 
 interface Artist {
     id: string;
@@ -76,6 +78,7 @@ const PeopleWhoSang = ({
         return (
             <View style={styles.artistCard}>
                 {/* Artist Image */}
+                {console.log(item, "hwhdjwjhkwdlwjldw")}
 
                 <Image source={GlobalImage(profileimage?.avatar_url)} style={styles.artistImage} />
 
@@ -129,6 +132,26 @@ const PeopleWhoSang = ({
                 renderItem={renderArtist}
                 keyExtractor={item => item.id}
                 contentContainerStyle={styles.listContent}
+                ListEmptyComponent={<View style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    paddingVertical: 40,
+                }}>
+                    <AppImage
+                        source={Logo.ymusic}
+                        width={20}
+                        height={20}
+                    />
+                    <AppText
+                        color={color.darkthemetext}
+                        fontSize={14}
+                        marginTop={10}
+                    >
+                        No songs found
+                    </AppText>
+                </View>}
+
             />
         </View>
     );

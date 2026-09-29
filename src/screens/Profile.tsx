@@ -362,7 +362,7 @@ const Profile = () => {
                             }),
                         );
 
-                        // Refresh complete profile data
+
                         fetchProfileData();
                     } else {
                         dispatch(
@@ -829,130 +829,154 @@ const Profile = () => {
 
                         </View>
 
+                        {
+                            recdata?.length > 0 ?
 
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: 10 }}>
-                            {recdata?.slice(0, 3).map((item, index) => (
-                                <View key={index} style={{
-                                    height: 111,
-                                    width: '30%',
-                                    borderWidth: 1,
-                                    borderColor: '#121212',
-                                    flexDirection: 'row',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: 10 }}>
+                                    {recdata?.slice(0, 3).map((item, index) => (
+                                        <View key={index} style={{
+                                            height: 111,
+                                            width: '30%',
+                                            borderWidth: 1,
+                                            borderColor: '#121212',
+                                            flexDirection: 'row',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
 
-                                    borderRadius: 9,
-                                    overflow: 'hidden'
+                                            borderRadius: 9,
+                                            overflow: 'hidden'
 
-                                }}>
-                                    <ImageBackground
-                                        source={GlobalImage(profiledetail?.avatar_url)}
-                                        resizeMode="cover"
-                                        style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            padding: 10,
-                                            gap: 10,
-                                            justifyContent: 'space-between',
-                                        }}
-                                        imageStyle={{
-                                            width: '120%',
-                                        }}
-                                    >
-                                        {/* Play Button */}
-                                        <TouchableOpacity
-                                            onPress={() => {
-                                                playingId === item.id
-                                                    ? stopRecording()
-                                                    : playRecording(item)
-                                            }}
-                                            style={{
-                                                borderWidth: 2,
-                                                borderColor: '#F3870C',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                backgroundColor: 'black',
-                                                height: 24,
-                                                width: 24,
-                                                borderRadius: 15,
-                                                alignSelf: 'center',
-                                            }}
-                                        >
-                                            {
-                                                playingId == item.id ?
-                                                    <View style={styles.pauseContainer}>
-                                                        <View style={styles.pauseLine} />
-                                                        <View style={styles.pauseLine} />
-                                                    </View> :
-                                                    <AppImage
-                                                        source={Images.playicon}
-                                                        width={7}
-                                                        height={7}
-                                                        resizeMode="contain"
-                                                    />}
-                                        </TouchableOpacity>
-
-                                        {/* Bottom Content */}
-                                        <View>
-                                            <AppText
-                                                color={color.darkthemetext}
-                                                fontSize={12}
-                                                fontWeight="500"
-                                                fontFamily={Inter.regular}
-                                                numberOfLines={1}
-                                            >
-                                                {item.title}
-                                            </AppText>
-
-                                            <View
+                                        }}>
+                                            <ImageBackground
+                                                source={GlobalImage(profiledetail?.avatar_url)}
+                                                resizeMode="cover"
                                                 style={{
-                                                    flexDirection: 'row',
-                                                    gap: 5,
-                                                    alignItems: 'center',
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    padding: 10,
+                                                    gap: 10,
                                                     justifyContent: 'space-between',
                                                 }}
+                                                imageStyle={{
+                                                    width: '120%',
+                                                }}
                                             >
-                                                <AppText
-                                                    color="#AFA7A2"
-                                                    fontSize={10}
-                                                    fontWeight="400"
-                                                    fontFamily={Inter.light}
-                                                >
-                                                    {getTimeAgo(item.updated_at)}
-                                                </AppText>
-
-                                                <View
+                                                {/* Play Button */}
+                                                <TouchableOpacity
+                                                    onPress={() => {
+                                                        playingId === item.id
+                                                            ? stopRecording()
+                                                            : playRecording(item)
+                                                    }}
                                                     style={{
-                                                        flexDirection: 'row',
-                                                        gap: 5,
+                                                        borderWidth: 2,
+                                                        borderColor: '#F3870C',
+                                                        justifyContent: 'center',
                                                         alignItems: 'center',
-                                                        borderWidth: 1,
-                                                        borderColor: '#121212',
-                                                        padding: 2,
-                                                        borderRadius: 5,
+                                                        backgroundColor: 'black',
+                                                        height: 24,
+                                                        width: 24,
+                                                        borderRadius: 15,
+                                                        alignSelf: 'center',
                                                     }}
                                                 >
-                                                    <AppImage
-                                                        source={Images.star}
-                                                        width={10}
-                                                        height={10}
-                                                        tintColor={'#D07113'}
-                                                    />
+                                                    {
+                                                        playingId == item.id ?
+                                                            <View style={styles.pauseContainer}>
+                                                                <View style={styles.pauseLine} />
+                                                                <View style={styles.pauseLine} />
+                                                            </View> :
+                                                            <AppImage
+                                                                source={Images.playicon}
+                                                                width={7}
+                                                                height={7}
+                                                                resizeMode="contain"
+                                                            />}
+                                                </TouchableOpacity>
+
+                                                {/* Bottom Content */}
+                                                <View>
                                                     <AppText
-                                                        color="#D07113"
-                                                        fontSize={10}
-                                                        fontWeight="400"
-                                                        fontFamily={Inter.light}
+                                                        color={color.darkthemetext}
+                                                        fontSize={12}
+                                                        fontWeight="500"
+                                                        fontFamily={Inter.regular}
+                                                        numberOfLines={1}
                                                     >
-                                                        4.8
+                                                        {item.title}
                                                     </AppText>
+
+                                                    <View
+                                                        style={{
+                                                            flexDirection: 'row',
+                                                            gap: 5,
+                                                            alignItems: 'center',
+                                                            justifyContent: 'space-between',
+                                                        }}
+                                                    >
+                                                        <AppText
+                                                            color="#AFA7A2"
+                                                            fontSize={10}
+                                                            fontWeight="400"
+                                                            fontFamily={Inter.light}
+                                                        >
+                                                            {getTimeAgo(item.updated_at)}
+                                                        </AppText>
+
+                                                        <View
+                                                            style={{
+                                                                flexDirection: 'row',
+                                                                gap: 5,
+                                                                alignItems: 'center',
+                                                                borderWidth: 1,
+                                                                borderColor: '#121212',
+                                                                padding: 2,
+                                                                borderRadius: 5,
+                                                            }}
+                                                        >
+                                                            <AppImage
+                                                                source={Images.star}
+                                                                width={10}
+                                                                height={10}
+                                                                tintColor={'#D07113'}
+                                                            />
+                                                            <AppText
+                                                                color="#D07113"
+                                                                fontSize={10}
+                                                                fontWeight="400"
+                                                                fontFamily={Inter.light}
+                                                            >
+                                                                4.8
+                                                            </AppText>
+                                                        </View>
+                                                    </View>
                                                 </View>
-                                            </View>
+                                            </ImageBackground>
                                         </View>
-                                    </ImageBackground>
+                                    ))}
                                 </View>
-                            ))}
-                        </View>
+                                :
+                                <View style={{
+                                    flex: 1,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    paddingVertical: 40,
+                                }}>
+                                    <AppImage
+                                        source={Logo.ymusic}
+                                        width={20}
+                                        height={20}
+                                    />
+                                    <AppText
+                                        color={color.darkthemetext}
+                                        fontSize={14}
+                                        marginTop={10}
+                                    >
+                                        No songs found
+                                    </AppText>
+                                </View>
+                        }
+
 
 
                         <View style={[styles.titles]}>

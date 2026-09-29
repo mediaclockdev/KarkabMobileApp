@@ -95,7 +95,7 @@ const Header: React.FC<HeaderProps> = ({
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
 
             <AppText
-              fontSize={headername == 'Library' ? 20 : headername == 'Profile' ? 20 : 20}
+              fontSize={headername == 'Library' ? 22 : headername == 'Profile' ? 22 : 22}
               fontWeight="700"
               color={color.darkthemetext}
               fontFamily={Inter.bold}
@@ -131,7 +131,7 @@ const Header: React.FC<HeaderProps> = ({
           </View>
 
           <AppText
-            fontSize={12}
+            fontSize={14}
             color={headername == 'Search' ? '#FFF195' : '#FFF195'}
             marginTop={1}
             fontFamily={Inter.regular}

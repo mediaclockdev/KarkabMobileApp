@@ -65,7 +65,7 @@ export default function SongsListScreen() {
 
         try {
             console.log(
-                'ARTIST SONGS API:',
+                'ARTIST SONGS APIjjjj:',
                 apiUrls.artistSongs(artistId)
             );
 
@@ -76,11 +76,12 @@ export default function SongsListScreen() {
             const data = (response as any)?.data;
 
             console.log(
-                'ARTIST SONGS RESPONSE:',
+                'ARTIST SONGS RESPONSEhhh:',
                 data
             );
 
             if (data?.success) {
+                console.log(data?.songs, "jjjj")
                 const songsList = Array.isArray(data?.songs)
                     ? data.songs
                     : [];
@@ -243,6 +244,7 @@ export default function SongsListScreen() {
             previousScreen,
             filter,
             songs?.id,
+            songs
         ])
     );
 
@@ -319,7 +321,7 @@ export default function SongsListScreen() {
                     false
                 }
                 contentContainerStyle={{
-                    paddingBottom: 120,
+                    paddingBottom: 60,
                 }}
             >
                 {/* HEADER */}
@@ -583,7 +585,7 @@ const styles = StyleSheet.create({
     subtitle: {
         color: '#999',
         marginTop: 2,
-        fontSize: 10,
+        fontSize: 12,
         fontFamily:
             Inter.regular,
     },

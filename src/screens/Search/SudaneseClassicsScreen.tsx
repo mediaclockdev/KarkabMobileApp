@@ -483,13 +483,13 @@ const styles = StyleSheet.create({
 
     sectionTitle: {
         color: '#fff',
-        fontSize: 15,
+        fontSize: 14,
         fontFamily: Inter.semiBold,
     },
 
     view: {
         color: '#F4A000',
-        fontSize: 12,
+        fontSize: 14,
         fontFamily: Inter.medium,
     },
     emptyContainer: {

@@ -12,7 +12,7 @@ export const LANGUAGES = {
 export type AppLanguage = keyof typeof LANGUAGES;
 
 /** Karkab is Arabic-first: Arabic is the default and the fallback. */
-export const DEFAULT_LANGUAGE: AppLanguage = 'ar';
+export const DEFAULT_LANGUAGE: AppLanguage = 'en';
 
 export const LANGUAGE_STORAGE_KEY = 'app_language';
 

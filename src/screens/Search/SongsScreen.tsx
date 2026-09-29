@@ -1033,7 +1033,7 @@ const styles = StyleSheet.create({
     subtitle: {
         color: '#999',
         marginTop: 2,
-        fontSize: 10,
+        fontSize: 12,
         fontFamily: Inter.regular
     },
 
@@ -1170,14 +1170,14 @@ const styles = StyleSheet.create({
 
     sectionTitle: {
         color: '#fff',
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: '700',
     },
 
     viewAll: {
         color: '#FFB300',
         fontWeight: '600',
-        fontSize: 10,
+        fontSize: 14,
     },
 
     songCard: {
