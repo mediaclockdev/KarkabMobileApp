@@ -34,7 +34,7 @@ type MusicItem = {
   title: string;
   artist: string;
   image: any;
-  song_url: string;
+  original_song: string;
   onLikePress?: () => void;
   onDislikePress?: () => void;
   type?: string;
@@ -56,14 +56,14 @@ const musicDatas: MusicItem[] = [
     title: 'يا أغلى وطن',
     artist: 'محمد الأمين',
     image: Logo.sngerprofile,
-    song_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+    original_song: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
   },
   {
     id: '2',
     title: 'يا أغلى وطن',
     artist: 'محمد الأمين',
     image: require('../../../assets/HomeScreen/image141.png'),
-    song_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
+    original_song: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
 
   },
   {
@@ -71,7 +71,7 @@ const musicDatas: MusicItem[] = [
     title: 'يا أغلى وطن',
     artist: 'محمد الأمين',
     image: Logo.sngerprofile,
-    song_url: 'https://archive.org/download/testmp3testfile/mpthreetest.mp3'
+    original_song: 'https://archive.org/download/testmp3testfile/mpthreetest.mp3'
   },
 ]
 
@@ -103,9 +103,9 @@ const Librarylist = ({ musicData,
     setPlayingId(item.id);
     setLoadings(true)
     await dispatch(isPausesd(false));
-    console.log(item.id, item.song_url, "dkdkbkdbkdb5")
+    console.log(item.id, item.original_song, "dkdkbkdbkdb5")
     // try {
-    //   const result = await Sound.startPlayer(item.song_url);
+    //   const result = await Sound.startPlayer(item.original_song);
 
     //   console.log('Playing:', result);
     //   await Sound.removePlayBackListener();
@@ -143,7 +143,7 @@ const Librarylist = ({ musicData,
 
   //   console.log(item.id, "dkdkbkdbkdb5")
   //   try {
-  //     const result = await Sound.startPlayer(item.song_url);
+  //     const result = await Sound.startPlayer(item.original_song);
 
   //     console.log('Playing:', result);
   //     await Sound.removePlayBackListener();

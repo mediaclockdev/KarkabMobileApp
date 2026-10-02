@@ -6,13 +6,13 @@ class MusicPlayerService {
 
     async play(song: any) {
         try {
-            if (!song?.song_url) {
+            if (!song?.original_song) {
                 console.log('No song URL');
                 return;
             }
 
             console.log('Playing:', song.title);
-            console.log('URL:', song.song_url);
+            console.log('URL:', song.original_song);
 
             // If same song is already playing, don't restart it
             if (
@@ -30,7 +30,7 @@ class MusicPlayerService {
 
             this.currentSongId = song.id;
 
-            await Sound.startPlayer(song.song_url);
+            await Sound.startPlayer(song.original_song);
 
             this.isPlaying = true;
 

@@ -45,7 +45,7 @@ const MusicCard: React.FC<MusicCardProps> = ({ data }) => {
 
 
   const playAudio = async () => {
-    console.log('playsong', playsong.song_url);
+    console.log('playsong', playsong.original_song);
     try {
       setLoadings(true)
       //  stopAudio()
@@ -55,7 +55,7 @@ const MusicCard: React.FC<MusicCardProps> = ({ data }) => {
       await Sound.stopPlayer();
 
       await Sound.startPlayer(
-        playsong.song_url,
+        playsong.original_song,
       );
 
       setLoadings(false);

@@ -330,6 +330,7 @@ const AllArtistScreen = () => {
                             width={100}
                             height={100}
                             borderRadius={50}
+                            style={{ borderWidth: 1, borderColor: color.homebordercolor, borderRadius: 50 }}
                         />
                     ) : (
                         <View
@@ -383,19 +384,19 @@ const AllArtistScreen = () => {
                         {item?.name || 'Unknown Artist'}
                     </AppText>
 
-                    {songsCount > 0 && (
-                        <AppText
-                            color={color.darkthemetext}
-                            fontSize={11}
-                            fontWeight="400"
-                            fontFamily={Inter.regular}
-                            opacity={0.6}
-                            marginTop={4}
-                            textAlign="center">
-                            {songsCount}{' '}
-                            {songsCount === 1 ? 'Song' : 'Songs'}
-                        </AppText>
-                    )}
+
+                    <AppText
+                        color={color.darkthemetext}
+                        fontSize={11}
+                        fontWeight="400"
+                        fontFamily={Inter.regular}
+                        opacity={0.6}
+                        marginTop={4}
+                        textAlign="center">
+                        {songsCount}{' '}
+                        {songsCount === 1 ? 'Song' : 'Songs'}
+                    </AppText>
+
                 </View>
             </TouchableOpacity>
         );

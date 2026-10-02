@@ -98,7 +98,7 @@ export const playAdjacentSong = async (
 
         TrackPlayer.setMediaItem({
             mediaId: song.id.toString(),
-            url: song.song_url,
+            url: song.original_song || song.recording_url,
             title: song.title || 'Unknown Title',
             artist: song.artist || 'Unknown Artist',
             artworkUrl: song.cover_image_url || undefined,

@@ -338,7 +338,7 @@ const Library = () => {
 
       // stop previous player
       await Sound.stopPlayer();
-      const result = await Sound.startPlayer(item.song_url);
+      const result = await Sound.startPlayer(item.original_song);
 
       console.log('Playing:', result);
 
@@ -777,7 +777,7 @@ const Library = () => {
                         onPress={() => {
                           (navigation as any).navigate('RecordingList', {
                             recordings: recdata,
-                            previousScreen: 'Home',
+                            previousScreen: 'Library',
                           });
                         }}
 
@@ -830,6 +830,7 @@ const Library = () => {
                                 //     ? pauseAudio()
                                 //     : resumeAudio(item)
                                 // }}
+                                onPress={() => (navigation as any).navigate('.', { id: item.id, type: 'recordings' })}
                                 style={{
                                   height: 27,
                                   width: 27,

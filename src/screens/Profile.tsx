@@ -812,7 +812,7 @@ const Profile = () => {
                                 onPress={() => {
                                     (navigation as any).navigate('RecordingList', {
                                         recordings: recdata,
-                                        previousScreen: 'Home',
+                                        previousScreen: 'Profile',
                                     });
                                 }}
                                 style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
@@ -864,9 +864,11 @@ const Profile = () => {
                                                 {/* Play Button */}
                                                 <TouchableOpacity
                                                     onPress={() => {
-                                                        playingId === item.id
-                                                            ? stopRecording()
-                                                            : playRecording(item)
+                                                        // playingId === item.id
+                                                        //     ? stopRecording()
+                                                        //     : playRecording(item)
+
+                                                        (navigation as any).navigate('.', { id: item.id, type: 'recordings' });
                                                     }}
                                                     style={{
                                                         borderWidth: 2,

@@ -95,7 +95,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
      * 2. LOAD & PLAY SONG WHEN REDUX SONG CHANGES
      */
     useEffect(() => {
-        if (!playsong?.id || !playsong?.song_url) return;
+        if (!playsong?.id) return;
 
         try {
             const activeSong = TrackPlayer.getActiveMediaItem();
@@ -109,7 +109,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
 
     const playSongItem = async (song: any) => {
         try {
-            if (!song?.id || !song?.song_url) return;
+            if (!song?.id) return;
 
             const dur = Number(song.duration) || 0;
             if (dur > 0) {
@@ -118,7 +118,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
 
             const mediaItem = {
                 mediaId: song.id.toString(),
-                url: song.song_url,
+                url: song?.original_song || song?.recording_url,
                 title: song.title || 'Unknown Song',
                 artist: song.artist || 'Unknown Artist',
                 artworkUrl: song.cover_image_url || undefined,

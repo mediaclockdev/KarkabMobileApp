@@ -59,9 +59,9 @@ const ClassicSongItem = ({ item, onPress }: Props) => {
         setPlayingId(item.id);
         await dispatch(isPausesd(false));
         setLoadings(true)
-        console.log(item.id, item.song_url, "dkdkbkdbkdb5")
+        console.log(item.id, item.original_song, "dkdkbkdbkdb5")
         // try {
-        //   const result = await Sound.startPlayer(item.song_url);
+        //   const result = await Sound.startPlayer(item.original_song);
 
         //   console.log('Playing:', result);
         //   await Sound.removePlayBackListener();

@@ -620,6 +620,7 @@ const Home = () => {
             profileimage={profiledetail}
             onPlay={(artist) => {
               console.log('Playing:', artist.name);
+              navigation.navigate('.', { id: artist.id, type: 'recordings' });
             }}
             onSeeAll={() => { }}
           />

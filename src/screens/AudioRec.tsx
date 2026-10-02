@@ -6,6 +6,7 @@ import {
   Easing,
   FlatList,
   PanResponder,
+  Platform,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -362,7 +363,7 @@ const AudioRec = () => {
 
       const mediaItem = {
         mediaId: song.id.toString(),
-        url: song.song_url || song.recording_url,
+        url: song.original_song || song.recording_url,
         title: song.title || 'Unknown Title',
         artist: song.artist || 'Unknown Artist',
         artworkUrl: song.cover_image_url || undefined,
@@ -372,7 +373,7 @@ const AudioRec = () => {
             : dur
           : undefined,
       };
-
+      console.log('Loading media item:', mediaItem);
       await TrackPlayer.setMediaItem(mediaItem);
 
       await TrackPlayer.play();
@@ -403,7 +404,7 @@ const AudioRec = () => {
         })
       );
     } finally {
-      getrendomsong()
+
       setScreenLoading(false);
     }
   };
@@ -429,7 +430,7 @@ const AudioRec = () => {
         })
       );
     } finally {
-      getrendomsong()
+
       setScreenLoading(false);
     }
   };
@@ -688,23 +689,37 @@ const AudioRec = () => {
               fontSize={14}
               fontWeight="700"
               fontFamily={Inter.bold}
-              style={{ letterSpacing: 1 }}
+              style={{ letterSpacing: 1, textAlign: 'center' }}
             >
               LIVE SESSION • LOSSLESS
             </AppText>
           </View>
 
           <TouchableOpacity
-            onPress={() => setIsLiked(!isLiked)}
+
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <AppImage
-              source={Images.like}
-              width={20}
-              height={20}
-              tintColor={isLiked ? '#FF2D55' : 'rgba(255,255,255,0.6)'}
-            />
+
           </TouchableOpacity>
+          {screenLoading ? (
+            null
+          ) : (
+            <TouchableOpacity
+
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('Recording', { prevScreen: '.', data: songdetail })}
+              // onPress={() => navigation.navigate('Recording', { prevScreen: '.' })}
+              style={styles.singAlongButton}
+            >
+              <AppText
+                color="#FFFFFF"
+                fontSize={12}
+                fontWeight="700"
+                fontFamily={Inter.bold}
+              >
+                ♫ Sing
+              </AppText>
+            </TouchableOpacity>)}
         </View>
 
         {screenLoading ? (
@@ -1102,7 +1117,12 @@ const AudioRec = () => {
               </View>
 
               {/* Bottom Quick Tools */}
-              <View style={styles.bottomDock}>
+              <View style={[
+                styles.bottomDock,
+                {
+                  marginBottom: Platform.OS === 'ios' ? 10 : 60,
+                },
+              ]}>
                 <TouchableOpacity
                   activeOpacity={0.7}
                   onPress={async () => {
@@ -1458,6 +1478,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     borderTopWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.06)',
+
   },
   dockItem: {
     flexDirection: 'row',
@@ -1473,5 +1494,12 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 7,
+  },
+  singAlongButton: {
+    backgroundColor: '#FF2D55',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 18,
+    marginLeft: 8,
   },
 });

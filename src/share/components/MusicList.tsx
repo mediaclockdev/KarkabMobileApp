@@ -77,9 +77,9 @@ const MusicList: React.FC<{
       setPlayingId(item.id);
       setLoadings(true)
       await dispatch(isPausesd(false));
-      console.log(item.id, item.song_url, "dkdkbkdbkdb5")
+      console.log(item.id, item.original_song, "dkdkbkdbkdb5")
       // try {
-      //   const result = await Sound.startPlayer(item.song_url);
+      //   const result = await Sound.startPlayer(item.original_song);
 
       //   console.log('Playing:', result);
       //   await Sound.removePlayBackListener();

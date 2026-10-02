@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,29 +7,38 @@ import {
   TouchableOpacity,
   Share,
   ActivityIndicator,
+  FlatList,
+  Text,
+  Image,
+  BackHandler,
 } from 'react-native';
-import { useAppColors } from '../share/constants/color';
+import color, { useAppColors } from '../share/constants/color';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppImage from '../share/components/AppImage';
 import { Banner, Images, Logo } from '../share/constants/media';
 import AppText from '../share/components/AppText';
 import { Inter } from '../share/constants/fonts';
 import LinearGradient from 'react-native-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Sound, { RecordBackType } from 'react-native-nitro-sound';
 import { requestMicPermission } from '../share/utils/requestMicPermission';
 import { useTranslation } from 'react-i18next';
 import apiUrls from '../services/apiUrls';
 import ApiService from '../services/api';
-import { showToast } from '../auth/redux/authSlice';
+import { addsong, setHideMiniPlayer, showToast } from '../auth/redux/authSlice';
 import { useAppDispatch } from '../share/hooks/useAppSelector';
+import TrackPlayer from '@rntp/player';
+
 
 const Recording = () => {
   const navigation = useNavigation<any>();
   const color = useAppColors();
   const { t } = useTranslation('ar');
   const dispatch = useAppDispatch();
-
+  const route = useRoute<any>();
+  const { prevScreen, data } = route?.params ?? {};
+  const scrollViewRef = useRef<ScrollView>(null);
+  const saveRecordingRef = useRef<View>(null);
   // State Management
   const [recording, setRecording] = useState(false);
   const [path, setPath] = useState('');
@@ -37,14 +46,229 @@ const Recording = () => {
   const [recPercentage, setRecPercentage] = useState('0');
   const [saved, setSaved] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showFullLyrics, setShowFullLyrics] = useState(false);
+
+  const [lyricsLines, setLyricsLines] = useState<
+    { text: string; start: number; end: number }[]
+  >([]);
+
+  const [activeLyricIndex, setActiveLyricIndex] = useState(0);
+
+  const lyricsListRef = useRef<FlatList>(null);
+  const lyricsLinesRef = useRef<
+    { text: string; start: number; end: number }[]
+  >([]);
+
+
+  const instrumentalUrl =
+    data?.instrumental_song || data?.instrumental_wav;
+
+  const songTitle = data?.title || 'Untitled Song';
+  const artistName = data?.artist || 'Unknown Artist';
+  const coverImage = data?.cover_image_url;
+  const songDuration = Number(data?.duration) || 0;
+
+  // Connect these to your actual player state and functions.
+  const [instrumentalPlaying, setInstrumentalPlaying] =
+    useState(false);
+
+  const [playbackPositionMs, setPlaybackPositionMs] =
+    useState(0);
+
+  const [instrumentalDurationMs, setInstrumentalDurationMs] =
+    useState(songDuration * 1000);
+  const [instrumentalLoading, setInstrumentalLoading] = useState(false);
+
+  const isRecordingRef = useRef(false);
+  const isStartingPlayerRef = useRef(false);
+  const isPlayingRef = useRef(false);
+  const playbackListenerRef = useRef(false);
+
+  const isStartingRef = useRef(false);
+  const hasStartedRef = useRef(false);
 
   // Clean up listeners and recording when component unmounts
   useEffect(() => {
+
     return () => {
       Sound.removeRecordBackListener();
       Sound.stopRecorder().catch(() => { });
     };
   }, []);
+
+
+
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const stopPreviousSong = async () => {
+        try {
+          // Stop the song playing through @rntp/player
+          await TrackPlayer.stop();
+
+          // Reset the previous song's position
+          await TrackPlayer.seekTo(0);
+
+          console.log('Previous TrackPlayer song stopped');
+        } catch (error) {
+          console.log('Error stopping previous song:', error);
+        }
+      };
+
+      dispatch(setHideMiniPlayer(true));
+
+      // Stop the previous song immediately when Recording gets focus
+      stopPreviousSong();
+
+      return () => {
+        isActive = false;
+        dispatch(setHideMiniPlayer(false));
+      };
+    }, [dispatch]),
+  );
+
+  useEffect(() => {
+    if (data?.lyrics) {
+      prepareLyrics(data);
+    } else {
+      setLyricsLines([]);
+      lyricsLinesRef.current = [];
+    }
+  }, [data]);
+
+
+  const prepareLyrics = (song: any) => {
+    if (!song?.lyrics) {
+      setLyricsLines([]);
+      lyricsLinesRef.current = [];
+      setActiveLyricIndex(0);
+      return;
+    }
+
+    const lyricRows = String(song.lyrics)
+      .split(/\r?\n/)
+      .map((line: string) => line.trim())
+      .filter(Boolean);
+
+    const parsedLines: {
+      text: string;
+      start: number;
+    }[] = [];
+
+    lyricRows.forEach((line: string) => {
+      const match = line.match(
+        /^\[(\d{1,2}):(\d{2}(?:\.\d+)?)\]\s*(.*)$/
+      );
+
+      if (!match) {
+        return;
+      }
+
+      const minutes = Number(match[1]);
+      const seconds = Number(match[2]);
+
+      const start = (minutes * 60 + seconds) * 1000;
+      const text = match[3].trim();
+
+      if (text) {
+        parsedLines.push({
+          text,
+          start,
+        });
+      }
+    });
+
+    // Make sure lyrics are ordered by timestamp
+    parsedLines.sort((a, b) => a.start - b.start);
+
+    const lines = parsedLines.map((line, index) => {
+      const nextLine = parsedLines[index + 1];
+
+      return {
+        text: line.text,
+        start: line.start,
+
+        // End when next lyric starts
+        // Otherwise keep it active for 3.5 seconds
+        end: nextLine
+          ? nextLine.start
+          : line.start + 3500,
+      };
+    });
+
+    lyricsLinesRef.current = lines;
+    setLyricsLines(lines);
+    setActiveLyricIndex(0);
+  };
+
+
+  const getRecordingSeconds = () => {
+    if (!recordTime) return 0;
+
+    const parts = recordTime.split(':');
+
+    if (parts.length !== 2) return 0;
+
+    const minutes = Number(parts[0]) || 0;
+    const seconds = Number(parts[1]) || 0;
+
+    return minutes * 60 + seconds;
+  };
+
+  useEffect(() => {
+    if (!lyricsLines.length) {
+      return;
+    }
+
+    const currentPositionMs = playbackPositionMs;
+
+    // Find the lyric whose time range contains current playback position
+    let index = -1;
+
+    for (let i = 0; i < lyricsLines.length; i++) {
+      const line = lyricsLines[i];
+
+      if (
+        currentPositionMs >= line.start &&
+        currentPositionMs < line.end
+      ) {
+        index = i;
+        break;
+      }
+    }
+
+    // If we're between lines, use the latest lyric that has started
+    if (index === -1) {
+      for (let i = lyricsLines.length - 1; i >= 0; i--) {
+        if (currentPositionMs >= lyricsLines[i].start) {
+          index = i;
+          break;
+        }
+      }
+    }
+
+    if (index !== -1 && index !== activeLyricIndex) {
+      setActiveLyricIndex(index);
+
+      if (showFullLyrics) {
+        requestAnimationFrame(() => {
+          lyricsListRef.current?.scrollToIndex({
+            index,
+            animated: true,
+            viewPosition: 0.35,
+          });
+        });
+      }
+    }
+  }, [
+    playbackPositionMs,
+    lyricsLines,
+    activeLyricIndex,
+    showFullLyrics,
+  ]);
+
 
   const progressViews = [
     {
@@ -131,17 +355,37 @@ const Recording = () => {
   const stopRecording = async () => {
     try {
       const result = await Sound.stopRecorder();
+
       Sound.removeRecordBackListener();
 
       setPath(result);
       setRecording(false);
       setRecPercentage('100');
+
       console.log('Recording stopped at path:', result);
+
+      // Wait until isRecorded UI is rendered, then scroll
+      setTimeout(() => {
+        scrollToSaveRecording();
+      }, 150);
+
     } catch (e) {
       console.log('Error stopping recording:', e);
       setRecording(false);
     }
   };
+
+  useEffect(() => {
+    if (!isRecorded) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      scrollToSaveRecording();
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [isRecorded]);
 
   const handleMicPress = () => {
     if (recording) {
@@ -208,14 +452,184 @@ const Recording = () => {
     }
   };
 
+  const lyrics = data?.lyrics;
+
+  const lyricsText = Array.isArray(lyrics)
+    ? lyrics
+      .map((item: any) =>
+        typeof item === 'string'
+          ? item
+          : item?.text || item?.lyric || item?.line || ''
+      )
+      .filter(Boolean)
+      .join('\n')
+    : typeof lyrics === 'string'
+      ? lyrics.trim()
+      : '';
+
+
+  useEffect(() => {
+    return () => {
+      Sound.removeRecordBackListener();
+
+      Sound.stopRecorder().catch(() => { });
+    };
+  }, [data]);
+
+
+
   const isRecorded = Boolean(path) && !recording;
+
+  const formatAudioTime = (milliseconds: number) => {
+    const totalSeconds = Math.floor(
+      Math.max(0, milliseconds) / 1000,
+    );
+
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${String(minutes).padStart(2, '0')}:${String(
+      seconds,
+    ).padStart(2, '0')}`;
+  };
+
+  useEffect(() => {
+    const playbackListener = (event: any) => {
+      const position = Number(event.currentPosition) || 0;
+      const duration = Number(event.duration) || 0;
+
+      setPlaybackPositionMs(position);
+
+      if (duration > 0) {
+        setInstrumentalDurationMs(duration);
+      }
+
+      // Song finished
+      if (duration > 0 && position >= duration - 100) {
+        isPlayingRef.current = false;
+        hasStartedRef.current = false;
+
+        setInstrumentalPlaying(false);
+        setPlaybackPositionMs(0);
+        setActiveLyricIndex(0);
+      }
+    };
+
+    Sound.addPlayBackListener(playbackListener);
+    playbackListenerRef.current = true;
+
+    return () => {
+      Sound.removePlayBackListener();
+      playbackListenerRef.current = false;
+    };
+  }, []);
+
+
+
+  const toggleInstrumentalPlayback = async () => {
+    if (!instrumentalUrl || instrumentalLoading || isStartingRef.current) {
+      return;
+    }
+
+    if (isRecordingRef.current) {
+      return;
+    }
+
+    try {
+      // PAUSE the current track
+      if (isPlayingRef.current) {
+        await Sound.pausePlayer();
+
+        isPlayingRef.current = false;
+        setInstrumentalPlaying(false);
+        return;
+      }
+
+      isStartingRef.current = true;
+      setInstrumentalLoading(true);
+
+      // RESUME from the paused position, not from the beginning
+      if (hasStartedRef.current) {
+        await Sound.resumePlayer();
+      } else {
+        await Sound.startPlayer(instrumentalUrl);
+        hasStartedRef.current = true;
+      }
+
+      isPlayingRef.current = true;
+      setInstrumentalPlaying(true);
+    } catch (error) {
+      console.error('Instrumental playback error:', error);
+    } finally {
+      isStartingRef.current = false;
+      setInstrumentalLoading(false);
+    }
+  };
+
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        handleBack()
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress,
+      );
+
+      return () => subscription.remove();
+    }, [navigation, stopRecording]),
+  );
+
+  const handleBack = useCallback(async () => {
+    try {
+      if (isPlayingRef.current || hasStartedRef.current) {
+        await Sound.stopPlayer();
+
+        isPlayingRef.current = false;
+        hasStartedRef.current = false;
+
+        setInstrumentalPlaying(false);
+        setPlaybackPositionMs(0);
+      }
+
+      if (recording || isRecordingRef.current) {
+        await stopRecording();
+      }
+    } catch (error) {
+      console.log('Error stopping audio:', error);
+    } finally {
+      navigation.navigate('Library');
+    }
+  }, [navigation, recording, stopRecording]);
+
+  const scrollToSaveRecording = () => {
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        saveRecordingRef.current?.measureLayout(
+          scrollViewRef.current as any,
+          (_x, y) => {
+            scrollViewRef.current?.scrollTo({
+              y: Math.max(0, y - 20),
+              animated: true,
+            });
+          },
+          () => {
+            console.log('Unable to measure Save Recording section');
+          },
+        );
+      }, 100);
+    });
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: color.darkbackround }]} edges={['top']}>
       {/* Top Header Navigation */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.navigate('Library')}
+          onPress={handleBack}
           style={styles.backButton}
         >
           <AppImage
@@ -226,22 +640,60 @@ const Recording = () => {
           />
         </TouchableOpacity>
 
-        {isRecorded && (
-          <TouchableOpacity onPress={onShare} style={styles.shareHeaderButton}>
-            <AppImage
-              source={Banner.shareicon}
-              height={16}
-              width={16}
-              tintColor={'#FFFFFF'}
-            />
-            <AppText fontFamily={Inter.regular} color={color.darkthemetext} fontSize={14}>
-              {t('Share') || 'Share'}
-            </AppText>
-          </TouchableOpacity>
-        )}
+        <View style={styles.headerRight}>
+          {lyricsLines.length > 0 && (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() =>
+                setShowFullLyrics(!showFullLyrics)
+              }
+              style={[
+                styles.lyricsHeaderButton,
+                showFullLyrics &&
+                styles.lyricsHeaderButtonActive,
+              ]}
+            >
+              <AppText
+                fontFamily={Inter.bold}
+                color={
+                  showFullLyrics
+                    ? '#FF2D55'
+                    : color.darkthemetext
+                }
+                fontSize={12}
+              >
+                ❝❞ Lyrics
+              </AppText>
+            </TouchableOpacity>
+          )}
+
+          {isRecorded && (
+            <TouchableOpacity
+              onPress={onShare}
+              style={styles.shareHeaderButton}
+            >
+              <AppImage
+                source={Banner.shareicon}
+                height={16}
+                width={16}
+                tintColor="#FFFFFF"
+              />
+
+              <AppText
+                fontFamily={Inter.regular}
+                color={color.darkthemetext}
+                fontSize={14}
+              >
+                {t('Share') || 'Share'}
+              </AppText>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+
+
         {/* Main Background Area */}
         <ImageBackground
           source={Banner.recbackground}
@@ -267,6 +719,118 @@ const Recording = () => {
               {recording ? t('Recording in Progress...') || 'جاري التسجيل...' : t('Ready to Sing?') || 'جاهز للغناء؟'}
             </AppText>
           )}
+
+
+          {/* SONG DETAILS */}
+          {data && (
+            <View style={styles.songMainCard}>
+              {/* SONG INFO */}
+              <View style={styles.songInfoCard}>
+                {coverImage ? (
+                  <Image
+                    source={{ uri: coverImage }}
+                    style={styles.songCover}
+                  />
+                ) : (
+                  <View style={styles.songCoverPlaceholder}>
+                    <Text style={styles.placeholderIcon}>♫</Text>
+                  </View>
+                )}
+
+                <View style={styles.songInfo}>
+                  <Text style={styles.songTitle} numberOfLines={2}>
+                    {songTitle}
+                  </Text>
+
+                  <Text style={styles.artistName}>
+                    {artistName}
+                  </Text>
+
+                  <Text style={styles.songMeta}>
+                    {data?.language || 'Arabic'} ·{' '}
+                    {data?.category?.title || 'Music'}
+                  </Text>
+
+                  <View style={styles.instrumentalBadge}>
+                    <Text style={styles.instrumentalBadgeText}>
+                      ♫ INSTRUMENTAL
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* DIVIDER */}
+              <View style={styles.cardDivider} />
+
+              {/* INSTRUMENTAL PLAYER */}
+              <View style={styles.playerCard}>
+                <View style={styles.playerHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.playerTitle}>
+                      Instrumental
+                    </Text>
+
+                    <Text style={styles.playerSubtitle}>
+                      Sing along with the music
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={[
+                      styles.playButton,
+                      instrumentalLoading && { opacity: 0.7 },
+                    ]}
+                    onPress={toggleInstrumentalPlayback}
+                    disabled={instrumentalLoading || !instrumentalUrl}
+                  >
+                    {instrumentalLoading ? (
+                      <ActivityIndicator
+                        size="small"
+                        color="#17130B"
+                      />
+                    ) : (
+                      <Text style={styles.playButtonText}>
+                        {instrumentalPlaying ? 'Ⅱ' : '▶'}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+
+                {/* PROGRESS */}
+                <View style={styles.progressTrack}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      {
+                        width: `${instrumentalDurationMs > 0
+                          ? Math.min(
+                            100,
+                            (playbackPositionMs /
+                              instrumentalDurationMs) *
+                            100,
+                          )
+                          : 0
+                          }%`,
+                      },
+                    ]}
+                  />
+                </View>
+
+                {/* TIME */}
+                <View style={styles.timeRow}>
+                  <Text style={styles.timeText}>
+                    {formatAudioTime(playbackPositionMs)}
+                  </Text>
+
+                  <Text style={styles.timeText}>
+                    {formatAudioTime(instrumentalDurationMs)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
 
           {/* Central Mic & Record Action Button */}
           <ImageBackground
@@ -302,6 +866,120 @@ const Recording = () => {
             )}
           </ImageBackground>
 
+
+
+          {/* Lyrics Section - show only when lyrics exist */}
+          {/* Current Lyric */}
+
+          {
+            data && (
+              <>
+                {/* {lyricsLines.length > 0 && !showFullLyrics && (
+                  <View style={styles.singleLyricCard}>
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      onPress={() => setShowFullLyrics(true)}
+                      style={styles.lyricTouchWrap}
+                    >
+                      <AppText
+                        color="#FFFFFF"
+                        fontSize={18}
+                        fontWeight="700"
+                        fontFamily={Inter.bold}
+                        textAlign="center"
+                        numberOfLines={2}
+                        style={styles.singleLyricText}
+                      >
+                        "{lyricsLines[activeLyricIndex]?.text || 'Sing along...'}"
+                      </AppText>
+
+                      <View style={styles.fullLyricsBadge}>
+                        <AppText
+                          color="#FF2D55"
+                          fontSize={11}
+                          fontWeight="700"
+                          fontFamily={Inter.bold}
+                        >
+                          FULL LYRICS ↗
+                        </AppText>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                )} */}
+
+                <View style={styles.lyricsCard}>
+                  <View style={styles.lyricsHeaderRow}>
+                    <Text style={styles.lyricsTitle}>Lyrics</Text>
+
+                    <TouchableOpacity
+                      onPress={() => setShowFullLyrics(value => !value)}
+                    >
+                      <Text style={styles.expandLyricsText}>
+                        {showFullLyrics ? 'Show less' : 'View all'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {!showFullLyrics ? (
+                    <View style={styles.currentLyrics}>
+                      {lyricsLines.length > 0 ? (
+                        <>
+                          {lyricsLines
+                            .slice(
+                              Math.max(0, activeLyricIndex - 1),
+                              activeLyricIndex + 3,
+                            )
+                            .map((line, index) => {
+                              const actualIndex =
+                                Math.max(0, activeLyricIndex - 1) + index;
+
+                              const active =
+                                actualIndex === activeLyricIndex;
+
+                              return (
+                                <Text
+                                  key={`${line.start}-${actualIndex}`}
+                                  style={[
+                                    styles.lyricLine,
+                                    active && styles.activeLyricLine,
+                                  ]}
+                                >
+                                  {line.text}
+                                </Text>
+                              );
+                            })}
+                        </>
+                      ) : (
+                        <Text style={styles.noLyricsText}>
+                          Lyrics are not available for this song.
+                        </Text>
+                      )}
+                    </View>
+                  ) : (
+                    <FlatList
+                      ref={lyricsListRef}
+                      data={lyricsLines}
+                      keyExtractor={(item, index) =>
+                        `${item.start}-${index}`
+                      }
+                      scrollEnabled={false}
+                      renderItem={({ item, index }) => (
+                        <Text
+                          style={[
+                            styles.lyricLine,
+                            index === activeLyricIndex &&
+                            styles.activeLyricLine,
+                          ]}
+                        >
+                          {item.text}
+                        </Text>
+                      )}
+                    />
+                  )}
+                </View>
+              </>)}
+
+
           {/* Saved Notification Banner */}
           {saved && (
             <View style={styles.savedSuccessRow}>
@@ -335,9 +1013,18 @@ const Recording = () => {
           )}
         </ImageBackground>
 
+        {/* Full Lyrics */}
+
+
+
+
+
         {/* Action Controls when Recorded */}
         {isRecorded && (
-          <View style={styles.actionButtonsRow}>
+          <View
+            ref={saveRecordingRef}
+            collapsable={false}
+            style={styles.actionButtonsRow}>
             {/* Sing Again */}
             <TouchableOpacity onPress={startRecording} style={styles.actionBtn}>
               <LinearGradient
@@ -401,7 +1088,9 @@ const Recording = () => {
         )}
 
         {/* Next Song Banner */}
-        <TouchableOpacity activeOpacity={0.8} style={styles.nextSongContainer}>
+        <TouchableOpacity
+          onPress={handleBack}
+          activeOpacity={0.8} style={styles.nextSongContainer}>
           <ImageBackground source={Banner.btnview} resizeMode="stretch" style={styles.nextSongBg}>
             <View style={styles.nextSongInner}>
               <AppImage source={Images.music} height={30} width={30} />
@@ -493,6 +1182,150 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
   },
+  songMainCard: {
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    borderRadius: 16,
+    padding: 12,
+    marginHorizontal: 16,
+    //   marginVertical: 8,
+    width: '95%',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    marginTop: 20,
+  },
+
+  songInfoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  songCover: {
+    width: 64,
+    height: 64,
+    borderRadius: 10,
+  },
+
+  songCoverPlaceholder: {
+    width: 64,
+    height: 64,
+    borderRadius: 10,
+    backgroundColor: '#29251D',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  placeholderIcon: {
+    fontSize: 26,
+    color: '#F5BD55',
+  },
+
+  songInfo: {
+    flex: 1,
+    marginLeft: 10,
+  },
+
+  songTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+
+  artistName: {
+    color: '#B8B4AA',
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  songMeta: {
+    color: '#858178',
+    fontSize: 10,
+    marginTop: 2,
+  },
+
+  instrumentalBadge: {
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 12,
+    backgroundColor: 'rgba(245,189,85,0.12)',
+  },
+
+  instrumentalBadgeText: {
+    color: '#F5BD55',
+    fontSize: 8,
+    fontWeight: '800',
+  },
+
+  cardDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    marginVertical: 10,
+  },
+
+  playerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  playerTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+
+  playerSubtitle: {
+    color: '#858178',
+    fontSize: 10,
+    marginTop: 1,
+  },
+
+  playButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#F5BD55',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 10,
+  },
+
+  playButtonText: {
+    color: '#17130B',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+
+  progressTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#39352D',
+    overflow: 'hidden',
+    marginTop: 12,
+  },
+
+  timeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+
+  timeText: {
+    color: '#8D897F',
+    fontSize: 9,
+  },
+
+
+
+
+
+
+  playerCard: {
+    padding: 0,
+  },
+
+
+
   completionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -501,7 +1334,7 @@ const styles = StyleSheet.create({
   circleContainer: {
     width: 280,
     height: 280,
-    marginVertical: 16,
+    marginVertical: 5,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -586,6 +1419,209 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 1,
     marginHorizontal: 8,
+  },
+  lyricsContainer: {
+    marginTop: 18,
+    padding: 16,
+    borderRadius: 20,
+    backgroundColor: '#17131F',
+    borderWidth: 1,
+    borderColor: '#39303F',
+  },
+
+  lyricsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+
+  lyricsIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(254, 199, 73, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  lyricsBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: 'rgba(254, 199, 73, 0.12)',
+  },
+
+  lyricsDivider: {
+    height: 1,
+    backgroundColor: '#39303F',
+    marginVertical: 16,
+  },
+
+  lyricsScroll: {
+    maxHeight: 240,
+  },
+
+  lyricsContent: {
+    paddingBottom: 8,
+  },
+
+  lyricsText: {
+    lineHeight: 32,
+    textAlign: 'center',
+    writingDirection: 'rtl',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  lyricsHeaderButton: {
+    height: 35,
+    paddingHorizontal: 12,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+
+  lyricsHeaderButtonActive: {
+    backgroundColor: 'rgba(255,45,85,0.15)',
+    borderColor: '#FF2D55',
+  },
+  singleLyricCard: {
+    width: '92%',
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    marginTop: 8,
+  },
+
+  lyricTouchWrap: {
+    alignItems: 'center',
+  },
+
+  singleLyricText: {
+    lineHeight: 27,
+    letterSpacing: -0.2,
+    textShadowColor: 'rgba(255,45,85,0.4)',
+    textShadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    textShadowRadius: 6,
+  },
+
+  fullLyricsBadge: {
+    marginTop: 8,
+    backgroundColor: 'rgba(255,45,85,0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+
+  fullLyricsContainer: {
+    flex: 1,
+    width: '100%',
+    paddingHorizontal: 22,
+    marginTop: 12,
+    minHeight: 300,
+  },
+
+  lyricsModeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+
+  collapseBtn: {
+    backgroundColor: 'rgba(255,45,85,0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+
+  fullLyricsScroll: {
+    paddingTop: 24,
+    paddingBottom: 40,
+  },
+
+  fullLyricItem: {
+    paddingVertical: 12,
+  },
+
+  fullLyricItemActive: {
+    paddingVertical: 16,
+  },
+
+  fullLyricText: {
+    lineHeight: 32,
+    letterSpacing: -0.3,
+    textAlign: 'center',
+  },
+
+
+
+  lyricsCard: {
+    marginHorizontal: 10,
+    marginTop: 0,
+    marginBottom: 50,
+    padding: 18,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    width: '95%',
+  },
+  lyricsHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  lyricsTitle: {
+    color: '#FFFFFF',
+    fontSize: 19,
+    fontWeight: '700',
+  },
+  expandLyricsText: {
+    color: '#F5BD55',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  currentLyrics: {
+    alignItems: 'center',
+    gap: 15,
+    paddingVertical: 12,
+  },
+  lyricLine: {
+    color: '#AAA8B4',
+    fontSize: 17,
+    lineHeight: 32,
+    textAlign: 'center',
+    paddingVertical: 5,
+    writingDirection: 'rtl',
+  },
+  activeLyricLine: {
+    color: '#F5BD55',
+    fontSize: 21,
+    fontWeight: '800',
+  },
+  noLyricsText: {
+    color: '#92909D',
+    textAlign: 'center',
+    paddingVertical: 20,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#F5BD55',
+    borderRadius: 2,
   },
 });
 

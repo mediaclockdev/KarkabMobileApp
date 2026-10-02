@@ -150,7 +150,7 @@ const AudioRec = () => {
 
 
     const playAudio = async (path: any) => {
-        if (!path?.song_url) {
+        if (!path?.original_song) {
             console.log('Song URL not found');
             return;
         }
@@ -158,7 +158,7 @@ const AudioRec = () => {
         try {
             setLoadings(true);
 
-            console.log('Playing path:', path.song_url);
+            console.log('Playing path:', path.original_song);
 
             await dispatch(isPausesd(true));
 
@@ -176,7 +176,7 @@ const AudioRec = () => {
                 console.log('No previous player to stop');
             }
 
-            await Sound.startPlayer(path.song_url);
+            await Sound.startPlayer(path.original_song);
 
             setIsPlaying(true);
             setIsPaused(false);
@@ -818,10 +818,10 @@ onLayout = {(event) => {
         < View
 style = {
     [
-    styles.progressFill,
-    {
-        width: `${progress}%`,
-    },
+        styles.progressFill,
+        {
+            width: `${progress}%`,
+        },
                           ]}
     />
 
@@ -829,11 +829,11 @@ style = {
     < View
 style = {
     [
-    styles.progressThumb,
-    {
-        left: `${progress}%`,
-        transform: [{ translateX: -5 }],
-    },
+        styles.progressThumb,
+        {
+            left: `${progress}%`,
+            transform: [{ translateX: -5 }],
+        },
                           ]}
     />
     </View>
@@ -912,8 +912,8 @@ onPress = {() => {
 }}
 style = {
     [
-    styles.navigationButton,
-    !adjectprevdata?.id && styles.navigationButtonDisabled,
+        styles.navigationButton,
+        !adjectprevdata?.id && styles.navigationButtonDisabled,
               ]}
     >
     <AppImage
@@ -962,9 +962,9 @@ onPress = {() => {
 }}
 style = {
     [
-    styles.navigationButton,
-    styles.nextNavigationButton,
-    !adjectnextdata?.id && styles.navigationButtonDisabled,
+        styles.navigationButton,
+        styles.nextNavigationButton,
+        !adjectnextdata?.id && styles.navigationButtonDisabled,
               ]}
     >
     <View style={ styles.navigationTextContainer }>
