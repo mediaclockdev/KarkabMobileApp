@@ -25,9 +25,12 @@ const Search = () => {
   const recentdata = ['Mabrook', 'Mabrook', 'Mabrook']
   const dispatch = useAppDispatch();
   const color = useAppColors();
-
-
+  const [categories, setCategories] = useState<any[]>([]);
+  const [classics, setClassics] = useState<any[]>([]);
   const [populardatas, setPopulardatas] = useState<any[]>([])
+  const [categorySongs, setCategorySongs] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<any>(null);
+
   const [topdatas, setTopdatas] = useState<any[]>([])
   const trandindata = [
     {
@@ -82,6 +85,7 @@ const Search = () => {
   useEffect(() => {
     trandingdata()
     topmostdata()
+    categorydata()
   }, [])
 
 
@@ -94,16 +98,28 @@ const Search = () => {
       (navigation as any).navigate('SongsScreen')
     }
     else if (item.title == 'Sudanese classics') {
+
       (navigation as any).navigate('SudaneseClassicsScreen')
+
     }
     else if (item.title == 'Playlists') {
+
+
       (navigation as any).navigate('PlayListScreen')
+
+
     }
     else if (item.title == 'Genre') {
+
       (navigation as any).navigate('GenreScreen')
+
     }
     else if (item.title == 'Performances') {
+
+
       (navigation as any).navigate('PerformanceScreen')
+
+
     }
 
   }
@@ -124,6 +140,79 @@ const Search = () => {
       setLoader(false);
     }
   };
+
+
+  const categorydata = async () => {
+    try {
+      setLoader(true);
+
+      const response = await ApiService.get(apiUrls.categorie);
+
+      const data = response?.data;
+
+      if (data?.success) {
+        const categoryList = data?.categories || [];
+
+        setCategories(categoryList);
+
+        // Get songs for ALL categories
+        const results = await Promise.all(
+          categoryList.map((category: any) =>
+            classicdatabyid(
+              category.id,
+              category.title
+            )
+          )
+        );
+
+        setCategorySongs(results);
+      }
+    } catch (error) {
+      console.log('Categorydata ERROR:', error);
+    } finally {
+      setLoader(false);
+    }
+  };
+
+
+  const classicdatabyid = async (
+    categoryId: number,
+    categoryTitle: string
+  ) => {
+    try {
+      const response = await ApiService.get(
+        apiUrls.getsudanesesongbycategory(String(categoryId))
+      );
+
+      const data = response?.data;
+
+      if (data?.success) {
+        return {
+          categoryId,
+          categoryTitle,
+          songs: data?.songs || [],
+        };
+      }
+
+      return {
+        categoryId,
+        categoryTitle,
+        songs: [],
+      };
+    } catch (error) {
+      console.log(
+        `Error getting songs for category ${categoryTitle}:`,
+        error
+      );
+
+      return {
+        categoryId,
+        categoryTitle,
+        songs: [],
+      };
+    }
+  };
+
 
   const browesdata = [
     {
@@ -224,6 +313,8 @@ const Search = () => {
                 <ActivityIndicator size="large" color="#EFCB61" />
               </View> :
               <ScrollView showsVerticalScrollIndicator={false} style={{ gap: 20, marginVertical: 10 }}>
+
+
                 {/* <View style={styles.titles}>
                   <AppText
                     color={color.darkthemetext}
@@ -304,7 +395,9 @@ const Search = () => {
                     </View>
                   )}
                 /> */}
-                <View style={styles.titles}>
+
+
+                {/* <View style={styles.titles}>
                   <AppText
                     color={color.darkthemetext}
                     fontSize={14}
@@ -343,57 +436,78 @@ const Search = () => {
                 </View>
 
 
-                <SingingList populardatas={topdatas} />
+                <SingingList populardatas={topdatas} /> */}
 
-                <View style={styles.titles}>
-                  <AppText
-                    color={color.darkthemetext}
-                    fontSize={14}
-                    fontWeight="500"
-                    fontFamily={Inter.regular}
-                  >
-                    Trending Sudanese Songs
-                  </AppText>
+                {categorySongs.map((category: any) => {
+                  // Don't show category if it has no songs
+                  if (!category.songs?.length) {
+                    return null;
+                  }
 
-                  <TouchableOpacity
-                    onPress={() => {
-                      (navigation as any).navigate('SongsListScreen', {
-                        songs: populardatas,
-                        previousScreen: 'Search',
-                      });
-                    }}
-                    activeOpacity={0.5}
-                    style={{
-                      flexDirection: 'row',
-                      gap: 5,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <AppText
-                      color={'#F6A202'}
-                      fontSize={14}
-                      fontWeight="500"
-                      fontFamily={Inter.regular}
-                    >
-                      See all
-                    </AppText>
+                  return (
+                    <View key={category.categoryId}>
 
-                    <AppImage
-                      source={Images.arrow}
-                      width={5}
-                      height={8}
-                      resizeMode="contain"
-                      tintColor={'#F6A202'}
-                    />
-                  </TouchableOpacity>
-                </View>
+                      <View style={styles.titles}>
+                        <AppText
+                          color={color.darkthemetext}
+                          fontSize={14}
+                          fontWeight="500"
+                          fontFamily={Inter.regular}
+                        >
+                          {category.categoryTitle}
+                        </AppText>
+
+                        <TouchableOpacity
+                          onPress={() => {
+                            (navigation as any).navigate(
+                              'SongsListScreen',
+                              {
+                                songs: category.songs,
+                                categoryId: category.categoryId,
+                                categoryTitle: category.categoryTitle,
+                                previousScreen: 'Search',
+                              }
+                            );
+                          }}
+                          activeOpacity={0.5}
+                          style={{
+                            flexDirection: 'row',
+                            gap: 5,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <AppText
+                            color="#F6A202"
+                            fontSize={14}
+                            fontWeight="500"
+                            fontFamily={Inter.regular}
+                          >
+                            See all
+                          </AppText>
+
+                          <AppImage
+                            source={Images.arrow}
+                            width={5}
+                            height={8}
+                            resizeMode="contain"
+                            tintColor="#F6A202"
+                          />
+                        </TouchableOpacity>
+                      </View>
+
+                      <TrandingList data={category.songs} />
+
+                    </View>
+                  );
+                })}
 
 
 
 
 
-                <TrandingList data={populardatas} />
+                {/* <TrandingList data={populardatas} /> */}
+                <TrandingList data={classics} />
 
                 <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
                   Browse by category
@@ -408,7 +522,10 @@ const Search = () => {
                       }}
                       key={index} style={{
                         width: '31%',
-                        marginBottom: 12, borderWidth: 1, borderColor: index === 3 || index === 1 ? "#806141" : "#9F4A65", borderRadius: 12
+                        marginBottom: 12,
+                        borderWidth: 1,
+                        borderColor: index === 3 || index === 1 ? "#806141" : "#9F4A65",
+                        borderRadius: 12
                       }}>
                       <ImageBackground
                         source={item.image}
@@ -416,7 +533,6 @@ const Search = () => {
                         style={{
                           width: '100%',
                           height: 98,
-
                           borderRadius: 12
                         }}
                         imageStyle={styles.image}
@@ -446,6 +562,7 @@ const Search = () => {
                               width={5}
                               height={8}
                               tintColor={"#FFF"}
+
                             />
 
                           </View>

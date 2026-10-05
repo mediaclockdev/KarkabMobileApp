@@ -6,6 +6,7 @@ const apiUrls = {
   signup: 'api/auth/signup',
   login: '/api/auth/login',
   forgetpassword: '/api/auth/forgot-password',
+  categorie: '/api/categories',
   categories: '/api/categories/parents',
   uploadSong: '/api/songs',
   resetPassword: '/api/auth/reset-password',

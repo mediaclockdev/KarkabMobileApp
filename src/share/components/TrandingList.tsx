@@ -48,30 +48,7 @@ export default function TrandingList({
         ItemSeparatorComponent={() => (
           <View style={{ width: 10 }} />
         )}
-        ListEmptyComponent={
-          <View
-            style={{
-              width: 350,
-              justifyContent: 'center',
-              alignItems: 'center',
-              paddingVertical: 40,
-            }}
-          >
-            <AppImage
-              source={Logo.ymusic}
-              width={20}
-              height={20}
-            />
 
-            <AppText
-              color={color.darkthemetext}
-              fontSize={14}
-              marginTop={10}
-            >
-              No songs found
-            </AppText>
-          </View>
-        }
         renderItem={({ item }) => (
           <TouchableOpacity
             activeOpacity={0.8}
