@@ -10,6 +10,7 @@ import AppImage from './AppImage';
 import AppText from './AppText';
 import { Inter } from '../constants/fonts';
 import { useAppColors } from '../constants/color';
+import { Logo } from '../constants/media';
 
 interface ArtistRowProps {
     artists: any[];
@@ -58,36 +59,57 @@ const ArtistRow = ({
     ];
 
     return (
-        <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.container}
-        >
-            {artists.map((artist, index) => (
-                <TouchableOpacity
-                    key={artist?.id ?? index}
-                    activeOpacity={0.8}
-                    onPress={() => onPress?.(artist)}
-                    style={styles.artistItem}
-                >
-                    <View
-                        style={[
-                            styles.imageContainer,
-                            {
-                                borderColor: color.homebordercolor,
-                            },
-                        ]}
-                    >
-                        <AppImage
-                            source={{
-                                uri: artist?.artist_image || artist?.artist_image,
-                            }}
-                            width={72}
-                            height={72}
-                            style={styles.image}
-                        />
+        <>
 
-                        {/* <TouchableOpacity
+            {
+                artists?.length === 0 ?
+
+                    <View style={{
+                        flex: 1,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        paddingVertical: 40,
+                    }}>
+
+                        <AppText
+                            color={color.darkthemetext}
+                            fontSize={14}
+                            fontFamily={Inter.medium}
+                        >
+                            No Artists found
+                        </AppText>
+                    </View>
+                    :
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.container}
+                    >
+                        {artists.map((artist, index) => (
+                            <TouchableOpacity
+                                key={artist?.id ?? index}
+                                activeOpacity={0.8}
+                                onPress={() => onPress?.(artist)}
+                                style={styles.artistItem}
+                            >
+                                <View
+                                    style={[
+                                        styles.imageContainer,
+                                        {
+                                            borderColor: color.homebordercolor,
+                                        },
+                                    ]}
+                                >
+                                    <AppImage
+                                        source={{
+                                            uri: artist?.artist_image || artist?.artist_image,
+                                        }}
+                                        width={72}
+                                        height={72}
+                                        style={styles.image}
+                                    />
+
+                                    {/* <TouchableOpacity
                             activeOpacity={0.7}
                             onPress={() => onPlay?.(artist)}
                             style={{
@@ -110,20 +132,22 @@ const ArtistRow = ({
                                 ▶
                             </AppText>
                         </TouchableOpacity> */}
-                    </View>
+                                </View>
 
-                    <AppText
-                        color={color.darkthemetext}
-                        fontSize={12}
-                        fontFamily={Inter.medium}
-                        numberOfLines={1}
-                        style={styles.name}
-                    >
-                        {artist?.name || artist?.artistName}
-                    </AppText>
-                </TouchableOpacity>
-            ))}
-        </ScrollView>
+                                <AppText
+                                    color={color.darkthemetext}
+                                    fontSize={12}
+                                    fontFamily={Inter.medium}
+                                    numberOfLines={1}
+                                    style={styles.name}
+                                >
+                                    {artist?.name || artist?.artistName}
+                                </AppText>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+            }
+        </>
     );
 };
 

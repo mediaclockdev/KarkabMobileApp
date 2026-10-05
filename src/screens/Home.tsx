@@ -5,6 +5,9 @@ import {
   View,
   RefreshControl,
   ActivityIndicator,
+  FlatList,
+  Dimensions,
+  ImageBackground,
 } from 'react-native';
 import { useAppColors } from '../share/constants/color';
 import AppText from '../share/components/AppText';
@@ -31,6 +34,9 @@ import ArtistRow from '../share/components/ArtistRow';
 import LinearGradient from 'react-native-linear-gradient';
 import { addsong } from '../auth/redux/authSlice';
 import { getLastPlayed } from '../services/lastPlayed';
+import { GlobalImage } from '../share/utils/GlobalImage';
+
+const { width } = Dimensions.get('window');
 
 const Home = () => {
   const navigation = useNavigation<any>();
@@ -50,7 +56,7 @@ const Home = () => {
     'Latest'
   );
   const [loader, setLoader] = useState(false);
-
+  const [newReleasesdata, setNewreleasesdata] = useState<any[]>([])
   const loginState = useAppSelector((state: any) => state.auth.loginState);
 
 
@@ -69,6 +75,7 @@ const Home = () => {
         recommendedsongfun(),
         getartistfun(),
         getRecording(),
+        newreleasesdata(),
         fetchArtistsByFilter(selectedFilter),
       ]);
     } catch (error) {
@@ -77,6 +84,26 @@ const Home = () => {
       setRefreshing(false);
     }
   }, [selectedFilter]);
+
+  const newreleasesdata = async () => {
+    console.log("popular api called")
+    try {
+      //dispatch(loaderstate(true));
+
+      const response = await ApiService.get(apiUrls.getnewreleases);
+
+      const data = (response as any)?.data;
+      console.log(data, 'tranding API RESPONSEdddd');
+
+      if (data?.success) {
+        setNewreleasesdata(data.songs);
+      }
+    } catch (error) {
+      console.log('trandingdata ERROR:', error);
+    } finally {
+      // dispatch(loaderstate(false));
+    }
+  };
 
   const fetchProfileData = async () => {
     try {
@@ -226,6 +253,7 @@ const Home = () => {
     recommendedsongfun();
     getartistfun();
     getRecording();
+    newreleasesdata();
   }, []);
 
   useEffect(() => {
@@ -461,6 +489,100 @@ const Home = () => {
             }}
           />
 
+
+
+          <View style={styles.titles}>
+
+            <AppText color={color.darkthemetext}
+              fontSize={14}
+              fontWeight="500"
+              fontFamily={Inter.medium}>
+              New Releases
+            </AppText>
+            <TouchableOpacity
+              onPress={() => {
+                (navigation as any).navigate('SongsListScreen', {
+                  songs: newReleasesdata,
+                  previousScreen: 'Home',
+                });
+              }}
+              activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+              <AppText color={'#FFB300'} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
+                View all
+              </AppText>
+              <AppImage
+                source={Images.arrow}
+                width={5}
+                height={8}
+                tintColor={'#FFB300'}
+
+              />
+            </TouchableOpacity>
+            {/* <TouchableOpacity>
+                        <Text style={styles.viewAll}>
+                            View all >
+                        </Text>
+                    </TouchableOpacity> */}
+
+          </View>
+
+          <View style={styles.grid}>
+
+
+            <FlatList
+              horizontal
+              data={newReleasesdata}
+              keyExtractor={item => item.id}
+              showsHorizontalScrollIndicator={false}
+              ListEmptyComponent={() => (
+                <View style={styles.emptyContainer}>
+                  <AppImage
+                    source={Images.music}
+                    width={20}
+                    height={20}
+                    resizeMode="contain"
+                  />
+
+                  <AppText
+                    style={styles.emptyTitle}>
+                    No New Releases
+                  </AppText>
+
+                  <AppText style={styles.emptySubtitle}>
+                    New songs will appear here soon.
+                  </AppText>
+                </View>
+              )}
+
+              contentContainerStyle={{
+                paddingHorizontal: 5,
+              }}
+              renderItem={({ item }) => (
+                <SongCard
+                  key={item.id}
+                  showNewTag={true}
+                  item={item}
+                  width={(width - 45) / 3}
+                  onpress={() => (navigation as any).navigate('.', {
+                    id: item.id,
+                  })}
+
+                />
+
+              )}
+            />
+
+            {/* {newReleases.map(item => (
+                        <SongCard
+                            key={item.id}
+                            item={item}
+                            width={(width - 45) / 2}
+                        />
+                    ))} */}
+
+          </View>
+
+
           {/* Selected Artist - All Songs */}
           <View style={styles.titles}>
             <AppText
@@ -678,6 +800,96 @@ const Home = () => {
   );
 };
 
+const SongCard = ({
+  item,
+  width = 150,
+  onpress,
+  showNewTag = false,
+
+}: {
+  item: any;
+  width?: number;
+  onpress?: () => void;
+  showNewTag?: boolean;
+}) => {
+
+
+  return (
+    <TouchableOpacity
+
+      onPress={
+        onpress
+
+      }
+      style={[styles.songCard, { width }]}>
+
+      <   ImageBackground
+        source={GlobalImage
+          (item.cover_image_url)}
+        style={styles.songImage}
+        resizeMode='cover'
+      >
+
+        <LinearGradient
+          colors={[
+            'rgba(0,0,0,0)',
+            'rgba(0,0,0,0.15)',
+            'rgba(0,0,0,0.45)',
+            'rgba(0,0,0,0.9)',
+          ]}
+          locations={[0, 0.4, 0.7, 1]}
+          style={styles.songOverlay}
+        />
+        {showNewTag && (
+          <View style={styles.newReleaseTag}>
+
+
+            <LinearGradient
+              colors={['#FFB300', '#FF4D67']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                height: '100%', width: '100%', flex: 1, justifyContent
+                  : 'center', alignItems: 'center', borderRadius: 8
+              }}
+            >
+              <AppText style={styles.newReleaseText}>NEW</AppText>
+            </LinearGradient>
+          </View>
+        )}
+        <TouchableOpacity style={styles.playCircle}>
+          <AppImage
+            source={Images.playicon}
+            height={12}
+            width={12}
+          />
+        </TouchableOpacity>
+
+        <View style={styles.songBottom}>
+
+          <AppText
+            numberOfLines={1}
+            style={styles.songTitle}>
+            {item.title}
+          </AppText>
+
+          <AppText
+            numberOfLines={1}
+            style={styles.songArtist}>
+            {item.artist}
+          </AppText>
+
+          <AppText style={styles.songLike}>
+            ❤️ {item.likes_count}
+          </AppText>
+
+        </View>
+      </ImageBackground>
+
+    </TouchableOpacity>
+  );
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -691,6 +903,125 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginVertical: 10,
+  },
+  emptyContainer: {
+    width: width - 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+
+  emptyTitle: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: 12,
+  },
+
+  emptySubtitle: {
+    color: '#888',
+    fontSize: 10,
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  songCard: {
+    backgroundColor: '#151515',
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginRight: 8,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#262626',
+    height: 160,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  songImage: {
+    width: '100%',
+    height: 282,
+    justifyContent: 'flex-end',
+    alignSelf: 'center',
+  },
+
+  songOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  songTitle: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 12,
+    textShadowColor: 'rgba(0,0,0,0.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+
+  songArtist: {
+    color: '#E5E5E5',
+    marginTop: 3,
+    fontSize: 10,
+    textShadowColor: 'rgba(0,0,0,0.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+
+  songLike: {
+    color: '#FFD54F',
+    marginTop: 8,
+    fontSize: 10,
+    fontWeight: '600',
+    textShadowColor: 'rgba(0,0,0,0.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  newReleaseTag: {
+    position: 'absolute',
+    top: 70,
+    left: 10,
+    backgroundColor: '#FF2D55',
+    height: 20,
+    width: 40,
+    borderRadius: 8,
+    zIndex: 10,
+  },
+
+  newReleaseText: {
+    color: '#FFF',
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  playCircle: {
+    position: 'absolute',
+    bottom: 135,
+    left: 10,
+    //alignSelf: 'center',
+    width: 32,
+    height: 32,
+    borderRadius: 26,
+    backgroundColor: 'rgba(0,0,0,.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#F3870C',
+  },
+
+  songBottom: {
+    position: 'absolute',
+    bottom: 65,
+    left: 0,
+    padding: 10,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
   },
 });
 

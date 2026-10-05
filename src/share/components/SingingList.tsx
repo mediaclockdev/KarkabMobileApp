@@ -165,9 +165,10 @@ export default function SingingList(populardatas: any) {
                                             width: '22.4%',
                                         }}
                                         onPress={() => {
+                                            console.log("populardatas", populardatas);
                                             if (item.id == 2) {
                                                 (navigation as any).navigate('SongsListScreen', {
-                                                    songs: populardatas,
+                                                    songs: populardatas?.populardatas,
                                                     previousScreen: 'Search',
                                                 });
                                             }

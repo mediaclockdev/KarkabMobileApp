@@ -71,6 +71,24 @@ export default function SearchSongSecreen() {
     const [sortOrder, setSortOrder] = useState('asc');
 
 
+    const normalizeText = (text: any) => {
+        return String(text ?? '')
+            .toLowerCase()
+            .trim()
+            // Arabic letter normalization
+            .replace(/[إأآ]/g, 'ا')
+            .replace(/ى/g, 'ي')
+            .replace(/ة/g, 'ه')
+            .replace(/ؤ/g, 'و')
+            .replace(/ئ/g, 'ي')
+            // Remove Arabic diacritics
+            .replace(/[\u064B-\u065F\u0670]/g, '')
+            // Remove Arabic tatweel
+            .replace(/ـ/g, '')
+            // Normalize extra spaces
+            .replace(/\s+/g, ' ');
+    };
+
     const songlist = async () => {
         try {
             setIsLoading(true);
@@ -97,6 +115,9 @@ export default function SearchSongSecreen() {
         }, [])
     );
 
+
+
+
     useEffect(() => {
         if (searchText.trim().length === 0) {
             setFilteredSongs([]);
@@ -107,22 +128,36 @@ export default function SearchSongSecreen() {
         setIsLoading(true);
 
         const timer = setTimeout(() => {
-            const search = searchText.toLowerCase();
+            const search = normalizeText(searchText);
 
-            const result = songdata?.filter(song =>
-                song.title?.toLowerCase().includes(search) ||
-                song.artist?.toLowerCase().includes(search) ||
-                song.badge?.toLowerCase().includes(search) ||
-                String(song.is_favorite).toLowerCase().includes(search)
-            ) || [];
+            const result =
+                songdata?.filter((song: any) => {
+                    const title = normalizeText(song?.title);
+
+                    const artist = normalizeText(
+                        typeof song?.artist === 'object'
+                            ? song?.artist?.name
+                            : song?.artist
+                    );
+
+                    const badge = normalizeText(song?.badge);
+
+                    const favorite = normalizeText(song?.is_favorite);
+
+                    return (
+                        title.includes(search) ||
+                        artist.includes(search) ||
+                        badge.includes(search) ||
+                        favorite.includes(search)
+                    );
+                }) || [];
 
             setFilteredSongs(result);
             setIsLoading(false);
-        }, 400); // Delay for loader
+        }, 400);
 
         return () => clearTimeout(timer);
     }, [searchText, songdata]);
-
 
 
     return (

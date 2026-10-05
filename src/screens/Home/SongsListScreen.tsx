@@ -1,9 +1,9 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     View,
     Text,
     StyleSheet,
-    SafeAreaView,
+
     TouchableOpacity,
     ScrollView,
     TextInput,
@@ -18,6 +18,7 @@ import apiUrls from '../../services/apiUrls';
 import ApiService from '../../services/api';
 import AppText from '../../share/components/AppText';
 import Librarylist from '../../share/components/Librarylist';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -113,6 +114,12 @@ export default function SongsListScreen() {
      * FETCH CATEGORY SONGS
      * -----------------------------------------
      */
+
+    useEffect(() => {
+        console.log(songs, "filter", songdata);
+    }, [songs, songdata]);
+
+
     const songlist = async () => {
         setIsLoading(true);
 
@@ -175,8 +182,9 @@ export default function SongsListScreen() {
             let cancelled = false;
 
             const loadSongs = async () => {
+
                 console.log(
-                    'SongsListScreen focused'
+                    'SongsListScreen focused', previousScreen, artist,
                 );
 
                 setSearchText('');
@@ -184,6 +192,8 @@ export default function SongsListScreen() {
                 /**
                  * Artist songs
                  */
+
+
                 if (artist?.id) {
                     await fetchArtistSongs(
                         artist.id
@@ -220,10 +230,12 @@ export default function SongsListScreen() {
                  * through navigation
                  */
                 setIsLoading(true);
+                console.log(songs, "songsList")
 
                 const songsList = Array.isArray(songs)
                     ? songs
                     : [];
+                console.log(songsList, "songsList")
 
                 if (!cancelled) {
                     setSongdata(songsList);
@@ -253,64 +265,78 @@ export default function SongsListScreen() {
      * FILTER + SORT SONGS
      * -----------------------------------------
      */
+    /**
+  * -----------------------------------------
+  * NORMALIZE SEARCH TEXT
+  * Supports English + Arabic
+  * -----------------------------------------
+  */
+    const normalizeText = (text: any) => {
+        return String(text ?? '')
+            .toLowerCase()
+            .trim()
+
+            // Arabic character normalization
+            .replace(/[إأآ]/g, 'ا')
+            .replace(/ى/g, 'ي')
+            .replace(/ة/g, 'ه')
+            .replace(/ؤ/g, 'و')
+            .replace(/ئ/g, 'ي')
+
+            // Remove Arabic tashkeel/diacritics
+            .replace(/[\u064B-\u065F\u0670]/g, '')
+
+            // Remove tatweel
+            .replace(/ـ/g, '');
+    };
+
+
+    /**
+     * -----------------------------------------
+     * FILTER + SORT SONGS
+     * English + Arabic
+     * -----------------------------------------
+     */
     const filteredSongs = (songdata || [])
         .filter((song: any) => {
-            const search =
-                searchText.toLowerCase().trim();
+            const search = normalizeText(searchText);
 
-            const title =
-                String(song?.title || '');
+            // Show everything when search is empty
+            if (!search) {
+                return true;
+            }
 
-            const artistName =
+            const title = normalizeText(song?.title);
+
+            const artistName = normalizeText(
                 typeof song?.artist === 'object'
-                    ? String(
-                        song?.artist?.name || ''
-                    )
-                    : String(
-                        song?.artist || ''
-                    );
+                    ? song?.artist?.name
+                    : song?.artist
+            );
 
-            const category =
-                String(
-                    song?.categoryName || ''
-                );
+            const category = normalizeText(
+                song?.categoryName
+            );
 
             return (
-                title
-                    .toLowerCase()
-                    .includes(search) ||
-                artistName
-                    .toLowerCase()
-                    .includes(search) ||
-                category
-                    .toLowerCase()
-                    .includes(search)
+                title.includes(search) ||
+                artistName.includes(search) ||
+                category.includes(search)
             );
         })
-        .sort(
-            (
-                a: any,
-                b: any
-            ) => {
-                const comparison =
-                    String(
-                        a?.title || ''
-                    ).localeCompare(
-                        String(
-                            b?.title || ''
-                        ),
-                        ['ar', 'en'],
-                        {
-                            sensitivity:
-                                'base',
-                        }
-                    );
+        .sort((a: any, b: any) => {
+            const comparison = String(a?.title || '').localeCompare(
+                String(b?.title || ''),
+                ['ar', 'en'],
+                {
+                    sensitivity: 'base',
+                }
+            );
 
-                return sortOrder === 'asc'
-                    ? comparison
-                    : -comparison;
-            }
-        );
+            return sortOrder === 'asc'
+                ? comparison
+                : -comparison;
+        });
 
     return (
         <SafeAreaView

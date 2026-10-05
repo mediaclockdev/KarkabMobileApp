@@ -390,7 +390,9 @@ const Librarylist = ({ musicData,
             marginBottom: 5
           }}
         >
-          {Number(item.duration || 0).toFixed(2) || '00:00'}
+          {Number.isFinite(Number(item.duration))
+            ? Number(item.duration).toFixed(2)
+            : '00:00'}
         </AppText>
 
 

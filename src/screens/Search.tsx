@@ -115,7 +115,7 @@ const Search = () => {
       const response = await ApiService.get(apiUrls.getpopularsong);
       const data = (response as any).data;
       if (data?.success) {
-
+        console.log(data.songs, 'topmost API RESPONSE');
         setTopdatas(data.songs);
       }
     } catch (error) {

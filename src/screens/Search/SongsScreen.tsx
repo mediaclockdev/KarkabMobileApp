@@ -1197,7 +1197,7 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 282,
         justifyContent: 'flex-end',
-        alignself: 'center',
+        alignSelf: 'center',
     },
 
     songOverlay: {
@@ -1258,24 +1258,6 @@ const styles = StyleSheet.create({
         padding: 10,
     },
 
-    songTitle: {
-        color: '#fff',
-        fontWeight: '700',
-        fontSize: 12,
-    },
-
-    songArtist: {
-        color: '#999',
-        marginTop: 3,
-        fontSize: 10,
-    },
-
-    songLike: {
-        color: '#FF4D67',
-        marginTop: 8,
-        fontSize: 10,
-        fontWeight: '600',
-    },
 
     grid: {
         flexDirection: 'row',
