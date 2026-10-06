@@ -54,6 +54,7 @@ export default function TrandingList({
             activeOpacity={0.8}
             onPress={() => {
               (navigation as any).navigate('.', {
+                previousScreen: 'Search',
                 id: item.id,
               });
             }}
@@ -73,7 +74,7 @@ export default function TrandingList({
             <ImageBackground
               source={
                 item?.cover_image_url
-                  ? GlobalImage(item.cover_image_url)
+                  ? GlobalImage(item?.cover_image_url)
                   : item?.image
               }
               resizeMode="cover"

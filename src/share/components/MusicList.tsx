@@ -22,9 +22,10 @@ import Sound, {
   PlayBackType,
 } from 'react-native-nitro-sound';
 import { GlobalImage } from '../utils/GlobalImage'
-import { addsong, isPausesd } from '../../auth/redux/authSlice'
+import { addsong, isPausesd, openSongAction } from '../../auth/redux/authSlice'
 import { useAppDispatch, useAppSelector } from '../hooks/useAppSelector'
 import { useNavigation } from '@react-navigation/native'
+import SongActionSheet from '../../screens/SongActionSheet'
 
 const musicData = [
   {
@@ -70,6 +71,18 @@ const MusicList: React.FC<{
       (state: any) => state.auth.playsong
     );
     const navigation = useNavigation();
+    const [selectedSong, setSelectedSong] = useState<any>(null);
+    const [showActions, setShowActions] = useState(false);
+
+    const openSongActions = (song: any) => {
+      setSelectedSong(song);
+      setShowActions(true);
+    };
+
+    const closeSongActions = () => {
+      setShowActions(false);
+      setSelectedSong(null);
+    };
 
     const playRecording = async (item: any) => {
       await Sound.stopPlayer();
@@ -150,8 +163,8 @@ const MusicList: React.FC<{
 
     const renderItem = ({ item, index }: any) => {
       return (
-        <TouchableOpacity
-          activeOpacity={0.8}
+        <View
+
           style={[styles.card, { borderColor: color.homebordercolor }]}
         >
           {/* Image */}
@@ -237,65 +250,72 @@ const MusicList: React.FC<{
             </TouchableOpacity>
 
             {/* Menu */}
-            {/* <TouchableOpacity style={styles.menu}>
-            <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
-            <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
-            <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
-          </TouchableOpacity> */}
+            {/* <TouchableOpacity
+              onPress={() => { dispatch(openSongAction(item)); }}
+              style={styles.menu}>
+              <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
+              <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
+              <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
+            </TouchableOpacity> */}
           </View>
-        </TouchableOpacity>
+        </View>
       )
     }
 
     return (
-      <View style={{
-        backgroundColor: color.darkbackround,
-        borderWidth: 1,
-        borderColor: color.homebordercolor,
-        borderRadius: 12,
-        marginBottom: 15
-      }}>
-        {loading ? (
-          <View style={styles.loaderContainer}>
-            <ActivityIndicator
-              size="small"
-              color={color.mgyellow}
-            />
-          </View>
-        ) : (
-          <FlatList
-            data={data?.slice(0, 8) || musicData}
-            // data={musicData}
-            keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContainer}
-            ListEmptyComponent={() =>
+      <>
 
-              <View style={{
-                flex: 1,
-                justifyContent: 'center',
-                alignItems: 'center',
-                paddingVertical: 40,
-              }}>
-                <AppImage
-                  source={Logo.ymusic}
-                  width={20}
-                  height={20}
-                />
-                <AppText
-                  color={color.darkthemetext}
-                  fontSize={14}
-                  marginTop={10}
-                >
-                  No songs found
-                </AppText>
-              </View>
+        <View style={{
+          backgroundColor: color.darkbackround,
+          borderWidth: 1,
+          borderColor: color.homebordercolor,
+          borderRadius: 12,
+          marginBottom: 15
+        }}>
+          {loading ? (
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator
+                size="small"
+                color={color.mgyellow}
+              />
+            </View>
+          ) : (
+            <FlatList
+              data={data?.slice(0, 8) || musicData}
+              // data={musicData}
+              keyExtractor={(item) => item.id}
+              renderItem={renderItem}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.listContainer}
+              ListEmptyComponent={() =>
 
-            }
-          />)}
-      </View>
+                <View style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingVertical: 40,
+                }}>
+                  <AppImage
+                    source={Logo.ymusic}
+                    width={20}
+                    height={20}
+                  />
+                  <AppText
+                    color={color.darkthemetext}
+                    fontSize={14}
+                    marginTop={10}
+                  >
+                    No songs found
+                  </AppText>
+                </View>
 
+              }
+            />)}
+
+
+        </View>
+
+      </>
     )
   }
 
@@ -369,7 +389,7 @@ const styles = StyleSheet.create({
   },
 
   menu: {
-    marginLeft: 14,
+    marginLeft: 0,
     justifyContent: 'center',
     alignItems: 'center',
   },

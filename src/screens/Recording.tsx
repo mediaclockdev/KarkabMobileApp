@@ -102,7 +102,8 @@ const Recording = () => {
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
-
+      console.log('Recording screen focused, stopping previous song if any');
+      dispatch(setHideMiniPlayer(true));
       const stopPreviousSong = async () => {
         try {
           // Stop the song playing through @rntp/player
@@ -110,14 +111,14 @@ const Recording = () => {
 
           // Reset the previous song's position
           await TrackPlayer.seekTo(0);
-
+          dispatch(setHideMiniPlayer(true));
           console.log('Previous TrackPlayer song stopped');
         } catch (error) {
           console.log('Error stopping previous song:', error);
         }
       };
 
-      dispatch(setHideMiniPlayer(true));
+      // dispatch(setHideMiniPlayer(true));
 
       // Stop the previous song immediately when Recording gets focus
       stopPreviousSong();
@@ -126,7 +127,7 @@ const Recording = () => {
         isActive = false;
         dispatch(setHideMiniPlayer(false));
       };
-    }, [dispatch]),
+    }, [dispatch, data]),
   );
 
   useEffect(() => {

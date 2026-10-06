@@ -9,7 +9,7 @@ import LinearGradient from "react-native-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Inter } from "../share/constants/fonts";
 import { useAppDispatch } from "../share/hooks/useAppSelector";
-import { loaderstate, setAuthenticated, showToast } from "../auth/redux/authSlice";
+import { addsong, loaderstate, setAuthenticated, showToast } from "../auth/redux/authSlice";
 import Sound, {
     AudioEncoderAndroidType,
     AudioSourceAndroidType,
@@ -420,7 +420,9 @@ const Profile = () => {
                     const token = storage.getString('userToken');
                     console.log(token, "fkfckfv")
                     dispatch(setAuthenticated(false));
-
+                    dispatch(
+                        addsong
+                            (''),)
                 },
             },
 

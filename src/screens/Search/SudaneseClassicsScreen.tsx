@@ -181,8 +181,8 @@ export default function SudaneseClassicsScreen() {
         // console.log("classicdata api called")
         try {
             setLoading(true);
-
-            const response = await ApiService.get(apiUrls.getsudanesesong);
+            console.log("getsudanseclassicsongs api called", apiUrls.getsudanseclassicsongs)
+            const response = await ApiService.get(apiUrls.getsudanseclassicsongs);
 
             const data = response.data;
             console.log(data, 'classicdata API RESPONSEdddd');

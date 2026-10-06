@@ -20,8 +20,14 @@ interface AuthState {
     toast: ToastState
     isPaused: boolean,
     hideMiniPlayer: boolean,
+    songAction: SongActionState | null,
 }
 
+
+interface SongActionState {
+    visible: boolean;
+    song: any | null;
+}
 const initialState: AuthState = {
     user: null,
     accessToken: null,
@@ -43,6 +49,10 @@ const initialState: AuthState = {
     },
     playsong: null,
     hideMiniPlayer: false,
+    songAction: {
+        visible: false,
+        song: null,
+    },
 }
 
 const authSlice = createSlice({
@@ -114,6 +124,17 @@ const authSlice = createSlice({
         hideToast(state) {
             state.toast.visible = false;
         },
+        openSongAction(state, action) {
+            state.songAction ??= { visible: false, song: null };
+            state.songAction.visible = true;
+            state.songAction.song = action.payload;
+        },
+
+        closeSongAction(state) {
+            if (!state.songAction) return;
+            state.songAction.visible = false;
+            state.songAction.song = null;
+        },
     },
 })
 
@@ -132,7 +153,9 @@ export const {
     addsong,
     showToast,
     hideToast,
-    setHideMiniPlayer
+    setHideMiniPlayer,
+    openSongAction,
+    closeSongAction,
 } = authSlice.actions
 
 export default authSlice.reducer

@@ -18,9 +18,9 @@ import { loginSuccess, setAuthenticated, setLoginState } from '../../auth/redux/
 type Field = 'name' | 'email' | 'password' | 'confirmPassword';
 
 export const useSignup = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<any>();
-
+  const language = i18n.language.split('-')[0];
   const [values, setValues] = useState({
     name: '',
     email: '',
@@ -69,6 +69,7 @@ export const useSignup = () => {
         name: values.name.trim(),
         email: values.email.trim().toLowerCase(),
         password: values.password,
+        language: language,
       });
 
       if (data?.success) {

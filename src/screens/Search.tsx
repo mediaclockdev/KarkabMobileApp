@@ -5,7 +5,7 @@ import { Banner, Images, Logo } from "../share/constants/media";
 import color, { useAppColors } from "../share/constants/color";
 import AppImage from "../share/components/AppImage";
 import SearchBar from "../share/components/SearchBar";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AppText from "../share/components/AppText";
 import LinearGradient from "react-native-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -16,8 +16,9 @@ import apiUrls from "../services/apiUrls";
 import { useAppDispatch } from "../share/hooks/useAppSelector";
 import { loaderstate } from "../auth/redux/authSlice";
 import ApiService from '../services/api';
-import { useNavigation } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { Sound } from "react-native-nitro-sound";
+import TagLIst from "../share/components/TagLIst";
 
 const Search = () => {
   //const [search, setSearch] = useState('')
@@ -29,6 +30,7 @@ const Search = () => {
   const [classics, setClassics] = useState<any[]>([]);
   const [populardatas, setPopulardatas] = useState<any[]>([])
   const [categorySongs, setCategorySongs] = useState<any[]>([]);
+  const [tagSongs, setTagSongs] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
 
   const [topdatas, setTopdatas] = useState<any[]>([])
@@ -82,12 +84,36 @@ const Search = () => {
   };
 
 
-  useEffect(() => {
-    trandingdata()
-    topmostdata()
-    categorydata()
-  }, [])
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
 
+      const loadSearchData = async () => {
+        try {
+          setLoader(true);
+
+          await Promise.all([
+            trandingdata(),
+            topmostdata(),
+            categorydata(),
+            tagsdata(),
+          ]);
+        } catch (error) {
+          console.log('LOAD SEARCH DATA ERROR:', error);
+        } finally {
+          if (isMounted) {
+            setLoader(false);
+          }
+        }
+      };
+
+      loadSearchData();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
 
   const handlenavigation = async ({ item }: { item: { title: string } }) => {
     console.log(item)
@@ -175,10 +201,37 @@ const Search = () => {
   };
 
 
+  const tagsdata = async () => {
+    try {
+      setLoader(true);
+
+      const response = await ApiService.get(apiUrls.gettags);
+      const data = response?.data;
+
+      if (data?.success) {
+        const tagList = data?.tags || [];
+
+        const results = await Promise.all(
+          tagList.map((tag: any) =>
+            classictagdatabyid(tag.id, tag.title)
+          )
+        );
+
+        setTagSongs(results);
+      }
+    } catch (error) {
+      console.log('tagsdata ERROR:', error);
+    } finally {
+      setLoader(false);
+    }
+  };
+
+
   const classicdatabyid = async (
     categoryId: number,
     categoryTitle: string
   ) => {
+    setLoader(true);
     try {
       const response = await ApiService.get(
         apiUrls.getsudanesesongbycategory(String(categoryId))
@@ -199,7 +252,8 @@ const Search = () => {
         categoryTitle,
         songs: [],
       };
-    } catch (error) {
+    }
+    catch (error) {
       console.log(
         `Error getting songs for category ${categoryTitle}:`,
         error
@@ -210,6 +264,52 @@ const Search = () => {
         categoryTitle,
         songs: [],
       };
+    }
+    finally {
+      setLoader(false);
+    }
+  };
+
+
+  const classictagdatabyid = async (
+    tagId: number,
+    tagTitle: string
+  ) => {
+    setLoader(true);
+    try {
+      const response = await ApiService.get(
+        apiUrls.gettagSongs(String(tagId))
+      );
+
+      const data = response?.data;
+
+      if (data?.success) {
+        return {
+          tagId,
+          tagTitle,
+          songs: data?.songs || [],
+        };
+      }
+
+      return {
+        tagId,
+        tagTitle,
+        songs: [],
+      };
+    } catch (error) {
+      console.log(
+        `Error getting songs for tag ${tagTitle}:`,
+        error
+      );
+
+      return {
+        tagId,
+        tagTitle,
+        songs: [],
+      };
+    }
+    finally {
+      setLoader(false);
     }
   };
 
@@ -508,6 +608,68 @@ const Search = () => {
 
                 {/* <TrandingList data={populardatas} /> */}
                 <TrandingList data={classics} />
+
+
+                {tagSongs.map((tag: any) => {
+                  if (!tag.songs?.length) {
+                    return null;
+                  }
+
+                  return (
+                    <View key={tag.tagId}>
+                      <View style={styles.titles}>
+                        <AppText
+                          color={color.darkthemetext}
+                          fontSize={14}
+                          fontWeight="500"
+                          fontFamily={Inter.regular}
+                        >
+                          {tag.tagTitle}
+                        </AppText>
+
+                        <TouchableOpacity
+                          activeOpacity={0.5}
+                          onPress={() => {
+                            (navigation as any).navigate(
+                              'SongsListScreen',
+                              {
+                                songs: tag.songs,
+                                categoryId: tag.tagId,
+                                categoryTitle: tag.tagTitle,
+                                previousScreen: 'Search',
+                              }
+                            );
+                          }}
+                          style={{
+                            flexDirection: 'row',
+                            gap: 5,
+                            alignItems: 'center',
+                          }}
+                        >
+                          <AppText
+                            color="#F6A202"
+                            fontSize={14}
+                            fontWeight="500"
+                            fontFamily={Inter.regular}
+                          >
+                            See all
+                          </AppText>
+
+                          <AppImage
+                            source={Images.arrow}
+                            width={5}
+                            height={8}
+                            resizeMode="contain"
+                            tintColor="#F6A202"
+                          />
+                        </TouchableOpacity>
+                      </View>
+
+                      <TagLIst data={tag.songs} />
+                    </View>
+                  );
+                })}
+
 
                 <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
                   Browse by category

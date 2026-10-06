@@ -13,6 +13,7 @@ import { loginSuccess, setAuthenticated, setLoginState } from '../../auth/redux/
 import authService from '../../services/auth.service';
 import ApiService from '../../services/api';
 import apiUrls from '../../services/apiUrls';
+import i18n from '../../localization/i18n';
 const EMPTY_ERRORS: LoginErrors = { email: null, password: null };
 
 /**
@@ -20,9 +21,10 @@ const EMPTY_ERRORS: LoginErrors = { email: null, password: null };
  * The screen only renders state and forwards user intent.
  */
 export const useLogin = () => {
-    const { t } = useTranslation();
-    const dispatch = useAppDispatch();
+    const { t, i18n } = useTranslation();
 
+    const dispatch = useAppDispatch();
+    const language = i18n.language.split('-')[0];
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errors, setErrors] = useState<LoginErrors>(EMPTY_ERRORS);
@@ -69,9 +71,10 @@ export const useLogin = () => {
                 {
                     email: email,
                     password: password,
+                    language: language,
                 }
             );
-            const res = response.data
+            const res = (response as any).data
             if (res.success && res.token) {
                 persistSession(res);
                 return;

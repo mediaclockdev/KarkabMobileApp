@@ -45,7 +45,9 @@ const apiUrls = {
   deleteplaylist: (id: number | string) => `/api/playlists/${id}`,
   playlistDetail: (id: string | number) => `/api/playlists/${id}`,
   addSongToPlaylist: (id: string | number) => `/api/playlists/${id}/songs`,
-
+  gettags: '/api/tags',
+  gettagSongs: (id: string | number) => `/api/songs/by-tag/${id}`,
+  getsudanseclassicsongs: '/api/songs/Sudanese-classics',
 };
 
 export default apiUrls;

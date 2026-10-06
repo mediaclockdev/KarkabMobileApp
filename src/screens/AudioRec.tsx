@@ -39,6 +39,7 @@ type RepeatMode = 'off' | 'one' | 'all';
 const AudioRec = () => {
   const color = useAppColors();
   const route = useRoute();
+  const previousScreen = route?.params?.previousScreen
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const dispatch = useAppDispatch();
@@ -668,7 +669,13 @@ const AudioRec = () => {
         {/* Top Header */}
         <View style={styles.topHeader}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              if (previousScreen === 'Search') {
+                navigation.navigate('Search');
+              } else {
+                navigation.goBack();
+              }
+            }}
             style={styles.grabBarTouch}
           >
             <AppImage

@@ -23,8 +23,15 @@ import NotificationScreen from '../screens/Profile/NotificationScreen';
 import CreatePlaylist from '../screens/Profile/CreatePlaylist';
 import PlaylistDetailScreen from '../screens/Profile/PlaylistDetailScreen';
 import RecordingList from '../screens/Home/RecordingList';
+import LanguageScreen from '../screens/Settings/LanguageScreen';
+import SongActionSheet from '../screens/SongActionSheet';
+import { useAppDispatch, useAppSelector } from '../share/hooks/useAppSelector';
+import { closeSongAction } from '../auth/redux/authSlice';
 export const Tabs = () => {
-
+    const songAction = useAppSelector(
+        (state: any) => state.auth.songAction
+    );
+    const dispatch = useAppDispatch();
     const screens = [
         { name: 'Home', component: Home },
         { name: 'Search', component: Search },
@@ -49,14 +56,23 @@ export const Tabs = () => {
         { name: 'CreatePlaylist', component: CreatePlaylist },
         { name: 'PlaylistDetailScreen', component: PlaylistDetailScreen },
         { name: 'RecordingList', component: RecordingList },
+        { name: 'LanguageScreen', component: LanguageScreen },
 
 
     ];
 
     return (
-        <HideableBottomTabs
-            screens={screens}
-        />
+        <>
 
+            <HideableBottomTabs
+                screens={screens}
+            />
+            <SongActionSheet
+                visible={songAction.visible}
+                song={songAction.song}
+                onClose={() => dispatch(closeSongAction())}
+
+            />
+        </>
     );
 };

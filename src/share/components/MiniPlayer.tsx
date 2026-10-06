@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
+    AppState,
     Image,
     StyleSheet,
     TouchableOpacity,
@@ -51,10 +52,54 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     const [trackDuration, setTrackDuration] = useState(0);
     const [switchingTrack, setSwitchingTrack] = useState(false);
     const isAutoNextingRef = useRef(false);
-
+    const appState = useRef(AppState.currentState);
     /**
      * 1. ACTIVE PROGRESS POLLING + AUTO NEXT SONG ON FINISH
      */
+
+
+    const wasPausedByBackground = useRef(false);
+
+    useEffect(() => {
+        const subscription = AppState.addEventListener(
+            'change',
+            async nextState => {
+                const previousState = appState.current;
+
+                if (
+                    previousState === 'active' &&
+                    (
+                        nextState === 'inactive' ||
+                        (nextState as string) === 'unknown'
+                    )
+                ) {
+                    try {
+                        if (playing) {
+                            wasPausedByBackground.current = true;
+                            await TrackPlayer.pause();
+                        }
+                    } catch (error) {
+                        console.log(
+                            'PAUSE ON APP CLOSE/KILL ERROR:',
+                            error
+                        );
+                    }
+                }
+
+                appState.current = nextState;
+            }
+        );
+
+        return () => {
+            subscription.remove();
+        };
+    }, [playing]);
+
+
+
+
+
+
     useEffect(() => {
         if (!playsong?.id || hideMiniPlayer) return;
 

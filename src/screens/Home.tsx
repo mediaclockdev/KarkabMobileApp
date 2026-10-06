@@ -350,7 +350,7 @@ const Home = () => {
               console.log('Artist selected:', artist);
             }}
             onPlay={(artist) => {
-              openPlayer(artist.id); // 👈 Fixed
+              openPlayer(artist.id);
             }}
           />
 
@@ -531,7 +531,7 @@ const Home = () => {
 
             <FlatList
               horizontal
-              data={newReleasesdata}
+              data={newReleasesdata.slice(0, 10)}
               keyExtractor={item => item.id}
               showsHorizontalScrollIndicator={false}
               ListEmptyComponent={() => (
@@ -1021,7 +1021,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
+    //  paddingHorizontal: 15,
   },
 });
 

@@ -76,7 +76,8 @@ export const HideableBottomTabs = ({ screens }: Props) => {
             currentRoute === 'NotificationScreen' ||
             currentRoute === 'CreatePlaylist' ||
             currentRoute === 'PlaylistDetailScreen' ||
-            currentRoute === 'RecordingList'
+            currentRoute === 'RecordingList' ||
+            currentRoute === 'LanguageScreen'
 
 
           ) {

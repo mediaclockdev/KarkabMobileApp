@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+    Alert,
     ScrollView,
     StyleSheet,
     Switch,
@@ -16,6 +17,9 @@ import color from '../../share/constants/color';
 import { Inter } from '../../share/constants/fonts';
 import { Images, Logo } from '../../share/constants/media';
 import { useNavigation } from '@react-navigation/native';
+import { storage } from '../../share/storage/mmkv';
+import { addsong, setAuthenticated } from '../../auth/redux/authSlice';
+import { useAppDispatch } from '../../share/hooks/useAppSelector';
 
 const SettingScreen = () => {
     const navigation = useNavigation();
@@ -24,6 +28,32 @@ const SettingScreen = () => {
     const [darkMode, setDarkMode] = useState(true);
     const [highQuality, setHighQuality] = useState(false);
     const [downloadWifi, setDownloadWifi] = useState(true);
+
+    const dispatch = useAppDispatch();
+
+    const LogOutAlertOccurred = (title = 'User Logout', body = 'Are you sure you want to logout?', btnTxt = 'yes', btnTxt2 = 'No') => {
+        Alert.alert(title, body, [
+            {
+                text: btnTxt,
+                onPress: async () => {
+                    storage.set('userToken', '');
+                    const token = storage.getString('userToken');
+                    console.log(token, "fkfckfv")
+                    dispatch(setAuthenticated(false));
+                    dispatch(
+                        addsong
+                            (''),)
+                },
+            },
+
+            {
+                text: btnTxt2,
+                onPress: () => {
+                    console.log('No Pressed');
+                },
+            },
+        ]);
+    };
 
     const renderSettingRow = ({
         icon,
@@ -40,6 +70,8 @@ const SettingScreen = () => {
         onPress?: () => void;
         danger?: boolean;
     }) => {
+
+
         return (
             <TouchableOpacity
                 activeOpacity={0.75}
@@ -201,7 +233,7 @@ const SettingScreen = () => {
                         icon: '▣',
                         title: 'Language',
                         subtitle: 'English',
-                        onPress: () => { },
+                        onPress: () => { (navigation as any).navigate('LanguageScreen') },
                     })}
                 </View>
 
@@ -398,6 +430,7 @@ const SettingScreen = () => {
                 <TouchableOpacity
                     activeOpacity={0.8}
                     style={styles.logoutButton}
+                    onPress={() => LogOutAlertOccurred()}
                 >
                     <AppText style={styles.logoutIcon}>
                         ⇥
