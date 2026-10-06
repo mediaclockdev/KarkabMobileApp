@@ -14,7 +14,8 @@
       "title": "لنصنع ذكريات",
       "headline": "استعد لـ",
       "tagline": "دورك تغني والمسرح بانتظارك",
-      "taglineAccent": "Your stage is waiting",
+            "taglineAccent": "دورك تغنى والمسرح بانتظارك",
+
       "emailPlaceholder": "أدخل البريد الإلكتروني",
       "emailOrUsername": "البريد الإلكتروني أو اسم المستخدم أو رقم الهاتف",
       "passwordPlaceholder": "كلمة المرور",
@@ -43,8 +44,8 @@
   "failed": "فشل إنشاء الحساب"
 },
     "social": {
-      "continueWithGoogle": "المتابعة باستخدام Google",
-      "continueWithApple": "المتابعة عبر Apple",
+      "continueWithGoogle": "المتابعة باستخدام جوجل",
+      "continueWithApple": "المتابعة عبر تفاحة",
       "divider": "أو"
     },
     "forgotPassword": {
