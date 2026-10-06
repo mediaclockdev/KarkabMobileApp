@@ -799,7 +799,7 @@ const Recording = () => {
                 </View>
 
                 {/* PROGRESS */}
-                <View style={styles.progressTrack}>
+                {/* <View style={styles.progressTrack}>
                   <View
                     style={[
                       styles.progressFill,
@@ -816,10 +816,10 @@ const Recording = () => {
                       },
                     ]}
                   />
-                </View>
+                </View> */}
 
                 {/* TIME */}
-                <View style={styles.timeRow}>
+                {/* <View style={styles.timeRow}>
                   <Text style={styles.timeText}>
                     {formatAudioTime(playbackPositionMs)}
                   </Text>
@@ -827,7 +827,7 @@ const Recording = () => {
                   <Text style={styles.timeText}>
                     {formatAudioTime(instrumentalDurationMs)}
                   </Text>
-                </View>
+                </View> */}
               </View>
             </View>
           )}

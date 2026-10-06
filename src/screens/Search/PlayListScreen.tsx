@@ -112,17 +112,31 @@ export default function PlayListScreen() {
         try {
             setLoading(true);
 
-            // Replace with your actual playlist API
-            // const response = await ApiService.get(apiUrls.getplaylists);
+            const response = await ApiService.get(apiUrls.getplaylists);
 
-            // if (response?.data?.success) {
-            //     setPlaylists(response.data.playlists || []);
-            // }
+            console.log('Playlist API response:', response);
 
-            // Keeping default data until API is connected
-            setPlaylists(defaultPlaylists);
+            const res = (response as any)?.data;
+
+            if (res?.success) {
+                const playlistData = res?.playlists || [];
+
+                setPlaylists(playlistData);
+
+                // Select first API playlist
+                if (playlistData.length > 0) {
+                    const firstPlaylist = playlistData[0];
+
+                    setSelected(firstPlaylist.id);
+
+                    await getPlaylistSongs(firstPlaylist.id);
+                }
+            } else {
+                setPlaylists([]);
+            }
         } catch (error) {
             console.log('Playlist API error:', error);
+            setPlaylists([]);
         } finally {
             setLoading(false);
         }
@@ -134,50 +148,23 @@ export default function PlayListScreen() {
     const getPlaylistSongs = async (playlistId: string) => {
         try {
             setSongsLoading(true);
+            setSongs([]);
 
-            // Example:
-            //
-            // const response = await ApiService.get(
-            //     apiUrls.getplaylistsongs(playlistId),
-            // );
-            //
-            // if (response?.data?.success) {
-            //     setSongs(response.data.songs || []);
-            // }
+            const response = await ApiService.get(
+                apiUrls.getplaylistsongs(playlistId),
+            );
 
-            // Temporary sample data
-            setSongs([
-                {
-                    id: '1',
-                    title: 'يا أغلى وطن',
-                    artist: 'Mohamed Wardi',
-                    likes: '125K',
-                    duration: '5:24',
-                    level: 'Easy',
-                    image:
-                        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
-                },
-                {
-                    id: '2',
-                    title: 'مبروك',
-                    artist: 'Hussein Al Sadiq',
-                    likes: '102K',
-                    duration: '6:12',
-                    level: 'Intermediate',
-                    image:
-                        'https://images.unsplash.com/photo-1506794778202-cad84cf45f1',
-                },
-                {
-                    id: '3',
-                    title: 'الزين نادي',
-                    artist: 'Mustafa Al Sadiq',
-                    likes: '87K',
-                    duration: '5:48',
-                    level: 'Easy',
-                    image:
-                        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
-                },
-            ]);
+            console.log('Playlist songs API response:', response);
+
+            const res = (response as any)?.data;
+
+            if (res?.success) {
+                const playlistSongs = res?.playlist.songs || [];
+
+                setSongs(playlistSongs);
+            } else {
+                setSongs([]);
+            }
         } catch (error) {
             console.log('Playlist songs error:', error);
             setSongs([]);
@@ -189,9 +176,6 @@ export default function PlayListScreen() {
     useEffect(() => {
         getPlaylists();
         getPlaylistCategories();
-
-        // Load first playlist by default
-        getPlaylistSongs(defaultPlaylists[0].id);
     }, []);
 
     const categoryList = [
@@ -228,7 +212,7 @@ export default function PlayListScreen() {
                 <View style={styles.playlistImageWrapper}>
                     <AppImage
                         source={{
-                            uri: item.image,
+                            uri: item?.cover_image_url,
                         }}
                         width={150}
                         height={150}
@@ -237,10 +221,11 @@ export default function PlayListScreen() {
 
                     <View style={styles.playButton}>
                         <AppImage
-                            source={Images.play}
+                            source={Images.bplay}
                             width={18}
                             height={18}
                             resizeMode="contain"
+                            tintColor="#FFFFFF"
                         />
                     </View>
                 </View>
@@ -249,11 +234,11 @@ export default function PlayListScreen() {
                     style={styles.playlistName}
                     numberOfLines={1}
                 >
-                    {item.name}
+                    {item?.creator_name}
                 </AppText>
 
                 <AppText style={styles.playlistSongs}>
-                    {item.songs || '0 songs'}
+                    {item?.song_count || '0 songs'}
                 </AppText>
             </TouchableOpacity>
         );
@@ -454,7 +439,14 @@ export default function PlayListScreen() {
                                 🎵 Songs
                             </AppText>
 
-                            <TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    (navigation as any).navigate('SongsListScreen', {
+                                        songs: songs,
+                                        previousScreen: 'PlayListScreen',
+                                    });
+                                }}
+                            >
                                 <AppText style={styles.view}>
                                     Play All
                                 </AppText>

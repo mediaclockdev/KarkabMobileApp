@@ -101,6 +101,30 @@ const ClassicSongItem = ({ item, onPress }: Props) => {
             console.log('Stop Error:', error);
         }
     };
+
+    const formatDuration = (duration: any) => {
+        if (duration === null || duration === undefined || duration === '') {
+            return '00:00';
+        }
+
+        // Already formatted as MM:SS
+        if (typeof duration === 'string' && duration.includes(':')) {
+            return duration;
+        }
+
+        const seconds = Number(duration);
+
+        if (!Number.isFinite(seconds) || seconds < 0) {
+            return '00:00';
+        }
+
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+
+        return `${String(minutes).padStart(2, '0')}:${String(
+            remainingSeconds,
+        ).padStart(2, '0')}`;
+    };
     return (
         <TouchableOpacity
             activeOpacity={0.85}
@@ -144,7 +168,7 @@ const ClassicSongItem = ({ item, onPress }: Props) => {
                 </AppText>
 
                 <AppText style={styles.info}>
-                    {Number(item.duration || 0).toFixed(2) || '00:00'}
+                    {formatDuration(item.duration)}
                 </AppText>
 
                 <View

@@ -48,6 +48,8 @@ const apiUrls = {
   gettags: '/api/tags',
   gettagSongs: (id: string | number) => `/api/songs/by-tag/${id}`,
   getsudanseclassicsongs: '/api/songs/Sudanese-classics',
+  getplaylists: `/api/app/playlists`,
+  getplaylistsongs: (playlistId: string | number) => `/api/app/playlists/${playlistId}`,
 };
 
 export default apiUrls;

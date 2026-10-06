@@ -149,7 +149,7 @@ const SettingScreen = () => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.container}
             >
-                {/* Header */}
+
                 <View style={styles.header}>
                     <View style={styles.headerContent}>
                         <TouchableOpacity
@@ -209,7 +209,7 @@ const SettingScreen = () => {
                         icon: '♙',
                         title: 'Profile',
                         subtitle: 'Manage your profile information',
-                        onPress: () => { navigation.navigate('ManageProfileScreen') },
+                        onPress: () => { (navigation as any).navigate('ManageProfileScreen') },
                     })}
 
                     <View style={styles.divider} />
@@ -520,8 +520,6 @@ const styles = StyleSheet.create({
         fontFamily: Inter.medium,
     },
 
-    /* Settings card */
-
     settingsCard: {
         borderWidth: 1,
         borderColor: '#272727',
@@ -543,8 +541,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#191919',
         marginLeft: 64,
     },
-
-    /* Icon */
 
     iconBox: {
         width: 40,
@@ -592,8 +588,6 @@ const styles = StyleSheet.create({
         marginRight: 2,
     },
 
-    /* VIP */
-
     vipBadge: {
         paddingHorizontal: 11,
         paddingVertical: 5,
@@ -609,9 +603,6 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         fontFamily: Inter.medium,
     },
-
-    /* Logout */
-
     logoutButton: {
         height: 52,
         marginTop: 24,
