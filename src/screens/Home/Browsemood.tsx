@@ -3,7 +3,7 @@ import {
     View,
     Text,
     StyleSheet,
-    SafeAreaView,
+
     StatusBar,
     TouchableOpacity,
     ScrollView,
@@ -23,6 +23,7 @@ import { useAppDispatch } from '../../share/hooks/useAppSelector';
 import { loaderstate } from '../../auth/redux/authSlice';
 import apiUrls from '../../services/apiUrls';
 import ApiService from '../../services/api';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -189,14 +190,19 @@ export default function Browsemood() {
 
                     </View>
 
-                    <TouchableOpacity style={styles.settingBtn}>
+                    <TouchableOpacity
+                        onPress={() => {
+                            (navigation as any).navigate('CreatePlaylist', {
+                                previousScreen: 'Browsemood',
+                            });
+                        }}
+                        style={styles.settingBtn}>
                         <AppImage
                             source={Images.playlist}
                             height={16}
                             width={16}
                         />
                     </TouchableOpacity>
-
                 </View>
 
 
@@ -206,6 +212,7 @@ export default function Browsemood() {
                         source={BottomIcons.search}
                         height={16}
                         width={16}
+                        style={{ marginRight: 10 }}
                     />
                     {/* <Text style={styles.searchIcon}>🔍</Text> */}
 
@@ -471,7 +478,7 @@ const styles = StyleSheet.create({
 
     listContainer: {
         paddingHorizontal: 15,
-        paddingBottom: 120,
+        paddingBottom: 0,
     },
 
     row: {

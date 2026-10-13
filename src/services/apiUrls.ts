@@ -24,6 +24,7 @@ const apiUrls = {
   dislikesong: (id: number | string) => `/api/songs/${id}/dislike`,
   uploadrecording: '/api/recordings',
   getrecording: '/api/recordings',
+  getrecordingpublic: '/api/recordings/public',
   getpopularsong: '/api/songs/popular',
   gettrandingsong: '/api/songs/trending',
   otpverify: '/api/auth/verify-otp',
@@ -50,6 +51,9 @@ const apiUrls = {
   getsudanseclassicsongs: '/api/songs/Sudanese-classics',
   getplaylists: `/api/app/playlists`,
   getplaylistsongs: (playlistId: string | number) => `/api/app/playlists/${playlistId}`,
+  deletesongplaylist: (playlistId: string | number, id: string | number) => `/api/playlists/${playlistId}/songs/${id}`,
+  downloadsongs: (id: string | number) => `/api/songs/${id}/download`,
+  requestPublicRecording: (id: string | number) => `/api/recordings/${id}/request-public`,
 };
 
 export default apiUrls;

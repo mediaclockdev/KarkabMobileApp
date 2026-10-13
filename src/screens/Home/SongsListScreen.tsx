@@ -19,6 +19,8 @@ import ApiService from '../../services/api';
 import AppText from '../../share/components/AppText';
 import Librarylist from '../../share/components/Librarylist';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import { useAppSelector } from '../../share/hooks/useAppSelector';
 
 const { width } = Dimensions.get('window');
 
@@ -35,7 +37,7 @@ const COLORS = {
 export default function SongsListScreen() {
     const navigation = useNavigation();
     const route = useRoute();
-
+    const { t } = useTranslation();
     const {
         songs,
         previousScreen,
@@ -53,7 +55,9 @@ export default function SongsListScreen() {
     const [searchText, setSearchText] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-
+    const recordingRefresh = useAppSelector(
+        state => state.auth.recordingRefresh
+    );
     /**
      * -----------------------------------------
      * FETCH ARTIST SONGS
@@ -207,6 +211,7 @@ export default function SongsListScreen() {
                  */
                 if (
                     previousScreen === 'Browsemood'
+                    || previousScreen === 'GenreScreen'
                 ) {
                     await songlist();
 
@@ -256,7 +261,8 @@ export default function SongsListScreen() {
             previousScreen,
             filter,
             songs?.id,
-            songs
+            songs,
+            recordingRefresh
         ])
     );
 
@@ -405,7 +411,7 @@ export default function SongsListScreen() {
                                         styles.title
                                     }
                                 >
-                                    {' '}Songs
+                                    {' '}{t('Home.Songs')}
                                 </Text>
 
                                 <Text
@@ -413,16 +419,14 @@ export default function SongsListScreen() {
                                         styles.subtitle
                                     }
                                 >
-                                    {' '}Discover
-                                    thousands of
+                                    {' '}{t('Home.Discoverthousandsof')}
                                     <Text
                                         style={{
                                             color:
                                                 '#D4AF37',
                                         }}
                                     >
-                                        {' '}Sudanese
-                                        songs
+                                        {' '}{t('Home.Sudanesesongs')}
                                     </Text>
                                 </Text>
                             </View>
@@ -476,7 +480,8 @@ export default function SongsListScreen() {
                                     Inter.regular
                                 }
                             >
-                                All Songs
+
+                                {t('Library.allsongs')}
                             </AppText>
 
                             <AppText
@@ -537,7 +542,7 @@ export default function SongsListScreen() {
                                     onChangeText={
                                         setSearchText
                                     }
-                                    placeholder="Search songs, artists..."
+                                    placeholder={t('Library.searchsongs,artists...')}
                                     placeholderTextColor="#CDCECB"
                                     style={{
                                         fontSize: 10,
@@ -558,6 +563,15 @@ export default function SongsListScreen() {
                                         '#303030',
                                     borderRadius:
                                         12,
+                                }}
+                                onPress={() => {
+                                    setSortOrder(
+                                        prev =>
+                                            prev ===
+                                                'asc'
+                                                ? 'desc'
+                                                : 'asc'
+                                    );
                                 }}
                             >
                                 <AppImage

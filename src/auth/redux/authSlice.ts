@@ -21,6 +21,7 @@ interface AuthState {
     isPaused: boolean,
     hideMiniPlayer: boolean,
     songAction: SongActionState | null,
+    recordingRefresh: number;
 }
 
 
@@ -53,6 +54,7 @@ const initialState: AuthState = {
         visible: false,
         song: null,
     },
+    recordingRefresh: 0,
 }
 
 const authSlice = createSlice({
@@ -135,6 +137,9 @@ const authSlice = createSlice({
             state.songAction.visible = false;
             state.songAction.song = null;
         },
+        refreshRecordings(state) {
+            state.recordingRefresh += 1;
+        },
     },
 })
 
@@ -156,6 +161,7 @@ export const {
     setHideMiniPlayer,
     openSongAction,
     closeSongAction,
+    refreshRecordings,
 } = authSlice.actions
 
 export default authSlice.reducer

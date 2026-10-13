@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
     FlatList,
     ScrollView,
@@ -15,8 +15,11 @@ import AppImage from '../../share/components/AppImage';
 import color from '../../share/constants/color';
 import { Inter } from '../../share/constants/fonts';
 import { Images, Logo } from '../../share/constants/media';
-import { useNavigation } from '@react-navigation/native';
-
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { loaderstate } from '../../auth/redux/authSlice';
+import apiUrls from '../../services/apiUrls';
+import { useAppDispatch } from '../../share/hooks/useAppSelector';
+import ApiService from '../../services/api';
 const categories = [
     'All',
     'Sudanese',
@@ -102,15 +105,77 @@ const genres = [
 const GenreScreen = () => {
     const navigation = useNavigation();
     const [selectedCategory, setSelectedCategory] = useState('All');
+    const [categories, setCategories] = useState<any[]>([])
+    const dispatch = useAppDispatch();
+    const [selected, setSelected] = useState('All');
+    const [searchText, setSearchText] = useState('');
+    const [searchText1, setSearchText1] = useState('');
+    useFocusEffect(
+        useCallback(() => {
+            setSearchText('');
+            setSearchText1('');
+            setSelected('All');
+            categorydata();
+        }, [])
+    );
 
+    const filteredCategories = categories.filter((item: any) => {
+        const search = searchText.trim().toLowerCase();
+
+
+        const matchesSearch =
+            !search ||
+            item.name?.toLowerCase().includes(search) ||
+            item.title?.toLowerCase().includes(search) ||
+            item.description?.toLowerCase().includes(search);
+
+
+        const matchesCategory =
+            selected === 'All' ||
+            item.name === selected ||
+            item.title === selected;
+
+        return matchesSearch && matchesCategory;
+    });
+
+    const categorydata = async () => {
+        console.log("category api called", apiUrls.categories)
+        try {
+            dispatch(loaderstate(true));
+
+            const response = await ApiService.get(apiUrls
+                .categories);
+
+            const data = (response as any)?.data;
+            console.log(data?.categories, 'category API RESPONSEdddd');
+
+            if (data?.success) {
+                setCategories(data?.categories);
+            }
+        } catch (error) {
+            console.log('Categorydata ERROR:', error);
+        } finally {
+            dispatch(loaderstate(false));
+        }
+    };
+    const categoryList = [
+        { id: 'all', title: 'All' },
+        ...categories,
+    ];
     const renderGenre = ({ item }: { item: (typeof genres)[0] }) => {
         return (
             <TouchableOpacity
                 activeOpacity={0.85}
                 style={styles.genreCard}
+                onPress={() => {
+                    (navigation as any).navigate('SongsListScreen', {
+                        songs: item,
+                        previousScreen: 'GenreScreen',
+                    });
+                }}
             >
                 <AppImage
-                    source={{ uri: item.image }}
+                    source={{ uri: item?.category_image }}
                     style={styles.genreImage}
                     resizeMode="cover"
                 />
@@ -124,7 +189,7 @@ const GenreScreen = () => {
                     </AppText>
 
                     <AppText style={styles.songCount}>
-                        {item.songs}
+                        {item?.songs_count}
                     </AppText>
                 </View>
 
@@ -202,7 +267,7 @@ const GenreScreen = () => {
                 {/* Categories */}
                 <FlatList
                     horizontal
-                    data={categories}
+                    data={categoryList}
                     showsHorizontalScrollIndicator={false}
                     keyExtractor={(item) => item}
                     contentContainerStyle={styles.categoryList}
@@ -210,29 +275,29 @@ const GenreScreen = () => {
                         <TouchableOpacity
                             activeOpacity={0.8}
                             onPress={() =>
-                                setSelectedCategory(item)
+                                setSelected(item.title)
                             }
                             style={[
                                 styles.categoryChip,
-                                selectedCategory === item &&
+                                selected === item.title &&
                                 styles.selectedCategory,
                             ]}
                         >
                             <AppText
                                 style={[
                                     styles.categoryText,
-                                    selectedCategory === item &&
+                                    selected === item.title &&
                                     styles.selectedCategoryText,
                                 ]}
                             >
-                                {item}
+                                {item.title}
                             </AppText>
                         </TouchableOpacity>
                     )}
                 />
 
                 {/* Featured section */}
-                <View style={styles.sectionHeader}>
+                {/* <View style={styles.sectionHeader}>
                     <AppText style={styles.sectionTitle}>
                         Explore Genres
                     </AppText>
@@ -240,11 +305,11 @@ const GenreScreen = () => {
                     <AppText style={styles.view}>
                         See all  ›
                     </AppText>
-                </View>
+                </View> */}
 
                 {/* Genre Grid */}
                 <FlatList
-                    data={genres}
+                    data={filteredCategories}
                     keyExtractor={(item) => item.id}
                     renderItem={renderGenre}
                     numColumns={2}

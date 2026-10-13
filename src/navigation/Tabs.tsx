@@ -26,7 +26,8 @@ import RecordingList from '../screens/Home/RecordingList';
 import LanguageScreen from '../screens/Settings/LanguageScreen';
 import SongActionSheet from '../screens/SongActionSheet';
 import { useAppDispatch, useAppSelector } from '../share/hooks/useAppSelector';
-import { closeSongAction } from '../auth/redux/authSlice';
+import { closeSongAction, refreshRecordings } from '../auth/redux/authSlice';
+import DownloadsScreen from '../screens/Profile/DownloadsScreen';
 export const Tabs = () => {
     const songAction = useAppSelector(
         (state: any) => state.auth.songAction
@@ -57,7 +58,7 @@ export const Tabs = () => {
         { name: 'PlaylistDetailScreen', component: PlaylistDetailScreen },
         { name: 'RecordingList', component: RecordingList },
         { name: 'LanguageScreen', component: LanguageScreen },
-
+        { name: 'DownloadsScreen', component: DownloadsScreen },
 
     ];
 
@@ -71,6 +72,12 @@ export const Tabs = () => {
                 visible={songAction.visible}
                 song={songAction.song}
                 onClose={() => dispatch(closeSongAction())}
+                onDeleted={recordingId => {
+                    // Remove deleted recording from your list
+                    console.log(recordingId)
+                    dispatch(refreshRecordings());
+
+                }}
 
             />
         </>

@@ -3,7 +3,7 @@ import {
     View,
     Text,
     StyleSheet,
-    SafeAreaView,
+
     TouchableOpacity,
     ScrollView,
     TextInput,
@@ -18,6 +18,9 @@ import apiUrls from '../../services/apiUrls';
 import ApiService from '../../services/api';
 import AppText from '../../share/components/AppText';
 import Librarylist from '../../share/components/Librarylist';
+import { useAppSelector } from '../../share/hooks/useAppSelector';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 
@@ -34,19 +37,21 @@ const COLORS = {
 export default function RecordingList() {
     const navigation = useNavigation();
     const route = useRoute();
-
+    const { t } = useTranslation();
     const {
         songs,
         previousScreen,
         filter = false,
         artist,
         recordings,
+        isRecordings = false,
     } = route.params as {
         songs?: any;
         previousScreen?: string;
         filter?: boolean;
         artist?: any;
         recordings?: any[];
+        isRecordings?: boolean;
     };
 
     const [songdata, setSongdata] = useState<any[]>([]);
@@ -54,12 +59,64 @@ export default function RecordingList() {
     const [searchText, setSearchText] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-
+    const recordingRefresh = useAppSelector(
+        state => state.auth.recordingRefresh
+    );
     /**
      * -----------------------------------------
      * FETCH ARTIST SONGS
      * -----------------------------------------
      */
+    const fetchRecordings = async () => {
+        setIsLoading(true);
+
+        try {
+            console.log('GET RECORDINGS API CALLED');
+
+            const response = await ApiService.get(
+                apiUrls.getrecording
+            );
+
+            const data = (response as any)?.data;
+
+            console.log(
+                'GET RECORDINGS RESPONSE:',
+                data
+            );
+
+            if (data?.success) {
+                const list = Array.isArray(data?.recordings)
+                    ? data.recordings
+                    : [];
+
+                const recordingList = list.map(
+                    (item: any) => ({
+                        ...item,
+                        isRecording: true,
+                    })
+                );
+
+                setSongdata(recordingList);
+                setNumberofsong(recordingList.length);
+            } else {
+                setSongdata([]);
+                setNumberofsong(0);
+            }
+        } catch (error) {
+            console.log(
+                'GET RECORDINGS ERROR:',
+                error
+            );
+
+            setSongdata([]);
+            setNumberofsong(0);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
+
     const fetchArtistSongs = async (
         artistId: number | string
     ) => {
@@ -178,98 +235,59 @@ export default function RecordingList() {
 
             const loadSongs = async () => {
                 console.log(
-                    'RecordingList focused'
+                    'RecordingList focused',
+                    'recordingRefresh:',
+                    recordingRefresh
                 );
 
                 setSearchText('');
                 setIsLoading(true);
 
-                /**
-                 * -----------------------------------------
-                 * RECORDINGS
-                 * -----------------------------------------
-                 *
-                 * If recordings are passed, use recordings
-                 * instead of songs.
-                 */
-                if (Array.isArray(recordings)) {
-                    const recordingList = recordings.map(
-                        (item: any) => ({
-                            ...item,
-                            isRecording: true,
-                        })
-                    );
-
-                    console.log(
-                        'RECORDING LIST:',
-                        recordingList
-                    );
-
-                    if (!cancelled) {
-                        setSongdata(recordingList);
-                        setNumberofsong(
-                            recordingList.length
-                        );
-                        setIsLoading(false);
-                    }
-
+                // -----------------------------------------
+                // RECORDINGS
+                // -----------------------------------------
+                if (isRecordings) {
+                    await fetchRecordings();
                     return;
                 }
 
-                /**
-                 * -----------------------------------------
-                 * ARTIST SONGS
-                 * -----------------------------------------
-                 */
+                // -----------------------------------------
+                // ARTIST SONGS
+                // -----------------------------------------
                 if (artist?.id) {
-                    await fetchArtistSongs(
-                        artist.id
-                    );
-
+                    await fetchArtistSongs(artist.id);
                     return;
                 }
 
-                /**
-                 * -----------------------------------------
-                 * BROWSE MOOD
-                 * -----------------------------------------
-                 */
-                if (
-                    previousScreen === 'Browsemood'
-                ) {
+                // -----------------------------------------
+                // BROWSE MOOD
+                // -----------------------------------------
+                if (previousScreen === 'Browsemood') {
                     await songlist();
-
                     return;
                 }
 
-                /**
-                 * -----------------------------------------
-                 * SONGS SCREEN + FILTER
-                 * -----------------------------------------
-                 */
+                // -----------------------------------------
+                // SONGS SCREEN + FILTER
+                // -----------------------------------------
                 if (
                     filter &&
                     previousScreen === 'SongsScreen'
                 ) {
                     await songlist();
-
                     return;
                 }
 
-                /**
-                 * -----------------------------------------
-                 * NORMAL SONGS
-                 * -----------------------------------------
-                 */
+                // -----------------------------------------
+                // NORMAL SONGS
+                // -----------------------------------------
                 const songsList = Array.isArray(songs)
                     ? songs
                     : [];
 
                 if (!cancelled) {
                     setSongdata(songsList);
-                    setNumberofsong(
-                        songsList.length
-                    );
+                    setNumberofsong(songsList.length);
                     setIsLoading(false);
                 }
             };
@@ -285,6 +303,7 @@ export default function RecordingList() {
             filter,
             songs?.id,
             recordings,
+            recordingRefresh
         ])
     );
 
@@ -440,7 +459,7 @@ export default function RecordingList() {
                                         styles.title
                                     }
                                 >
-                                    {' '}Recordings
+                                    {' '}{t('Search.Recordings')}
                                 </Text>
 
                                 <Text
@@ -448,14 +467,14 @@ export default function RecordingList() {
                                         styles.subtitle
                                     }
                                 >
-                                    {' '}Your recorded
+                                    {' '}{t('Search.Yourrecorded')}
                                     <Text
                                         style={{
                                             color:
                                                 '#D4AF37',
                                         }}
                                     >
-                                        {' '}songs
+                                        {' '}{t('Home.Songs')}
                                     </Text>
                                 </Text>
                             </View>

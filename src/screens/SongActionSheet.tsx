@@ -1,19 +1,28 @@
 import React from 'react';
 import {
     Animated,
+    Clipboard,
     Dimensions,
     Pressable,
+    Share,
     StyleSheet,
     TouchableOpacity,
     View,
+    Modal,
+    FlatList,
+    ActivityIndicator,
+    TextInput,
 } from 'react-native';
 
-
+import ApiService from '../services/api';
+import apiUrls from '../services/apiUrls';
 import AppText from '../share/components/AppText';
+import AppImage from '../share/components/AppImage';
 import color from '../share/constants/color';
 import { Inter } from '../share/constants/fonts';
-import { Logo } from '../share/constants/media';
-import AppImage from '../share/components/AppImage';
+import { useAppDispatch } from '../share/hooks/useAppSelector';
+import { showToast } from '../auth/redux/authSlice';
+import { Images, Logo, Banner } from '../share/constants/media';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -29,82 +38,700 @@ interface SongActionSheetProps {
     visible: boolean;
     song?: any;
     onClose: () => void;
-
+    onDeleted?: (songId: number | string) => void;
 }
 
 const SongActionSheet = ({
     visible,
     song,
     onClose,
+    onDeleted,
 
 }: SongActionSheetProps) => {
+    const dispatch = useAppDispatch();
+
     const translateY = React.useRef(
         new Animated.Value(SCREEN_HEIGHT),
     ).current;
 
-    React.useEffect(() => {
-        Animated.spring(translateY, {
-            toValue: visible ? 0 : SCREEN_HEIGHT,
-            useNativeDriver: true,
-            damping: 20,
-            stiffness: 180,
-        }).start();
-    }, [visible, translateY]);
+    const [mounted, setMounted] = React.useState(visible);
 
-    if (!visible && translateY._value === SCREEN_HEIGHT) {
-        return null;
-    }
+    // --- Playlist Feature State ---
+    const [playlistModalVisible, setPlaylistModalVisible] = React.useState(false);
+    const [createPlaylistModalVisible, setCreatePlaylistModalVisible] = React.useState(false);
+    const [playlists, setPlaylists] = React.useState<any[]>([]);
+    const [playlistsLoading, setPlaylistsLoading] = React.useState(false);
+    const [newPlaylistName, setNewPlaylistName] = React.useState('');
+    const [newPlaylistDesc, setNewPlaylistDesc] = React.useState('');
+    const [addingSong, setAddingSong] = React.useState(false);
+    const [creatingPlaylist, setCreatingPlaylist] = React.useState(false);
 
-    const handleAction = (action: SongAction) => {
-        action.onPress();
-        onClose();
+    const getPlaylists = async () => {
+        try {
+            setPlaylistsLoading(true);
+            const response = await ApiService.get(apiUrls.createplaylist);
+            const data = (response as any)?.data;
+            if (data?.success) {
+                const apiPlaylists = data?.data || data?.playlists || [];
+                setPlaylists(apiPlaylists);
+            }
+        } catch (error) {
+            console.log('GET PLAYLIST ERROR:', error);
+            dispatch(showToast({ visible: true, message: 'Unable to load playlists.', type: 'error' }));
+        } finally {
+            setPlaylistsLoading(false);
+        }
     };
 
-    const actions = [
+    const handleAddSongToPlaylist = async (playlistId: string | number) => {
+        if (!song?.id) return;
+        try {
+            console.log(song.id, playlistId, "evhvhbveb")
+            setAddingSong(true);
+            const response = await ApiService.post(apiUrls.addSongToPlaylist(playlistId), {
+                song_ids: [song.id],
+            });
+            const data = (response as any)?.data;
+            if (!data?.success) {
+                dispatch(showToast({ visible: true, message: data?.message || 'Unable to add song.', type: 'error' }));
+                return;
+            }
+            dispatch(showToast({ visible: true, message: 'Song added to playlist successfully.', type: 'success' }));
+            setPlaylistModalVisible(false);
+            closeSheet();
+        } catch (error: any) {
+            console.log('ADD SONG TO PLAYLIST ERROR:', error);
+            dispatch(showToast({ visible: true, message: error?.response?.data?.message || 'Unable to add song.', type: 'error' }));
+        } finally {
+            setAddingSong(false);
+        }
+    };
+
+    const handleCreatePlaylist = async () => {
+        const name = newPlaylistName.trim();
+        if (!name) {
+            dispatch(showToast({ visible: true, message: 'Please enter a playlist name.', type: 'error' }));
+            return;
+        }
+        try {
+            setCreatingPlaylist(true);
+            const response = await ApiService.post(apiUrls.createplaylist, {
+                name,
+                description: newPlaylistDesc.trim(),
+            });
+
+            console.log(response, "wjhwjh")
+            const data = (response as any)?.data;
+            if (!data?.success) {
+                dispatch(showToast({ visible: true, message: data?.message || 'Unable to create playlist.', type: 'error' }));
+                return;
+            }
+            // Add song to the newly created playlist
+            const newPlaylistId = data?.data?.id || data?.playlist?.id;
+            if (newPlaylistId && song?.id) {
+                await ApiService.post(apiUrls.addSongToPlaylist(newPlaylistId), {
+                    song_ids: [song.id],
+                });
+                dispatch(showToast({ visible: true, message: 'Playlist created and song added!', type: 'success' }));
+            } else {
+                dispatch(showToast({ visible: true, message: 'Playlist created successfully.', type: 'success' }));
+            }
+            getPlaylists();
+            setCreatePlaylistModalVisible(false);
+            setNewPlaylistName('');
+            setNewPlaylistDesc('');
+            setPlaylistModalVisible(false);
+            closeSheet();
+        } catch (error: any) {
+            console.log('CREATE PLAYLIST ERROR:', error);
+            dispatch(showToast({ visible: true, message: error?.response?.data?.message || 'Unable to create playlist.', type: 'error' }));
+        } finally {
+            setCreatingPlaylist(false);
+        }
+    };
+    // -----------------------------
+
+    // console.log('SongActionSheet visiblennn:', song, visible);
+    /**
+     * Open / close animation
+     */
+    React.useEffect(() => {
+        if (visible) {
+            setMounted(true);
+
+            // Reset position before opening
+            translateY.setValue(SCREEN_HEIGHT);
+
+            Animated.spring(translateY, {
+                toValue: 0,
+                useNativeDriver: true,
+                damping: 20,
+                stiffness: 180,
+            }).start();
+        } else {
+            Animated.timing(translateY, {
+                toValue: SCREEN_HEIGHT,
+                duration: 220,
+                useNativeDriver: true,
+            }).start(({ finished }) => {
+                if (finished) {
+                    setMounted(false);
+                }
+            });
+        }
+    }, [visible, translateY]);
+
+    /**
+     * Close sheet
+     */
+    const closeSheet = React.useCallback(() => {
+        onClose();
+    }, [onClose]);
+
+    /**
+     * Action handler
+     *
+     * Don't call onClose here for async actions.
+     * Each action can decide when it needs to close.
+     */
+    const handleAction = (action: SongAction) => {
+        action.onPress();
+    };
+
+    /**
+     * Like / Dislike
+     */
+    const handleLikeDislike = async (
+        songId: number | string,
+        action: 'like' | 'dislike',
+    ) => {
+        // Close immediately
+        closeSheet();
+
+        try {
+            const endpoint =
+                action === 'like'
+                    ? apiUrls.likesong(songId)
+                    : apiUrls.dislikesong(songId);
+
+            const response = await ApiService.post(endpoint);
+
+            const data = (response as any)?.data;
+
+            console.log(
+                `${action.toUpperCase()} RESPONSE:`,
+                data,
+            );
+
+            dispatch(
+                showToast({
+                    visible: true,
+                    message:
+                        data?.message ||
+                        (action === 'like'
+                            ? 'Song liked successfully.'
+                            : 'Song disliked successfully.'),
+                    type: 'success',
+                }),
+            );
+        } catch (error: any) {
+            console.log(
+                `${action.toUpperCase()} ERROR:`,
+                error,
+            );
+
+            dispatch(
+                showToast({
+                    visible: true,
+                    message:
+                        error?.response?.data?.message ||
+                        `Unable to ${action} song.`,
+                    type: 'error',
+                }),
+            );
+        }
+    };
+
+
+    const handledownload = async (songId: number | string) => {
+        closeSheet();
+
+        try {
+            const response = await ApiService.post(
+                apiUrls.downloadsongs(songId),
+            );
+
+            const data = (response as any)?.data;
+
+            console.log('DOWNLOAD RESPONSE:', data);
+
+            if (data?.success === false) {
+                dispatch(
+                    showToast({
+                        visible: true,
+                        message: data?.message || 'Unable to download song.',
+                        type: 'error',
+                    }),
+                );
+                return;
+            }
+
+            dispatch(
+                showToast({
+                    visible: true,
+                    message: data?.message || 'Song downloaded successfully.',
+                    type: 'success',
+                }),
+            );
+        } catch (error: any) {
+            console.log(
+                'DOWNLOAD ERROR:',
+                error?.response?.data || error,
+            );
+
+            dispatch(
+                showToast({
+                    visible: true,
+                    message:
+                        error?.response?.data?.message ||
+                        'Unable to download song.',
+                    type: 'error',
+                }),
+            );
+        }
+    };
+
+    const handleAddtofav = async (
+        songId: number | string,
+        isfavorate: boolean | string,
+    ) => {
+        closeSheet();
+
+        const isFavorite =
+            isfavorate === true ||
+            isfavorate === 'true' ||
+
+            isfavorate === '1';
+        console.log(isFavorite, songId, "hhh")
+        try {
+            const response = isFavorite
+                ? await ApiService.delete(apiUrls.addfavorite(songId))
+                : await ApiService.post(apiUrls.addfavorite(songId));
+
+            const data = (response as any)?.data;
+
+            console.log('FAVORITE RESPONSE:', data);
+
+            if (!data?.success) {
+                onDeleted?.(songId);
+                dispatch(
+                    showToast({
+                        visible: true,
+                        message:
+                            data?.message || 'Unable to update favorites.',
+                        type: 'error',
+                    }),
+                );
+                return;
+            }
+
+            dispatch(
+                showToast({
+                    visible: true,
+                    message:
+                        data?.message ||
+                        (isFavorite
+                            ? 'Song removed from favorites.'
+                            : 'Song added to favorites.'),
+                    type: 'success',
+                }),
+            );
+
+            onDeleted?.(songId);
+        } catch (error: any) {
+            console.log('FAVORITE ERROR:', error);
+
+            dispatch(
+                showToast({
+                    visible: true,
+                    message:
+                        error?.response?.data?.message ||
+                        'Unable to update favorites.',
+                    type: 'error',
+                }),
+            );
+        }
+    };
+
+
+
+    const handleDeleteRecording = async (
+        recordingId: number | string,
+    ) => {
+        // Close the action sheet immediately
+        closeSheet();
+
+        try {
+            const endpoint = apiUrls.singlerecdetail(recordingId);
+
+            const response = await ApiService.delete(endpoint);
+
+            const data = (response as any)?.data;
+
+            console.log('DELETE RECORDING RESPONSE:', data);
+
+            // Tell parent screen to remove/refresh the deleted recording
+            onDeleted?.(recordingId);
+
+            dispatch(
+                showToast({
+                    visible: true,
+                    message:
+                        data?.message ||
+                        'Recording deleted successfully.',
+                    type: 'success',
+                }),
+            );
+        } catch (error: any) {
+            console.log(
+                'DELETE RECORDING ERROR:',
+                error?.response?.data || error,
+            );
+
+            dispatch(
+                showToast({
+                    visible: true,
+                    message:
+                        error?.response?.data?.message ||
+                        'Unable to delete recording.',
+                    type: 'error',
+                }),
+            );
+        }
+    };
+
+
+
+
+    const handleRemovesong = async (
+        songId: number | string,
+        playlistId: number | string,
+    ) => {
+        // Close the action sheet immediately
+        closeSheet();
+
+        try {
+            const endpoint = apiUrls.deletesongplaylist(playlistId, songId);
+
+            const response = await ApiService.delete(endpoint);
+
+            const data = (response as any)?.data;
+
+            console.log('DELETE RECORDING RESPONSE:', data);
+
+            // Tell parent screen to remove/refresh the deleted recording
+            onDeleted?.(playlistId);
+
+            dispatch(
+                showToast({
+                    visible: true,
+                    message:
+                        data?.message ||
+                        'Song removed from playlist successfully.',
+                    type: 'success',
+                }),
+            );
+        } catch (error: any) {
+            console.log(
+                'DELETE playlist ERROR:',
+                error?.response?.data || error,
+            );
+
+            dispatch(
+                showToast({
+                    visible: true,
+                    message:
+                        error?.response?.data?.message ||
+                        'Unable to remove song from playlist.',
+                    type: 'error',
+                }),
+            );
+        }
+    }
+
+    const handleRequestPublic = async (recordingId: number | string) => {
+        console.log(recordingId, apiUrls.requestPublicRecording(recordingId), "kkkkkkkk")
+        try {
+            const response = await ApiService.post(
+                apiUrls.requestPublicRecording(recordingId),
+            );
+
+            const data = (response as any)?.data;
+            console.log(response, "jejdhjhdkjdelkj")
+            if (!data?.success) {
+                dispatch(
+                    showToast({
+                        visible: true,
+                        message: data?.message || 'Unable to request public verification.',
+                        type: 'error',
+                    }),
+                );
+                return;
+            }
+
+            dispatch(
+                showToast({
+                    visible: true,
+                    message: data?.message || 'Public verification request submitted.',
+                    type: 'success',
+                }),
+            );
+        } catch (error: any) {
+            dispatch(
+                showToast({
+                    visible: true,
+                    message:
+                        error?.response?.data?.message ||
+                        'Unable to submit public verification request.',
+                    type: 'error',
+                }),
+            );
+        }
+    };
+
+    /**
+     * Share
+     */
+    const handleShare = async () => {
+        // Close first
+        closeSheet();
+
+        try {
+            const songTitle =
+                song?.title ||
+                song?.name ||
+                'Unknown Song';
+
+            const songId = song?.id;
+
+            const songUrl = songId
+                ? `https://karkab.com/song/${songId}`
+                : 'https://karkab.com';
+
+            await Share.share({
+                title: songTitle,
+                message: `${songTitle}\n${songUrl}`,
+                url: songUrl,
+            });
+        } catch (error: any) {
+            console.log('Share error:', error);
+        }
+    };
+
+
+    const actions: SongAction[] = [
         {
-            id: 'top-song',
-            title: 'Add to Top Songs',
+            id: 'favorite',
+            title:
+                (song?.is_favorite ?? song?.is_favorite) === true
+                    ? 'Remove from Favorite'
+                    : 'Add to Favorite',
+            icon: Images.star1,
+            danger:
+                (song?.is_favorite ?? song?.isfavorate) === true,
             onPress: () => {
-                console.log('Add to Top Songs:', song);
+                console.log(song?.is_favorite, "jjj")
+                if (song?.id) {
+                    const isFavorite = Boolean(
+                        song?.is_favorite ?? song?.isfavorate
+                    );
+
+                    handleAddtofav(song.id, isFavorite);
+                } else {
+                    closeSheet();
+                }
             },
         },
         {
             id: 'playlist',
             title: 'Add to Playlist',
+            icon: Images.playlist,
             onPress: () => {
-                console.log('Add to Playlist:', song);
+                setPlaylistModalVisible(true);
+                getPlaylists();
             },
         },
         {
             id: 'like',
             title: 'Like',
+            icon: Banner.filllike,
             onPress: () => {
-                console.log('Like:', song);
+                if (song?.id) {
+                    handleLikeDislike(song.id, 'like');
+                } else {
+                    closeSheet();
+                }
             },
         },
+
+        {
+            id: 'dislike',
+            title: 'Dislike',
+            icon: Images.like,
+            onPress: () => {
+                if (song?.id) {
+                    handleLikeDislike(song.id, 'dislike');
+                } else {
+                    closeSheet();
+                }
+            },
+        },
+
+        // Show Delete ONLY for recordings
+
         {
             id: 'share',
             title: 'Share',
+            icon: Logo.share,
+            onPress: handleShare,
+        },
+        {
+            id: 'download',
+            title: 'Download',
+            icon: Images.import,
             onPress: () => {
-                console.log('Share:', song);
+                if (song?.id) {
+                    handledownload(song.id);
+                } else {
+                    closeSheet();
+                }
             },
         },
         {
             id: 'copy-link',
             title: 'Copy Song Link',
-            onPress: () => {
-                console.log('Copy Song Link:', song);
+            icon: Logo.Bluetick,
+            onPress: async () => {
+                try {
+                    const songId = song?.id;
+
+                    const songUrl = songId
+                        ? `https://karkab.com/song/${songId}`
+                        : 'https://karkab.com';
+
+                    await Clipboard.setString(songUrl);
+
+                    closeSheet();
+
+                    dispatch(
+                        showToast({
+                            visible: true,
+                            message:
+                                'Song link copied successfully.',
+                            type: 'success',
+                        }),
+                    );
+                } catch (error) {
+                    console.log('Copy link error:', error);
+
+                    closeSheet();
+
+                    dispatch(
+                        showToast({
+                            visible: true,
+                            message: 'Unable to copy song link.',
+                            type: 'error',
+                        }),
+                    );
+                }
             },
         },
+
+        ...(song?.recording_url && song?.public_request_status != 'approved'
+            ? [
+                {
+                    id: 'request-public',
+                    title: 'Request Public Verification',
+                    icon: Logo.glob,
+
+                    onPress: () => {
+                        if (song?.id) {
+                            closeSheet();
+                            handleRequestPublic(song.id);
+                        } else {
+                            closeSheet();
+                        }
+                    },
+                },
+            ]
+            : []),
+        ...(song?.recording_url && song?.public_request_status != 'approved'
+            ? [
+                {
+                    id: 'delete',
+                    title: 'Delete',
+                    icon: Logo.dustbin,
+                    danger: true,
+                    onPress: () => {
+                        console.log('Delete recording:', song);
+                        if (song?.id) {
+                            handleDeleteRecording(song.id);
+
+                        } else {
+                            closeSheet();
+                        }
+
+                    },
+                },
+            ]
+            : []),
+
+
+
+
+        ...(song?.songType == 'Playlist'
+            ? [
+                {
+                    id: 'Remove',
+                    title: 'Remove',
+                    icon: Images.bin,
+                    danger: true,
+                    onPress: () => {
+                        console.log('Delete Playlist song:', song);
+                        if (song?.id) {
+                            handleRemovesong(song.id, song?.playlistId);
+                        } else {
+                            closeSheet();
+                        }
+
+                    },
+                },
+            ]
+            : []),
+
+
     ];
+
+    /**
+     * IMPORTANT:
+     * Do not use translateY._value here.
+     *
+     * mounted controls whether the component exists.
+     */
+    if (!mounted) {
+        return null;
+    }
 
     return (
         <View
             pointerEvents={visible ? 'auto' : 'none'}
             style={StyleSheet.absoluteFill}
         >
-            {/* Background */}
-            <Pressable style={styles.overlay} onPress={onClose} />
+            {/* Background overlay */}
+            <Pressable
+                style={styles.overlay}
+                onPress={closeSheet}
+            />
 
             {/* Bottom sheet */}
             <Animated.View
@@ -122,20 +749,31 @@ const SongActionSheet = ({
                 {song && (
                     <View style={styles.songHeader}>
                         <View style={styles.songImageContainer}>
-                            {song?.image || song?.cover_image || song?.coverImage ? (
+                            {song?.image?.uri ||
+                                song?.cover_image ||
+                                song?.cover_image_url ||
+                                song?.coverImage ? (
                                 <AppImage
                                     source={{
                                         uri:
-                                            song?.image ||
-                                            song?.cover_image ||
+                                            song?.image?.uri ||
+                                            song?.cover_image_url ||
                                             song?.coverImage,
                                     }}
                                     width={56}
                                     height={56}
                                 />
                             ) : (
-                                <View style={styles.imagePlaceholder}>
-                                    <AppText style={styles.musicIcon}>♫</AppText>
+                                <View
+                                    style={
+                                        styles.imagePlaceholder
+                                    }
+                                >
+                                    <AppText
+                                        style={styles.musicIcon}
+                                    >
+                                        ♫
+                                    </AppText>
                                 </View>
                             )}
                         </View>
@@ -147,7 +785,9 @@ const SongActionSheet = ({
                                 fontFamily={Inter.semiBold}
                                 color={color.darkthemetext}
                             >
-                                {song?.title || song?.name || 'Unknown Song'}
+                                {song?.title ||
+                                    song?.name ||
+                                    'Unknown Song'}
                             </AppText>
 
                             <AppText
@@ -175,7 +815,9 @@ const SongActionSheet = ({
                             key={action.id}
                             activeOpacity={0.7}
                             style={styles.action}
-                            onPress={() => handleAction(action)}
+                            onPress={() =>
+                                handleAction(action)
+                            }
                         >
                             <View style={styles.actionIcon}>
                                 {action.icon ? (
@@ -188,7 +830,9 @@ const SongActionSheet = ({
                                                 ? '#FF4B4C'
                                                 : color.darkthemetext
                                         }
+                                        resizeMode="contain"
                                     />
+
                                 ) : (
                                     <AppText
                                         fontSize={20}
@@ -222,17 +866,139 @@ const SongActionSheet = ({
                 <TouchableOpacity
                     activeOpacity={0.7}
                     style={styles.cancelButton}
-                    onPress={onClose}
+                    onPress={closeSheet}
                 >
                     <AppText
                         fontSize={14}
-                        fontFamily={Inter.semiBold}
+                        fontFamily={Inter.semibold}
                         color={color.darkthemetext}
                     >
                         Cancel
                     </AppText>
                 </TouchableOpacity>
             </Animated.View>
+
+            {/* Playlist Selection Modal */}
+            <Modal
+                visible={playlistModalVisible}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setPlaylistModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.playlistModalContainer}>
+                        <View style={styles.modalHeaderInner}>
+                            <AppText color={color.darkthemetext} fontSize={17} fontFamily={Inter.semiBold}>
+                                Add to Playlist
+                            </AppText>
+                            <TouchableOpacity onPress={() => setPlaylistModalVisible(false)}>
+                                <AppText color="#8F8986" fontSize={25}>×</AppText>
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity
+                            style={styles.createNewBtn}
+                            onPress={() => setCreatePlaylistModalVisible(true)}
+                        >
+                            <AppText color={color.darkthemetext} fontSize={15} fontFamily={Inter.medium}>
+                                + Create New Playlist
+                            </AppText>
+                        </TouchableOpacity>
+
+                        {playlistsLoading ? (
+                            <ActivityIndicator size="large" color="#FF4B4C" style={{ marginTop: 20 }} />
+                        ) : (
+                            <FlatList
+                                data={playlists}
+                                keyExtractor={(item) => String(item.id)}
+                                contentContainerStyle={{ paddingBottom: 20 }}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity
+                                        style={styles.playlistItem}
+                                        onPress={() => handleAddSongToPlaylist(item.id)}
+                                        disabled={addingSong}
+                                    >
+                                        <AppImage
+                                            source={item.image ? { uri: item.image } : Images.profile}
+                                            width={50} height={50} radius={8}
+                                        />
+                                        <View style={styles.playlistItemInfo}>
+                                            <AppText color={color.darkthemetext} fontSize={15} fontFamily={Inter.medium}>
+                                                {item.name}
+                                            </AppText>
+                                            <AppText color="#8F8986" fontSize={12} fontFamily={Inter.regular}>
+                                                {item.songs_count ?? item.song_count ?? item.songs ?? 0} songs
+                                            </AppText>
+                                        </View>
+                                    </TouchableOpacity>
+                                )}
+                                ListEmptyComponent={() => (
+                                    <View style={{ alignItems: 'center', marginTop: 30 }}>
+                                        <AppText color="#8F8986" fontSize={14}>No playlists found.</AppText>
+                                    </View>
+                                )}
+                            />
+                        )}
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Create Playlist Modal */}
+            <Modal
+                visible={createPlaylistModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setCreatePlaylistModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.playlistModalContainer}>
+                        <View style={styles.modalHeaderInner}>
+                            <AppText color={color.darkthemetext} fontSize={17} fontFamily={Inter.semiBold}>
+                                Create New Playlist
+                            </AppText>
+                            <TouchableOpacity onPress={() => setCreatePlaylistModalVisible(false)}>
+                                <AppText color="#8F8986" fontSize={25}>×</AppText>
+                            </TouchableOpacity>
+                        </View>
+
+                        <AppText color={color.darkthemetext} fontSize={13} fontFamily={Inter.medium} style={{ marginTop: 10 }}>
+                            Playlist Name
+                        </AppText>
+                        <TextInput
+                            value={newPlaylistName}
+                            onChangeText={setNewPlaylistName}
+                            placeholder="Enter playlist name"
+                            placeholderTextColor="#716B69"
+                            style={styles.modalInput}
+                        />
+
+                        <AppText color={color.darkthemetext} fontSize={13} fontFamily={Inter.medium} style={{ marginTop: 10 }}>
+                            Description (Optional)
+                        </AppText>
+                        <TextInput
+                            value={newPlaylistDesc}
+                            onChangeText={setNewPlaylistDesc}
+                            placeholder="Enter description"
+                            placeholderTextColor="#716B69"
+                            style={styles.modalInput}
+                        />
+
+                        <TouchableOpacity
+                            style={styles.modalSubmitBtn}
+                            onPress={handleCreatePlaylist}
+                            disabled={creatingPlaylist}
+                        >
+                            {creatingPlaylist ? (
+                                <ActivityIndicator color="#FFF" />
+                            ) : (
+                                <AppText color="#FFF" fontSize={14} fontFamily={Inter.semiBold}>
+                                    Create & Add Song
+                                </AppText>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -241,13 +1007,7 @@ export default SongActionSheet;
 
 const styles = StyleSheet.create({
     overlay: {
-        width: '100%',
-        height: '100%',
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-
+        ...StyleSheet.absoluteFillObject,
     },
 
     sheet: {
@@ -255,7 +1015,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: '#151515',
+        backgroundColor: color.darkbackround,
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         paddingHorizontal: 18,
@@ -291,7 +1051,7 @@ const styles = StyleSheet.create({
         height: 56,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#252525',
+        backgroundColor: color.darkbackround,
     },
 
     musicIcon: {
@@ -337,5 +1097,60 @@ const styles = StyleSheet.create({
         backgroundColor: '#252525',
         alignItems: 'center',
         justifyContent: 'center',
+    },
+
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        justifyContent: 'flex-end',
+    },
+    playlistModalContainer: {
+        backgroundColor: color.darkbackround,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        paddingHorizontal: 20,
+        paddingBottom: 40,
+        paddingTop: 15,
+        maxHeight: '80%',
+    },
+    modalHeaderInner: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 15,
+    },
+    createNewBtn: {
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#292929',
+        marginBottom: 10,
+    },
+    playlistItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#292929',
+    },
+    playlistItemInfo: {
+        marginLeft: 15,
+        flex: 1,
+    },
+    modalInput: {
+        backgroundColor: '#1E1E1E',
+        borderRadius: 8,
+        color: color.darkthemetext,
+        paddingHorizontal: 15,
+        paddingVertical: 12,
+        marginTop: 8,
+        marginBottom: 10,
+        fontSize: 14,
+    },
+    modalSubmitBtn: {
+        backgroundColor: '#FF4B4C',
+        borderRadius: 8,
+        alignItems: 'center',
+        paddingVertical: 14,
+        marginTop: 20,
     },
 });

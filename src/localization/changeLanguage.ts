@@ -21,7 +21,7 @@ export const changeLanguage = async (lang: AppLanguage): Promise<void> => {
   storage.set(LANGUAGE_STORAGE_KEY, lang);
   await i18n.changeLanguage(lang);
 
-  if (!needsDirectionChange(lang)) return;
+  // if (!needsDirectionChange(lang)) return;
 
   try {
     I18nManager.allowRTL(true);              // always true — forceRTL is the switch

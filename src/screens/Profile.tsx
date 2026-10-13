@@ -25,11 +25,13 @@ import { GlobalImage } from "../share/utils/GlobalImage";
 import { useNavigation } from '@react-navigation/native'
 import { launchImageLibrary } from 'react-native-image-picker';
 import { storage } from "../share/storage/mmkv";
+import { useTranslation } from "react-i18next";
 
 const Profile = () => {
     const navigation = useNavigation();
     const dispatch = useAppDispatch();
     const color = useAppColors();
+    const { t } = useTranslation();
     const [play, setPlay] = useState(false);
     const [profiledetail, setProfileDetail] = useState<{
         name?: string;
@@ -106,42 +108,42 @@ const Profile = () => {
     const featuritem = [
         {
             image: Images.like,
-            title: 'Favorites',
+            title: t('Library.Favorites'),
             color: '#E52450'
         },
         {
             image: Images.playlist,
-            title: 'Playlists',
+            title: t('Library.Playlists'),
             color: '#B95EE2'
         },
         {
             image: Images.mic,
-            title: 'Performances',
+            title: t('Library.Performances'),
             color: '#D4AF37'
         },
         {
             image: Images.import,
-            title: 'Downloads',
+            title: t('Library.Downloads'),
             color: '#E52450'
         },
         {
             image: Images.history,
-            title: 'History',
+            title: t('Library.History'),
             color: '#B95EE2'
         },
         {
             image: Images.achiv,
-            title: 'Achievements',
+            title: t('Library.Achievments'),
             color: '#D4AF37'
         },
         {
             image: Images.reward,
-            title: 'Rewards',
+            title: t('Library.Rewards'),
             color: '#E52450'
         },
         {
             image: Images.import,
-            title: 'Logout',
+            title: t('Library.Logout'),
             color: '#BBD3E9'
         },
 
@@ -206,7 +208,7 @@ const Profile = () => {
 
         }
         if (index == 1) {
-            navigation.navigate('CreatePlaylist')
+            (navigation as any).navigate('CreatePlaylist')
         }
         if (index == 0) {
             (navigation as any).navigate('SongsListScreen', {
@@ -214,8 +216,24 @@ const Profile = () => {
                 previousScreen: 'Profile',
             });
         }
+        if (index == 3) {
+            (navigation as any).navigate('DownloadsScreen');
+        }
+    };
+
+
+    const handleachevmentfun = (item: any, index: number) => {
+        console.log(item, index);
+
+        if (index == 0) {
+            (navigation as any).navigate('Recording', { prevScreen: 'Profile' })
+        }
 
     };
+
+
+
+
 
     const playRecording = async (item: any) => {
         stopRecording()
@@ -618,7 +636,8 @@ const Profile = () => {
 
                                     />
                                     <AppText color={"#FEDF66"} fontSize={10} fontWeight="500" fontFamily={Inter.regular}>
-                                        VIP Premium
+
+                                        {t('Library.VIPpremium')}
                                     </AppText>
 
                                 </View>
@@ -631,7 +650,9 @@ const Profile = () => {
 
                                     />
                                     <AppText color={"#D07113"} fontSize={11} fontWeight="500" fontFamily={Inter.regular}>
-                                        Rising Star
+
+
+                                        {t('Library.risingstar')}
                                     </AppText>
 
                                 </View>
@@ -732,9 +753,10 @@ const Profile = () => {
 
                             <View style={[styles.titles, { width: '100%' }]}>
                                 <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-                                    Achievments
+
+                                    {t('Library.Achievments')}
                                 </AppText>
-                                <TouchableOpacity
+                                {/* <TouchableOpacity
 
                                     style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
                                     <AppText color={color.mgred} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
@@ -745,13 +767,15 @@ const Profile = () => {
                                         width={5}
                                         height={8}
                                     />
-                                </TouchableOpacity>
+                                </TouchableOpacity> */}
 
 
                             </View>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', gap: 8, flexWrap: 'wrap', paddingVertical: 10 }}>
                                 {achievmentdata.map((item, index) => (
-                                    <View
+                                    <TouchableOpacity
+                                        onPress={() => { handleachevmentfun(item, index) }}
+                                        // onPress={() => navigation.navigate('Recording', { prevScreen: '.', data: songdetail })}
                                         key={index}
                                         style={{
                                             width: '31.3%',
@@ -798,7 +822,7 @@ const Profile = () => {
                                             </AppText>
                                         </View>
 
-                                    </View>
+                                    </TouchableOpacity>
                                 ))}
                             </View>
 
@@ -808,7 +832,8 @@ const Profile = () => {
 
                         <View style={[styles.titles]}>
                             <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-                                Recent Perfomance
+
+                                {t('Library.recentperfomance')}
                             </AppText>
                             <TouchableOpacity
                                 onPress={() => {
@@ -819,7 +844,8 @@ const Profile = () => {
                                 }}
                                 style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
                                 <AppText color={color.mgred} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-                                    See all
+
+                                    {t('Home.Seeall')}
                                 </AppText>
                                 <AppImage
                                     source={Images.arrow}
@@ -976,7 +1002,8 @@ const Profile = () => {
                                         fontSize={14}
                                         marginTop={10}
                                     >
-                                        No songs found
+                                        {t('Library.nosongsfound')}
+
                                     </AppText>
                                 </View>
                         }
@@ -985,9 +1012,11 @@ const Profile = () => {
 
                         <View style={[styles.titles]}>
                             <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-                                Recent activity
+
+
+                                {t('Library.recentactivity')}
                             </AppText>
-                            <TouchableOpacity style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                            {/* <TouchableOpacity style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
                                 <AppText color={color.mgred} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
                                     See all
                                 </AppText>
@@ -996,7 +1025,7 @@ const Profile = () => {
                                     width={5}
                                     height={8}
                                 />
-                            </TouchableOpacity>
+                            </TouchableOpacity> */}
 
 
                         </View>
@@ -1182,17 +1211,23 @@ const Profile = () => {
                                             fontSize={15}
                                             fontWeight="500"
                                             fontFamily={Inter.regular}>
-                                            {"You’re Premium"}
+
+
+                                            {t('Library.You’repremium')}
                                         </AppText>
 
                                         <AppText color={"#F8CF36"}
                                             fontSize={12}
                                             fontWeight="500"
                                             fontFamily={Inter.regular}>
-                                            {"Enjoy all premium features"}
+
+                                            {t('Library.enjoyallpremiumfeatures')}
+
                                         </AppText>
                                         <AppText color={"#F8CF36"} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
-                                            {"and unlimited singing."}
+
+                                            {t('Library.andunlimitedsinging.')}
+
                                         </AppText>
                                     </View>
                                 </View>
@@ -1223,7 +1258,8 @@ const Profile = () => {
                                     alignItems: 'center'
                                 }}>
                                     <AppText color={"#ffff"} fontSize={10} fontWeight="400" fontFamily={Inter.light}>
-                                        {"Manage Plan"}
+
+                                        {t('Library.Manageplan')}
                                     </AppText>
                                     <AppImage
                                         source={Images.arrow}

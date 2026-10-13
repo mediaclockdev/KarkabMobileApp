@@ -19,6 +19,7 @@ import ApiService from '../services/api';
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { Sound } from "react-native-nitro-sound";
 import TagLIst from "../share/components/TagLIst";
+import { useTranslation } from "react-i18next";
 
 const Search = () => {
   //const [search, setSearch] = useState('')
@@ -26,6 +27,7 @@ const Search = () => {
   const recentdata = ['Mabrook', 'Mabrook', 'Mabrook']
   const dispatch = useAppDispatch();
   const color = useAppColors();
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<any[]>([]);
   const [classics, setClassics] = useState<any[]>([]);
   const [populardatas, setPopulardatas] = useState<any[]>([])
@@ -381,7 +383,7 @@ const Search = () => {
 
           <Header
             headername={'Search'}
-            headertitle={'What would you like to sing today?'}
+            headertitle={t('Search.whatwouldtosingtoday?')}
             rightIcon={Images.mics}
 
             onRightPress={() => {
@@ -652,7 +654,8 @@ const Search = () => {
                             fontWeight="500"
                             fontFamily={Inter.regular}
                           >
-                            See all
+                            {t('Home.Seeall')}
+
                           </AppText>
 
                           <AppImage
@@ -672,7 +675,8 @@ const Search = () => {
 
 
                 <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-                  Browse by category
+                  {t('Search.browsebycategory')}
+
                 </AppText>
 
 

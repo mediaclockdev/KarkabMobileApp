@@ -16,6 +16,7 @@ import AppImage from './AppImage';
 import { Inter } from '../constants/fonts';
 import { GlobalImage } from '../utils/GlobalImage';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 interface MainHeaderProps {
   user?: any
   userName?: string
@@ -32,6 +33,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({
 }) => {
   const color = useAppColors();
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const getInitials = (name?: string) => {
     return name
       ?.trim()
@@ -118,7 +120,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({
               fontFamily={Inter.regular}
               marginTop={5}
             >
-              {"Ready to sing today"}
+              {t("Home.Readysingtoday")}
             </AppText>
           </View>
 

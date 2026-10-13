@@ -27,7 +27,7 @@ import apiUrls, { BASE_URL } from '../../services/apiUrls'
 import { useNavigation } from '@react-navigation/native'
 import ApiService from '../../services/api';
 import { useAppDispatch } from '../hooks/useAppSelector'
-import { addsong, isPausesd } from '../../auth/redux/authSlice'
+import { addsong, isPausesd, openSongAction } from '../../auth/redux/authSlice'
 
 type MusicItem = {
   id: string;
@@ -302,12 +302,27 @@ const Librarylist = ({ musicData,
               borderWidth: 1,
               borderColor: '#6D3202',
             }}>
-            <AppImage
-              source={GlobalImage(item?.cover_image_url)}
-              width={62}
-              height={114}
-              resizeMode="cover"
-            />
+            {
+              item?.cover_image_url ?
+                <AppImage
+                  source={
+                    GlobalImage(item?.cover_image_url)
+                  }
+                  width={62}
+                  height={114}
+                  resizeMode="cover"
+                /> :
+                <AppImage
+                  source={
+
+                    GlobalImage(item?.album_picture_url)
+                  }
+                  width={62}
+                  height={114}
+                  resizeMode="cover"
+                />
+            }
+
           </View>
         </TouchableOpacity>
         {/* Content */}
@@ -390,9 +405,11 @@ const Librarylist = ({ musicData,
             marginBottom: 5
           }}
         >
-          {Number.isFinite(Number(item.duration))
+          {/* {Number.isFinite(Number(item.duration))
             ? Number(item.duration).toFixed(2)
-            : '00:00'}
+            : '00:00'} */}
+
+          {item?.duration}
         </AppText>
 
 
@@ -432,11 +449,13 @@ const Librarylist = ({ musicData,
           </TouchableOpacity>
 
           {/* Menu */}
-          {/* <TouchableOpacity style={styles.menu}>
+          <TouchableOpacity
+            onPress={() => { dispatch(openSongAction(item)); }}
+            style={styles.menu}>
             <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
             <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
             <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
-          </TouchableOpacity> */}
+          </TouchableOpacity>
         </View>
       </View>
     )
@@ -554,7 +573,7 @@ const styles = StyleSheet.create(
     },
 
     menu: {
-      //marginLeft: 10,
+      marginLeft: -8,
       justifyContent: 'center',
       alignItems: 'center',
     },

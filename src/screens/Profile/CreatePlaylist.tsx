@@ -12,13 +12,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import ApiService from '../../services/api';
 import Header from '../../share/components/Header';
 import AppImage from '../../share/components/AppImage';
 import AppText from '../../share/components/AppText';
 
-import { Images } from '../../share/constants/media';
+import { BottomIcons, Images } from '../../share/constants/media';
 import { useAppColors } from '../../share/constants/color';
 import { Inter } from '../../share/constants/fonts';
 import apiUrls from '../../services/apiUrls';
@@ -36,6 +36,8 @@ type Playlist = {
 
 const CreatePlaylist = () => {
     const navigation = useNavigation<any>();
+    const route = useRoute()
+    const previousScreen = route?.params?.previousScreen;
     const colors = useAppColors();
     const dispatch = useAppDispatch();
     const [search, setSearch] = useState('');
@@ -602,15 +604,17 @@ const CreatePlaylist = () => {
                 headertitle="Your music, your way"
                 rightIcon={Images.bell}
                 onRightPress={() => {
-                    navigation.navigate(
-                        'NotificationScreen',
-                    );
+                    navigation.navigate('NotificationScreen');
                 }}
                 backpress={() => {
-                    navigation.navigate('Profile')
-                }
+                    const previousScreen = route?.params?.previousScreen;
 
-                }
+                    if (previousScreen) {
+                        navigation.navigate(previousScreen);
+                    } else {
+                        navigation.navigate('Profile');
+                    }
+                }}
             />
 
             {/* Search */}
@@ -625,7 +629,7 @@ const CreatePlaylist = () => {
                 ]}
             >
                 <AppImage
-                    source={Images.search}
+                    source={BottomIcons.search}
                     width={17}
                     height={17}
                     resizeMode="contain"

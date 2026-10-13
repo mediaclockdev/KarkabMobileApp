@@ -250,13 +250,13 @@ const MusicList: React.FC<{
             </TouchableOpacity>
 
             {/* Menu */}
-            {/* <TouchableOpacity
+            <TouchableOpacity
               onPress={() => { dispatch(openSongAction(item)); }}
               style={styles.menu}>
               <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
               <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
               <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
-            </TouchableOpacity> */}
+            </TouchableOpacity>
           </View>
         </View>
       )

@@ -127,6 +127,24 @@ export const playAdjacentSong = async (
 
         if (lastSong) {
             dispatch(addsong(lastSong));
+            await TrackPlayer.pause();
         }
+    }
+};
+
+export const pauseCurrentSong = async () => {
+    try {
+        const activeTrack = TrackPlayer.getActiveMediaItem();
+
+        if (activeTrack?.mediaId) {
+            await TrackPlayer.pause();
+
+            console.log(
+                '⏸️ Last played song paused:',
+                activeTrack.mediaId,
+            );
+        }
+    } catch (error) {
+        console.log('❌ Pause current song error:', error);
     }
 };

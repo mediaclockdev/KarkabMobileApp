@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -11,6 +12,13 @@ import {
   Text,
   Image,
   BackHandler,
+  Animated,
+  Easing,
+  TextInput,
+  Alert,
+  Platform,
+  Modal,
+  KeyboardAvoidingView,
 } from 'react-native';
 import color, { useAppColors } from '../share/constants/color';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -28,7 +36,59 @@ import ApiService from '../services/api';
 import { addsong, setHideMiniPlayer, showToast } from '../auth/redux/authSlice';
 import { useAppDispatch } from '../share/hooks/useAppSelector';
 import TrackPlayer from '@rntp/player';
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 
+const EqualizerBar = ({ delay, playing }: { delay: number; playing: boolean }) => {
+  const height = useRef(new Animated.Value(4)).current;
+
+  useEffect(() => {
+    if (playing) {
+      const animation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(height, {
+            toValue: 16 + Math.random() * 8,
+            duration: 300 + delay * 80,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: false,
+          }),
+          Animated.timing(height, {
+            toValue: 4,
+            duration: 300 + delay * 80,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: false,
+          }),
+        ]),
+      );
+      animation.start();
+      return () => animation.stop();
+    } else {
+      Animated.timing(height, {
+        toValue: 4,
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [playing]);
+
+  return (
+    <Animated.View
+      style={{
+        width: 3,
+        borderRadius: 2,
+        backgroundColor: '#F5BD55',
+        height,
+      }}
+    />
+  );
+};
+
+const Equalizer = ({ playing }: { playing: boolean }) => (
+  <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 2, height: 24 }}>
+    {[0, 1, 2, 3, 4].map(i => (
+      <EqualizerBar key={i} delay={i} playing={playing} />
+    ))}
+  </View>
+);
 
 const Recording = () => {
   const navigation = useNavigation<any>();
@@ -39,6 +99,7 @@ const Recording = () => {
   const { prevScreen, data } = route?.params ?? {};
   const scrollViewRef = useRef<ScrollView>(null);
   const saveRecordingRef = useRef<View>(null);
+
   // State Management
   const [recording, setRecording] = useState(false);
   const [path, setPath] = useState('');
@@ -47,6 +108,19 @@ const Recording = () => {
   const [saved, setSaved] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showFullLyrics, setShowFullLyrics] = useState(false);
+
+  // Modal & Save Form State
+  const [saveModalVisible, setSaveModalVisible] = useState(false);
+  const [title, setTitle] = useState(data?.title || 'Song 1');
+  const [albumName, setAlbumName] = useState(
+    data?.album_name || data?.category?.title || 'Love Songs',
+  );
+  const [status, setStatus] = useState<'private' | 'public'>('private');
+  const [albumPicture, setAlbumPicture] = useState<{
+    uri: string;
+    type: string;
+    name: string;
+  } | null>(null);
 
   const [lyricsLines, setLyricsLines] = useState<
     { text: string; start: number; end: number }[]
@@ -59,57 +133,47 @@ const Recording = () => {
     { text: string; start: number; end: number }[]
   >([]);
 
-
-  const instrumentalUrl =
-    data?.instrumental_song || data?.instrumental_wav;
-
+  const instrumentalUrl = data?.instrumental_song || data?.instrumental_wav;
   const songTitle = data?.title || 'Untitled Song';
   const artistName = data?.artist || 'Unknown Artist';
   const coverImage = data?.cover_image_url;
   const songDuration = Number(data?.duration) || 0;
 
-  // Connect these to your actual player state and functions.
-  const [instrumentalPlaying, setInstrumentalPlaying] =
-    useState(false);
-
-  const [playbackPositionMs, setPlaybackPositionMs] =
-    useState(0);
-
-  const [instrumentalDurationMs, setInstrumentalDurationMs] =
-    useState(songDuration * 1000);
+  // Player state
+  const [instrumentalPlaying, setInstrumentalPlaying] = useState(false);
+  const [playbackPositionMs, setPlaybackPositionMs] = useState(0);
+  const [instrumentalDurationMs, setInstrumentalDurationMs] = useState(
+    songDuration * 1000,
+  );
   const [instrumentalLoading, setInstrumentalLoading] = useState(false);
 
   const isRecordingRef = useRef(false);
-  const isStartingPlayerRef = useRef(false);
   const isPlayingRef = useRef(false);
   const playbackListenerRef = useRef(false);
 
   const isStartingRef = useRef(false);
   const hasStartedRef = useRef(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lyricsCardRef = useRef<View>(null);
 
-  // Clean up listeners and recording when component unmounts
   useEffect(() => {
-
     return () => {
       Sound.removeRecordBackListener();
       Sound.stopRecorder().catch(() => { });
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+      }
     };
   }, []);
 
-
-
-
   useFocusEffect(
     useCallback(() => {
-      let isActive = true;
       console.log('Recording screen focused, stopping previous song if any');
       dispatch(setHideMiniPlayer(true));
       const stopPreviousSong = async () => {
         try {
-          // Stop the song playing through @rntp/player
           await TrackPlayer.stop();
-
-          // Reset the previous song's position
           await TrackPlayer.seekTo(0);
           dispatch(setHideMiniPlayer(true));
           console.log('Previous TrackPlayer song stopped');
@@ -118,19 +182,21 @@ const Recording = () => {
         }
       };
 
-      // dispatch(setHideMiniPlayer(true));
-
-      // Stop the previous song immediately when Recording gets focus
       stopPreviousSong();
 
       return () => {
-        isActive = false;
         dispatch(setHideMiniPlayer(false));
       };
     }, [dispatch, data]),
   );
 
   useEffect(() => {
+    if (data?.title) {
+      setTitle(data.title);
+    }
+    if (data?.album_name || data?.category?.title) {
+      setAlbumName(data.album_name || data?.category?.title || '');
+    }
     if (data?.lyrics) {
       prepareLyrics(data);
     } else {
@@ -139,6 +205,22 @@ const Recording = () => {
     }
   }, [data]);
 
+  const scrollToLyrics = () => {
+    requestAnimationFrame(() => {
+      lyricsCardRef.current?.measureLayout(
+        scrollViewRef.current as any,
+        (_x, y) => {
+          scrollViewRef.current?.scrollTo({
+            y: Math.max(0, y - 10),
+            animated: true,
+          });
+        },
+        () => {
+          console.log('Unable to measure lyrics section');
+        },
+      );
+    });
+  };
 
   const prepareLyrics = (song: any) => {
     if (!song?.lyrics) {
@@ -153,49 +235,30 @@ const Recording = () => {
       .map((line: string) => line.trim())
       .filter(Boolean);
 
-    const parsedLines: {
-      text: string;
-      start: number;
-    }[] = [];
+    const parsedLines: { text: string; start: number }[] = [];
 
     lyricRows.forEach((line: string) => {
-      const match = line.match(
-        /^\[(\d{1,2}):(\d{2}(?:\.\d+)?)\]\s*(.*)$/
-      );
-
-      if (!match) {
-        return;
-      }
+      const match = line.match(/^\[(\d{1,2}):(\d{2}(?:\.\d+)?)\]\s*(.*)$/);
+      if (!match) return;
 
       const minutes = Number(match[1]);
       const seconds = Number(match[2]);
-
       const start = (minutes * 60 + seconds) * 1000;
       const text = match[3].trim();
 
       if (text) {
-        parsedLines.push({
-          text,
-          start,
-        });
+        parsedLines.push({ text, start });
       }
     });
 
-    // Make sure lyrics are ordered by timestamp
     parsedLines.sort((a, b) => a.start - b.start);
 
     const lines = parsedLines.map((line, index) => {
       const nextLine = parsedLines[index + 1];
-
       return {
         text: line.text,
         start: line.start,
-
-        // End when next lyric starts
-        // Otherwise keep it active for 3.5 seconds
-        end: nextLine
-          ? nextLine.start
-          : line.start + 3500,
+        end: nextLine ? nextLine.start : line.start + 3500,
       };
     });
 
@@ -204,43 +267,20 @@ const Recording = () => {
     setActiveLyricIndex(0);
   };
 
-
-  const getRecordingSeconds = () => {
-    if (!recordTime) return 0;
-
-    const parts = recordTime.split(':');
-
-    if (parts.length !== 2) return 0;
-
-    const minutes = Number(parts[0]) || 0;
-    const seconds = Number(parts[1]) || 0;
-
-    return minutes * 60 + seconds;
-  };
-
   useEffect(() => {
-    if (!lyricsLines.length) {
-      return;
-    }
+    if (!lyricsLines.length) return;
 
     const currentPositionMs = playbackPositionMs;
-
-    // Find the lyric whose time range contains current playback position
     let index = -1;
 
     for (let i = 0; i < lyricsLines.length; i++) {
       const line = lyricsLines[i];
-
-      if (
-        currentPositionMs >= line.start &&
-        currentPositionMs < line.end
-      ) {
+      if (currentPositionMs >= line.start && currentPositionMs < line.end) {
         index = i;
         break;
       }
     }
 
-    // If we're between lines, use the latest lyric that has started
     if (index === -1) {
       for (let i = lyricsLines.length - 1; i >= 0; i--) {
         if (currentPositionMs >= lyricsLines[i].start) {
@@ -252,7 +292,6 @@ const Recording = () => {
 
     if (index !== -1 && index !== activeLyricIndex) {
       setActiveLyricIndex(index);
-
       if (showFullLyrics) {
         requestAnimationFrame(() => {
           lyricsListRef.current?.scrollToIndex({
@@ -263,13 +302,9 @@ const Recording = () => {
         });
       }
     }
-  }, [
-    playbackPositionMs,
-    lyricsLines,
-    activeLyricIndex,
-    showFullLyrics,
-  ]);
+  }, [playbackPositionMs, lyricsLines, activeLyricIndex, showFullLyrics]);
 
+  const isRecorded = Boolean(path) && !recording;
 
   const progressViews = [
     {
@@ -305,7 +340,7 @@ const Recording = () => {
           visible: true,
           message: t('Please record audio first') || 'يرجى التسجيل أولاً',
           type: 'error',
-        })
+        }),
       );
       return;
     }
@@ -329,13 +364,12 @@ const Recording = () => {
           visible: true,
           message: t('Microphone permission denied') || 'تم رفض إذن الميكروفون',
           type: 'error',
-        })
+        }),
       );
       return;
     }
 
     try {
-      // Reset prior recording states
       setSaved(false);
       setPath('');
       setRecPercentage('0');
@@ -356,20 +390,16 @@ const Recording = () => {
   const stopRecording = async () => {
     try {
       const result = await Sound.stopRecorder();
-
       Sound.removeRecordBackListener();
 
       setPath(result);
       setRecording(false);
       setRecPercentage('100');
-
       console.log('Recording stopped at path:', result);
 
-      // Wait until isRecorded UI is rendered, then scroll
       setTimeout(() => {
         scrollToSaveRecording();
       }, 150);
-
     } catch (e) {
       console.log('Error stopping recording:', e);
       setRecording(false);
@@ -377,22 +407,63 @@ const Recording = () => {
   };
 
   useEffect(() => {
-    if (!isRecorded) {
-      return;
-    }
-
+    if (!isRecorded) return;
     const timer = setTimeout(() => {
       scrollToSaveRecording();
     }, 200);
-
     return () => clearTimeout(timer);
   }, [isRecorded]);
 
-  const handleMicPress = () => {
+  const startCountdown = async () => {
+    const hasPermission = await requestMicPermission();
+    if (!hasPermission) {
+      dispatch(
+        showToast({
+          visible: true,
+          message: t('Microphone permission denied') || 'تم رفض إذن الميكروفون',
+          type: 'error',
+        }),
+      );
+      return;
+    }
+
+    setCountdown(3);
+    let count = 3;
+
+    countdownTimerRef.current = setInterval(() => {
+      count -= 1;
+      if (count > 0) {
+        setCountdown(count);
+      } else {
+        if (countdownTimerRef.current) {
+          clearInterval(countdownTimerRef.current);
+          countdownTimerRef.current = null;
+        }
+        setCountdown(null);
+        startRecording();
+      }
+    }, 1000);
+  };
+
+  const cancelCountdown = () => {
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+    setCountdown(null);
+  };
+
+  const handleMicPress = async () => {
     if (recording) {
       stopRecording();
+      await Sound.pausePlayer();
+      isPlayingRef.current = false;
+      setInstrumentalPlaying(false);
+      return;
+    } else if (countdown !== null) {
+      cancelCountdown();
     } else {
-      startRecording();
+      startCountdown();
     }
   };
 
@@ -400,33 +471,183 @@ const Recording = () => {
     return `${Date.now()}-${Math.floor(Math.random() * 1000)}-SONG`;
   };
 
+  // Image Selection Handlers
+  const handleSelectImageSource = () => {
+    Alert.alert(
+      t('Upload Album Picture') || 'تحميل صورة الألبوم',
+      t('Choose an image source') || 'اختر مصدراً للصورة',
+      [
+        {
+          text: t('Camera') || 'الكاميرا',
+          onPress: () => openCamera(),
+        },
+        {
+          text: t('Gallery') || 'المعرض',
+          onPress: () => openGallery(),
+        },
+        {
+          text: t('Cancel') || 'إلغاء',
+          style: 'cancel',
+        },
+      ],
+    );
+  };
+
+  const openGallery = async () => {
+    try {
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
+        selectionLimit: 1,
+        quality: 0.8,
+      });
+
+      if (result.didCancel) return;
+      if (result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        setAlbumPicture({
+          uri: asset.uri || '',
+          type: asset.type || 'image/jpeg',
+          name: asset.fileName || 'album_picture.jpg',
+        });
+      }
+    } catch (error) {
+      console.log('Error choosing image from gallery:', error);
+      dispatch(
+        showToast({
+          visible: true,
+          message: t('Failed to pick image') || 'فشل اختيار الصورة',
+          type: 'error',
+        }),
+      );
+    }
+  };
+
+  const openCamera = async () => {
+    try {
+      const result = await launchCamera({
+        mediaType: 'photo',
+        quality: 0.8,
+      });
+
+      if (result.didCancel) return;
+      if (result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        setAlbumPicture({
+          uri: asset.uri || '',
+          type: asset.type || 'image/jpeg',
+          name: asset.fileName || 'camera_picture.jpg',
+        });
+      }
+    } catch (error) {
+      console.log('Error capturing camera image:', error);
+      dispatch(
+        showToast({
+          visible: true,
+          message: t('Failed to capture image') || 'فشل التقاط الصورة',
+          type: 'error',
+        }),
+      );
+    }
+  };
+
+  // Upload Recording Handler
   const uploadRecording = async () => {
-    if (!path || saved || isUploading) return;
+    if (!path || isUploading) return;
+
+    if (!title.trim()) {
+      dispatch(
+        showToast({
+          visible: true,
+          message: t('Please enter a song title') || 'يرجى إدخال عنوان الأغنية',
+          type: 'error',
+        }),
+      );
+      return;
+    }
+
+    if (!albumName.trim()) {
+      dispatch(
+        showToast({
+          visible: true,
+          message: t('Please enter an album name') || 'يرجى إدخال اسم الألبوم',
+          type: 'error',
+        }),
+      );
+      return;
+    }
+
+    if (!albumPicture?.uri) {
+      dispatch(
+        showToast({
+          visible: true,
+          message:
+            t('Please select an album picture') || 'يرجى اختيار صورة الألبوم',
+          type: 'error',
+        }),
+      );
+      return;
+    }
 
     try {
       setIsUploading(true);
       const formData = new FormData();
-      formData.append('song_id', generateSongId());
-      formData.append('status', 'review');
+
+      const songId = data?.id
+        ? String(data.id)
+        : data?.song_id
+          ? String(data.song_id)
+          : generateSongId();
+
+      // Form fields matching the curl specification
+      formData.append('song_id', songId);
+      formData.append('status', status || 'private');
+      formData.append('album_name', albumName.trim());
+      formData.append('title', title.trim());
+
+      // Duration (e.g. "4:50")
+      const durationFormatted = recordTime ? recordTime.slice(0, 5) : '00:00';
+      formData.append('duration', durationFormatted);
+
+      // recordingFile
       formData.append('recordingFile', {
-        uri: path,
+        uri: Platform.OS === 'android' ? path : path.replace('file://', ''),
         type: 'audio/mp3',
-        name: 'song.mp3',
+        name: 'recording.mp3',
       } as any);
 
-      const response: any = await ApiService.post(apiUrls.uploadrecording, formData);
+      // album_picture
+      formData.append('album_picture', {
+        uri:
+          Platform.OS === 'android'
+            ? albumPicture.uri
+            : albumPicture.uri.replace('file://', ''),
+        type: albumPicture.type || 'image/jpeg',
+        name: albumPicture.name || 'album_picture.jpg',
+      } as any);
+
+      const response: any = await ApiService.post(
+        apiUrls.uploadrecording,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        },
+      );
 
       if (response?.data?.success) {
         setSaved(true);
+        setSaveModalVisible(false); // Close modal on success
         if (response.data.recording_url) {
           setPath(response.data.recording_url);
         }
         dispatch(
           showToast({
             visible: true,
-            message: t('Recording saved successfully.') || 'تم حفظ التسجيل بنجاح.',
+            message:
+              t('Recording saved successfully.') || 'تم حفظ التسجيل بنجاح.',
             type: 'success',
-          })
+          }),
         );
       } else {
         dispatch(
@@ -434,7 +655,7 @@ const Recording = () => {
             visible: true,
             message: response?.data?.message || 'Recording upload failed.',
             type: 'error',
-          })
+          }),
         );
       }
     } catch (error: any) {
@@ -446,101 +667,74 @@ const Recording = () => {
             error?.response?.data?.message ||
             'Unable to upload recording. Please try again.',
           type: 'error',
-        })
+        }),
       );
     } finally {
       setIsUploading(false);
     }
   };
 
-  const lyrics = data?.lyrics;
-
-  const lyricsText = Array.isArray(lyrics)
-    ? lyrics
-      .map((item: any) =>
-        typeof item === 'string'
-          ? item
-          : item?.text || item?.lyric || item?.line || ''
-      )
-      .filter(Boolean)
-      .join('\n')
-    : typeof lyrics === 'string'
-      ? lyrics.trim()
-      : '';
-
-
-  useEffect(() => {
-    return () => {
-      Sound.removeRecordBackListener();
-
-      Sound.stopRecorder().catch(() => { });
-    };
-  }, [data]);
-
-
-
-  const isRecorded = Boolean(path) && !recording;
-
   const formatAudioTime = (milliseconds: number) => {
-    const totalSeconds = Math.floor(
-      Math.max(0, milliseconds) / 1000,
-    );
-
+    const totalSeconds = Math.floor(Math.max(0, milliseconds) / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-
-    return `${String(minutes).padStart(2, '0')}:${String(
-      seconds,
-    ).padStart(2, '0')}`;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(
+      2,
+      '0',
+    )}`;
   };
 
-  useEffect(() => {
-    const playbackListener = (event: any) => {
-      const position = Number(event.currentPosition) || 0;
-      const duration = Number(event.duration) || 0;
+  useFocusEffect(
+    useCallback(() => {
+      isPlayingRef.current = false;
+      hasStartedRef.current = false;
+      isStartingRef.current = false;
+      setInstrumentalPlaying(false);
+      setPlaybackPositionMs(0);
+      setActiveLyricIndex(0);
 
-      setPlaybackPositionMs(position);
+      const playbackListener = (event: any) => {
+        const position = Number(event.currentPosition) || 0;
+        const duration = Number(event.duration) || 0;
 
-      if (duration > 0) {
-        setInstrumentalDurationMs(duration);
-      }
+        setPlaybackPositionMs(position);
 
-      // Song finished
-      if (duration > 0 && position >= duration - 100) {
-        isPlayingRef.current = false;
-        hasStartedRef.current = false;
+        if (duration > 0) {
+          setInstrumentalDurationMs(duration);
+        }
 
-        setInstrumentalPlaying(false);
-        setPlaybackPositionMs(0);
-        setActiveLyricIndex(0);
-      }
-    };
+        if (duration > 0 && position >= duration - 100) {
+          isPlayingRef.current = false;
+          hasStartedRef.current = false;
+          setInstrumentalPlaying(false);
+          setPlaybackPositionMs(0);
+          setActiveLyricIndex(0);
+        }
+      };
 
-    Sound.addPlayBackListener(playbackListener);
-    playbackListenerRef.current = true;
+      Sound.addPlayBackListener(playbackListener);
+      playbackListenerRef.current = true;
 
-    return () => {
-      Sound.removePlayBackListener();
-      playbackListenerRef.current = false;
-    };
-  }, []);
+      return () => {
+        Sound.removePlayBackListener();
+        playbackListenerRef.current = false;
 
-
+        if (isPlayingRef.current || hasStartedRef.current) {
+          Sound.stopPlayer().catch(() => { });
+          isPlayingRef.current = false;
+          hasStartedRef.current = false;
+        }
+      };
+    }, []),
+  );
 
   const toggleInstrumentalPlayback = async () => {
-    if (!instrumentalUrl || instrumentalLoading || isStartingRef.current) {
-      return;
-    }
-
-    if (isRecordingRef.current) {
-      return;
-    }
+    if (!instrumentalUrl || instrumentalLoading || isStartingRef.current) return;
+    if (isRecordingRef.current) return;
 
     try {
-      // PAUSE the current track
       if (isPlayingRef.current) {
         await Sound.pausePlayer();
-
         isPlayingRef.current = false;
         setInstrumentalPlaying(false);
         return;
@@ -549,7 +743,6 @@ const Recording = () => {
       isStartingRef.current = true;
       setInstrumentalLoading(true);
 
-      // RESUME from the paused position, not from the beginning
       if (hasStartedRef.current) {
         await Sound.resumePlayer();
       } else {
@@ -567,11 +760,10 @@ const Recording = () => {
     }
   };
 
-
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        handleBack()
+        handleBack();
         return true;
       };
 
@@ -588,10 +780,8 @@ const Recording = () => {
     try {
       if (isPlayingRef.current || hasStartedRef.current) {
         await Sound.stopPlayer();
-
         isPlayingRef.current = false;
         hasStartedRef.current = false;
-
         setInstrumentalPlaying(false);
         setPlaybackPositionMs(0);
       }
@@ -626,13 +816,13 @@ const Recording = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: color.darkbackround }]} edges={['top']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: color.darkbackround }]}
+      edges={['top']}
+    >
       {/* Top Header Navigation */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={handleBack}
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <AppImage
             source={Images.leftarrow}
             width={8}
@@ -645,22 +835,19 @@ const Recording = () => {
           {lyricsLines.length > 0 && (
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() =>
-                setShowFullLyrics(!showFullLyrics)
-              }
+              onPress={() => {
+                const next = !showFullLyrics;
+                setShowFullLyrics(next);
+                setTimeout(() => scrollToLyrics(), 150);
+              }}
               style={[
                 styles.lyricsHeaderButton,
-                showFullLyrics &&
-                styles.lyricsHeaderButtonActive,
+                showFullLyrics && styles.lyricsHeaderButtonActive,
               ]}
             >
               <AppText
                 fontFamily={Inter.bold}
-                color={
-                  showFullLyrics
-                    ? '#FF2D55'
-                    : color.darkthemetext
-                }
+                color={showFullLyrics ? '#FF2D55' : color.darkthemetext}
                 fontSize={12}
               >
                 ❝❞ Lyrics
@@ -669,17 +856,13 @@ const Recording = () => {
           )}
 
           {isRecorded && (
-            <TouchableOpacity
-              onPress={onShare}
-              style={styles.shareHeaderButton}
-            >
+            <TouchableOpacity onPress={onShare} style={styles.shareHeaderButton}>
               <AppImage
                 source={Banner.shareicon}
                 height={16}
                 width={16}
                 tintColor="#FFFFFF"
               />
-
               <AppText
                 fontFamily={Inter.regular}
                 color={color.darkthemetext}
@@ -692,9 +875,11 @@ const Recording = () => {
         </View>
       </View>
 
-      <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-
-
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Main Background Area */}
         <ImageBackground
           source={Banner.recbackground}
@@ -711,127 +896,182 @@ const Recording = () => {
                 </AppText>
                 <AppImage source={Images.bstar} width={29} height={32.5} />
               </View>
-              <AppText fontSize={18} color="#FEC749" fontFamily={Inter.extrabold} style={{ marginTop: 4 }}>
+              <AppText
+                fontSize={18}
+                color="#FEC749"
+                fontFamily={Inter.extrabold}
+                style={{ marginTop: 4 }}
+              >
                 {'لقد اكتمل أداؤك'}
               </AppText>
             </>
           ) : (
-            <AppText fontSize={28} color="#FFFFFF" fontFamily={Inter.extrabold} style={{ marginTop: 12 }}>
-              {recording ? t('Recording in Progress...') || 'جاري التسجيل...' : t('Ready to Sing?') || 'جاهز للغناء؟'}
+            <AppText
+              fontSize={28}
+              color="#FFFFFF"
+              fontFamily={Inter.extrabold}
+              style={{ marginTop: 12 }}
+            >
+              {countdown !== null
+                ? t('Get Ready!') || 'استعد!'
+                : recording
+                  ? t('Recording in Progress...') || 'جاري التسجيل...'
+                  : t('Ready to Sing?') || 'جاهز للغناء؟'}
             </AppText>
           )}
 
-
           {/* SONG DETAILS */}
           {data && (
-            <View style={styles.songMainCard}>
-              {/* SONG INFO */}
-              <View style={styles.songInfoCard}>
-                {coverImage ? (
-                  <Image
-                    source={{ uri: coverImage }}
-                    style={styles.songCover}
-                  />
-                ) : (
-                  <View style={styles.songCoverPlaceholder}>
-                    <Text style={styles.placeholderIcon}>♫</Text>
-                  </View>
-                )}
+            <View style={eStyles.card}>
+              <LinearGradient
+                colors={['#F5BD55', '#E80360', '#5002AE']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={eStyles.accentLine}
+              />
 
-                <View style={styles.songInfo}>
-                  <Text style={styles.songTitle} numberOfLines={2}>
+              <View style={eStyles.songRow}>
+                <View style={eStyles.coverWrap}>
+                  {coverImage ? (
+                    <Image source={{ uri: coverImage }} style={eStyles.cover} />
+                  ) : (
+                    <LinearGradient
+                      colors={['#29251D', '#3A2F1E']}
+                      style={eStyles.coverPlaceholder}
+                    >
+                      <Text style={{ fontSize: 28, color: '#F5BD55' }}>♫</Text>
+                    </LinearGradient>
+                  )}
+                  <View style={eStyles.coverGlow} />
+                </View>
+
+                <View style={eStyles.songDetails}>
+                  <Text style={eStyles.title} numberOfLines={2}>
                     {songTitle}
                   </Text>
+                  <Text style={eStyles.artist}>{artistName}</Text>
 
-                  <Text style={styles.artistName}>
-                    {artistName}
-                  </Text>
+                  <View style={eStyles.metaRow}>
+                    <View style={eStyles.metaTag}>
+                      <Text style={eStyles.metaTagText}>
+                        {data?.language || 'Arabic'}
+                      </Text>
+                    </View>
+                    <Text style={eStyles.metaDot}>·</Text>
+                    <View style={eStyles.metaTag}>
+                      <Text style={eStyles.metaTagText}>
+                        {data?.category?.title || 'Music'}
+                      </Text>
+                    </View>
+                  </View>
 
-                  <Text style={styles.songMeta}>
-                    {data?.language || 'Arabic'} ·{' '}
-                    {data?.category?.title || 'Music'}
-                  </Text>
-
-                  <View style={styles.instrumentalBadge}>
-                    <Text style={styles.instrumentalBadgeText}>
-                      ♫ INSTRUMENTAL
-                    </Text>
+                  <View style={eStyles.instrumentalBadge}>
+                    <Text style={eStyles.instrumentalBadgeIcon}>♫</Text>
+                    <Text style={eStyles.instrumentalBadgeText}>INSTRUMENTAL</Text>
                   </View>
                 </View>
               </View>
 
-              {/* DIVIDER */}
-              <View style={styles.cardDivider} />
+              <View style={eStyles.divider}>
+                <LinearGradient
+                  colors={['transparent', 'rgba(245,189,85,0.3)', 'transparent']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{ flex: 1, height: 1 }}
+                />
+              </View>
 
-              {/* INSTRUMENTAL PLAYER */}
-              <View style={styles.playerCard}>
-                <View style={styles.playerHeader}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.playerTitle}>
-                      Instrumental
-                    </Text>
-
-                    <Text style={styles.playerSubtitle}>
-                      Sing along with the music
-                    </Text>
+              <View style={eStyles.playerSection}>
+                <View style={eStyles.playerRow}>
+                  <View style={eStyles.playerLeft}>
+                    <Equalizer playing={instrumentalPlaying} />
+                    <View style={{ marginLeft: 10, flex: 1 }}>
+                      <View style={eStyles.playerTitleRow}>
+                        <Text style={eStyles.playerTitle}>Instrumental</Text>
+                        {instrumentalPlaying && (
+                          <View style={eStyles.nowPlayingBadge}>
+                            <Text style={eStyles.nowPlayingText}>LIVE</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={eStyles.playerSubtitle}>
+                        Sing along with the music
+                      </Text>
+                    </View>
                   </View>
 
                   <TouchableOpacity
                     activeOpacity={0.8}
                     style={[
-                      styles.playButton,
-                      instrumentalLoading && { opacity: 0.7 },
+                      eStyles.playBtn,
+                      instrumentalPlaying && eStyles.playBtnActive,
+                      instrumentalLoading && { opacity: 0.6 },
                     ]}
                     onPress={toggleInstrumentalPlayback}
                     disabled={instrumentalLoading || !instrumentalUrl}
                   >
                     {instrumentalLoading ? (
-                      <ActivityIndicator
-                        size="small"
-                        color="#17130B"
-                      />
+                      <ActivityIndicator size="small" color="#17130B" />
                     ) : (
-                      <Text style={styles.playButtonText}>
-                        {instrumentalPlaying ? 'Ⅱ' : '▶'}
+                      <Text
+                        style={[
+                          eStyles.playBtnText,
+                          instrumentalPlaying && eStyles.playBtnTextActive,
+                        ]}
+                      >
+                        {instrumentalPlaying ? '❚❚' : '▶'}
                       </Text>
                     )}
                   </TouchableOpacity>
                 </View>
 
-                {/* PROGRESS */}
-                {/* <View style={styles.progressTrack}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: `${instrumentalDurationMs > 0
-                          ? Math.min(
-                            100,
-                            (playbackPositionMs /
-                              instrumentalDurationMs) *
-                            100,
-                          )
-                          : 0
-                          }%`,
-                      },
-                    ]}
-                  />
-                </View> */}
+                <View style={eStyles.progressWrap}>
+                  <View style={eStyles.progressTrack}>
+                    <LinearGradient
+                      colors={['#F5BD55', '#E8A020']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={[
+                        eStyles.progressFill,
+                        {
+                          width: `${instrumentalDurationMs > 0
+                            ? Math.min(
+                              100,
+                              (playbackPositionMs / instrumentalDurationMs) *
+                              100,
+                            )
+                            : 0
+                            }%`,
+                        },
+                      ]}
+                    />
+                    {instrumentalDurationMs > 0 && (
+                      <View
+                        style={[
+                          eStyles.progressThumb,
+                          {
+                            left: `${Math.min(
+                              100,
+                              (playbackPositionMs / instrumentalDurationMs) * 100,
+                            )}%`,
+                          },
+                        ]}
+                      />
+                    )}
+                  </View>
+                </View>
 
-                {/* TIME */}
-                {/* <View style={styles.timeRow}>
-                  <Text style={styles.timeText}>
+                <View style={eStyles.timeRow}>
+                  <Text style={eStyles.timeText}>
                     {formatAudioTime(playbackPositionMs)}
                   </Text>
-
-                  <Text style={styles.timeText}>
+                  <Text style={eStyles.timeDuration}>
                     {formatAudioTime(instrumentalDurationMs)}
                   </Text>
-                </View> */}
+                </View>
               </View>
             </View>
           )}
-
 
           {/* Central Mic & Record Action Button */}
           <ImageBackground
@@ -839,147 +1079,237 @@ const Recording = () => {
             resizeMode="contain"
             style={styles.circleContainer}
           >
-            {saved && (
+            {/* {saved && (
               <View style={styles.savedBadge}>
                 <AppImage source={Logo.tick} width={18} height={18} />
                 <AppText fontSize={16} color="#FFFFFF" fontFamily={Inter.extrabold}>
                   {'تم الحفظ'}
                 </AppText>
               </View>
-            )}
+            )} */}
 
-            <TouchableOpacity onPress={handleMicPress} activeOpacity={0.7} style={styles.micTouchArea}>
-              <AppImage
-                source={recording ? Images.playicon : Logo.linmic}
-                height={recording ? 60 : 89}
-                width={recording ? 60 : 51}
-              />
-            </TouchableOpacity>
+            {countdown !== null ? (
+              <View style={styles.countdownContainer}>
+                <Text style={styles.countdownNumber}>{countdown}</Text>
+                <AppText
+                  fontSize={14}
+                  color="#FFFFFF"
+                  fontFamily={Inter.regular}
+                  style={{ marginTop: 8 }}
+                >
+                  {t('Get Ready...') || 'استعد...'}
+                </AppText>
+              </View>
+            ) : (
+              <>
+                <TouchableOpacity
+                  onPress={handleMicPress}
+                  activeOpacity={0.7}
+                  style={styles.micTouchArea}
+                >
+                  {recording ? (
+                    <View style={styles.stopIconContainer}>
+                      <View style={styles.stopIconSquare} />
+                    </View>
+                  ) : (
+                    <AppImage source={Logo.linmic} height={89} width={51} />
+                  )}
+                </TouchableOpacity>
 
-            <AppText fontSize={14} color="#FFFFFF" fontFamily={Inter.extrabold} style={{ marginTop: 8 }}>
-              {recording ? t('Tap to Stop') || 'اضغط للإيقاف' : isRecorded ? t('Tap to Re-record') || 'اضغط لإعادة التسجيل' : t('Tap to Start') || 'اضغط للبدء'}
-            </AppText>
+                <AppText
+                  fontSize={14}
+                  color="#FFFFFF"
+                  fontFamily={Inter.extrabold}
+                  style={{ marginTop: -5 }}
+                >
+                  {recording
+                    ? t('Tap to Stop') || 'اضغط للإيقاف'
+                    : isRecorded
+                      ? t('Tap to Re-record') || 'اضغط لإعادة التسجيل'
+                      : t('Tap to Start') || 'اضغط للبدء'}
+                </AppText>
 
-            {recording && (
-              <AppText fontSize={16} color="#FEC749" fontFamily={Inter.bold} style={{ marginTop: 4 }}>
-                {recordTime}
-              </AppText>
+                {recording && (
+                  <AppText
+                    fontSize={16}
+                    color="#FEC749"
+                    fontFamily={Inter.bold}
+                    style={{ marginTop: 4 }}
+                  >
+                    {recordTime}
+                  </AppText>
+                )}
+              </>
             )}
           </ImageBackground>
 
+          {/* Lyrics Section */}
+          {data && (
+            <View ref={lyricsCardRef} collapsable={false} style={lStyles.card}>
+              <LinearGradient
+                colors={['#F5BD55', '#E80360', '#5002AE']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={lStyles.accentLine}
+              />
 
-
-          {/* Lyrics Section - show only when lyrics exist */}
-          {/* Current Lyric */}
-
-          {
-            data && (
-              <>
-                {/* {lyricsLines.length > 0 && !showFullLyrics && (
-                  <View style={styles.singleLyricCard}>
-                    <TouchableOpacity
-                      activeOpacity={0.8}
-                      onPress={() => setShowFullLyrics(true)}
-                      style={styles.lyricTouchWrap}
-                    >
-                      <AppText
-                        color="#FFFFFF"
-                        fontSize={18}
-                        fontWeight="700"
-                        fontFamily={Inter.bold}
-                        textAlign="center"
-                        numberOfLines={2}
-                        style={styles.singleLyricText}
-                      >
-                        "{lyricsLines[activeLyricIndex]?.text || 'Sing along...'}"
-                      </AppText>
-
-                      <View style={styles.fullLyricsBadge}>
-                        <AppText
-                          color="#FF2D55"
-                          fontSize={11}
-                          fontWeight="700"
-                          fontFamily={Inter.bold}
-                        >
-                          FULL LYRICS ↗
-                        </AppText>
-                      </View>
-                    </TouchableOpacity>
+              <View style={lStyles.header}>
+                <View style={lStyles.headerLeft}>
+                  <View style={lStyles.lyricsIcon}>
+                    <Text style={lStyles.lyricsIconText}>❝</Text>
                   </View>
-                )} */}
-
-                <View style={styles.lyricsCard}>
-                  <View style={styles.lyricsHeaderRow}>
-                    <Text style={styles.lyricsTitle}>Lyrics</Text>
-
-                    <TouchableOpacity
-                      onPress={() => setShowFullLyrics(value => !value)}
-                    >
-                      <Text style={styles.expandLyricsText}>
-                        {showFullLyrics ? 'Show less' : 'View all'}
+                  <View>
+                    <Text style={lStyles.headerTitle}>Lyrics</Text>
+                    {lyricsLines.length > 0 && (
+                      <Text style={lStyles.headerSubtitle}>
+                        {lyricsLines.length} lines · {data?.language || 'Arabic'}
                       </Text>
-                    </TouchableOpacity>
+                    )}
                   </View>
+                </View>
 
-                  {!showFullLyrics ? (
-                    <View style={styles.currentLyrics}>
-                      {lyricsLines.length > 0 ? (
-                        <>
-                          {lyricsLines
-                            .slice(
-                              Math.max(0, activeLyricIndex - 1),
-                              activeLyricIndex + 3,
-                            )
-                            .map((line, index) => {
-                              const actualIndex =
-                                Math.max(0, activeLyricIndex - 1) + index;
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => setShowFullLyrics(value => !value)}
+                  style={[
+                    lStyles.toggleBtn,
+                    showFullLyrics && lStyles.toggleBtnActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      lStyles.toggleBtnText,
+                      showFullLyrics && lStyles.toggleBtnTextActive,
+                    ]}
+                  >
+                    {showFullLyrics ? '⌃ Show less' : 'View all ⌄'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
-                              const active =
-                                actualIndex === activeLyricIndex;
+              <View style={lStyles.dividerWrap}>
+                <LinearGradient
+                  colors={['transparent', 'rgba(245,189,85,0.25)', 'transparent']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{ flex: 1, height: 1 }}
+                />
+              </View>
 
-                              return (
-                                <Text
-                                  key={`${line.start}-${actualIndex}`}
-                                  style={[
-                                    styles.lyricLine,
-                                    active && styles.activeLyricLine,
-                                  ]}
-                                >
-                                  {line.text}
-                                </Text>
-                              );
-                            })}
-                        </>
-                      ) : (
-                        <Text style={styles.noLyricsText}>
-                          Lyrics are not available for this song.
-                        </Text>
-                      )}
-                    </View>
+              {!showFullLyrics ? (
+                <View style={lStyles.compactBody}>
+                  {lyricsLines.length > 0 ? (
+                    <>
+                      {lyricsLines
+                        .slice(
+                          Math.max(0, activeLyricIndex - 1),
+                          activeLyricIndex + 3,
+                        )
+                        .map((line, index) => {
+                          const actualIndex =
+                            Math.max(0, activeLyricIndex - 1) + index;
+                          const active = actualIndex === activeLyricIndex;
+                          const distance = Math.abs(actualIndex - activeLyricIndex);
+
+                          return (
+                            <View
+                              key={`${line.start}-${actualIndex}`}
+                              style={[
+                                lStyles.lineWrap,
+                                active && lStyles.lineWrapActive,
+                              ]}
+                            >
+                              {active && <View style={lStyles.activeDot} />}
+                              <Text
+                                style={[
+                                  lStyles.line,
+                                  active && lStyles.lineActive,
+                                  !active && {
+                                    opacity: distance === 1 ? 0.45 : 0.25,
+                                  },
+                                ]}
+                              >
+                                {line.text}
+                              </Text>
+                            </View>
+                          );
+                        })}
+
+                      <View style={lStyles.dotsRow}>
+                        {lyricsLines.map((_, i) => (
+                          <View
+                            key={i}
+                            style={[
+                              lStyles.dot,
+                              i === activeLyricIndex && lStyles.dotActive,
+                              i < activeLyricIndex && lStyles.dotPast,
+                            ]}
+                          />
+                        ))}
+                      </View>
+                    </>
                   ) : (
-                    <FlatList
-                      ref={lyricsListRef}
-                      data={lyricsLines}
-                      keyExtractor={(item, index) =>
-                        `${item.start}-${index}`
-                      }
-                      scrollEnabled={false}
-                      renderItem={({ item, index }) => (
+                    <View style={lStyles.emptyState}>
+                      <Text style={lStyles.emptyIcon}>♪</Text>
+                      <Text style={lStyles.emptyTitle}>No Lyrics Available</Text>
+                      <Text style={lStyles.emptySubtitle}>
+                        Lyrics are not available for this song.
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              ) : (
+                <FlatList
+                  ref={lyricsListRef}
+                  data={lyricsLines}
+                  keyExtractor={(item, index) => `${item.start}-${index}`}
+                  scrollEnabled={false}
+                  contentContainerStyle={lStyles.fullList}
+                  renderItem={({ item, index }) => {
+                    const active = index === activeLyricIndex;
+                    const distance = Math.abs(index - activeLyricIndex);
+
+                    return (
+                      <View
+                        style={[
+                          lStyles.fullLineWrap,
+                          active && lStyles.fullLineWrapActive,
+                        ]}
+                      >
                         <Text
                           style={[
-                            styles.lyricLine,
-                            index === activeLyricIndex &&
-                            styles.activeLyricLine,
+                            lStyles.lineNumber,
+                            active && lStyles.lineNumberActive,
+                          ]}
+                        >
+                          {String(index + 1).padStart(2, '0')}
+                        </Text>
+
+                        <View
+                          style={[
+                            lStyles.lineBar,
+                            active && lStyles.lineBarActive,
+                          ]}
+                        />
+
+                        <Text
+                          style={[
+                            lStyles.fullLine,
+                            active && lStyles.fullLineActive,
+                            !active && {
+                              opacity: distance <= 1 ? 0.5 : 0.3,
+                            },
                           ]}
                         >
                           {item.text}
                         </Text>
-                      )}
-                    />
-                  )}
-                </View>
-              </>)}
-
+                      </View>
+                    );
+                  }}
+                />
+              )}
+            </View>
+          )}
 
           {/* Saved Notification Banner */}
           {saved && (
@@ -994,7 +1324,7 @@ const Recording = () => {
           {/* Progress & Duration Cards */}
           {isRecorded && (
             <View style={styles.statsContainer}>
-              {progressViews.map((item) => (
+              {progressViews.map(item => (
                 <View key={item.id} style={styles.statCard}>
                   <AppImage
                     source={item.image}
@@ -1002,10 +1332,18 @@ const Recording = () => {
                     width={28}
                     tintColor={item.tintcolor || undefined}
                   />
-                  <AppText fontSize={12} fontFamily={Inter.regular} color={item.color}>
+                  <AppText
+                    fontSize={12}
+                    fontFamily={Inter.regular}
+                    color={item.color}
+                  >
                     {item.title}
                   </AppText>
-                  <AppText fontSize={18} fontFamily={Inter.bold} color={color.darkthemetext}>
+                  <AppText
+                    fontSize={18}
+                    fontFamily={Inter.bold}
+                    color={color.darkthemetext}
+                  >
                     {item.number}
                   </AppText>
                 </View>
@@ -1014,18 +1352,13 @@ const Recording = () => {
           )}
         </ImageBackground>
 
-        {/* Full Lyrics */}
-
-
-
-
-
         {/* Action Controls when Recorded */}
         {isRecorded && (
           <View
             ref={saveRecordingRef}
             collapsable={false}
-            style={styles.actionButtonsRow}>
+            style={styles.actionButtonsRow}
+          >
             {/* Sing Again */}
             <TouchableOpacity onPress={startRecording} style={styles.actionBtn}>
               <LinearGradient
@@ -1041,33 +1374,30 @@ const Recording = () => {
               </LinearGradient>
             </TouchableOpacity>
 
-            {/* Save / Upload */}
+            {/* Save / Upload - Tapping opens the Save Recording Modal */}
             <TouchableOpacity
-              onPress={uploadRecording}
-              disabled={saved || isUploading}
-              style={[styles.actionBtn, saved && { opacity: 0.6 }]}
+              onPress={() => setSaveModalVisible(true)}
+              style={styles.actionBtn}
             >
               <LinearGradient
-                colors={saved ? ['#27AE60', '#2ECC71'] : ['#5002AE', '#160146']}
+                colors={
+                  saved
+                    ? ['#27AE60', '#2ECC71']
+                    : ['#5002AE', '#160146']
+                }
                 start={{ x: 0.2, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.gradientBtn}
               >
-                {isUploading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <>
-                    <AppImage
-                      source={saved ? Logo.filltick : Images.import}
-                      height={24}
-                      width={24}
-                      tintColor={'#FFFF'}
-                    />
-                    <AppText fontSize={12} fontFamily={Inter.regular} color="#FFFF">
-                      {saved ? t('Saved') || 'Saved' : t('Save Recording') || 'Save Recording'}
-                    </AppText>
-                  </>
-                )}
+                <AppImage
+                  source={saved ? Logo.filltick : Images.import}
+                  height={24}
+                  width={24}
+                  tintColor={'#FFFF'}
+                />
+                <AppText fontSize={12} fontFamily={Inter.regular} color="#FFFF">
+                  {saved ? t('Saved') || 'Saved' : t('Save Recording') || 'Save Recording'}
+                </AppText>
               </LinearGradient>
             </TouchableOpacity>
 
@@ -1079,7 +1409,12 @@ const Recording = () => {
                 end={{ x: 1, y: 1 }}
                 style={styles.gradientBtn}
               >
-                <AppImage source={Logo.share} height={24} width={24} tintColor={color.darkthemetext} />
+                <AppImage
+                  source={Logo.share}
+                  height={24}
+                  width={24}
+                  tintColor={color.darkthemetext}
+                />
                 <AppText fontSize={12} fontFamily={Inter.regular} color="#FFFF">
                   {t('Share') || 'Share'}
                 </AppText>
@@ -1091,8 +1426,14 @@ const Recording = () => {
         {/* Next Song Banner */}
         <TouchableOpacity
           onPress={handleBack}
-          activeOpacity={0.8} style={styles.nextSongContainer}>
-          <ImageBackground source={Banner.btnview} resizeMode="stretch" style={styles.nextSongBg}>
+          activeOpacity={0.8}
+          style={styles.nextSongContainer}
+        >
+          <ImageBackground
+            source={Banner.btnview}
+            resizeMode="stretch"
+            style={styles.nextSongBg}
+          >
             <View style={styles.nextSongInner}>
               <AppImage source={Images.music} height={30} width={30} />
               <View style={{ alignItems: 'center' }}>
@@ -1103,7 +1444,12 @@ const Recording = () => {
                   {'يا ليالي الخرطوم'}
                 </AppText>
               </View>
-              <AppImage source={Images.arrow} height={16} width={10} tintColor={'#FFFFFF'} />
+              <AppImage
+                source={Images.arrow}
+                height={16}
+                width={10}
+                tintColor={'#FFFFFF'}
+              />
             </View>
           </ImageBackground>
         </TouchableOpacity>
@@ -1138,6 +1484,256 @@ const Recording = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* ─── SAVE RECORDING MODAL (OPENS ON CLICKING SAVE RECORDINGS) ─── */}
+      <Modal
+        visible={saveModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setSaveModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={mStyles.modalOverlay}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => setSaveModalVisible(false)}
+            style={mStyles.backdrop}
+          />
+
+          <View style={mStyles.sheetContainer}>
+            {/* Accent Line */}
+            <LinearGradient
+              colors={['#F5BD55', '#E80360', '#5002AE']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={mStyles.accentLine}
+            />
+
+            {/* Modal Header */}
+            <View style={mStyles.sheetHeader}>
+              <View style={mStyles.headerLeft}>
+                <View style={mStyles.headerIconWrap}>
+                  <Text style={mStyles.headerIconText}>🎵</Text>
+                </View>
+                <View>
+                  <Text style={mStyles.headerTitle}>
+                    {t('Save Recording') || 'حفظ التسجيل'}
+                  </Text>
+                  <Text style={mStyles.headerSubtitle}>
+                    {t('Add song details before saving') ||
+                      'أضف تفاصيل الأغنية قبل الحفظ'}
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => setSaveModalVisible(false)}
+                style={mStyles.closeButton}
+              >
+                <Text style={mStyles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={mStyles.sheetScrollContent}
+            >
+              {/* 1. Upload Album Picture */}
+              <View style={mStyles.sectionGroup}>
+                <Text style={mStyles.fieldLabel}>
+                  {t('Album Picture') || 'صورة الألبوم'} *
+                </Text>
+
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={handleSelectImageSource}
+                  style={mStyles.imageTouchArea}
+                >
+                  {albumPicture?.uri ? (
+                    <View style={mStyles.imagePreviewContainer}>
+                      <Image
+                        source={{ uri: albumPicture.uri }}
+                        style={mStyles.imagePreview}
+                      />
+                      <View style={mStyles.changePhotoOverlay}>
+                        <Text style={mStyles.changePhotoText}>
+                          {t('Change Photo') || 'تغيير الصورة'} ✎
+                        </Text>
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={mStyles.placeholderBox}>
+                      <View style={mStyles.uploadIconCircle}>
+                        <AppImage
+                          source={Images.import}
+                          width={22}
+                          height={22}
+                          tintColor="#F5BD55"
+                        />
+                      </View>
+                      <Text style={mStyles.placeholderTitle}>
+                        {t('Upload Album Picture') || 'رفع صورة الألبوم'}
+                      </Text>
+                      <Text style={mStyles.placeholderSubtitle}>
+                        {t('Tap to choose from Gallery or Camera') ||
+                          'اضغط لاختيار صورة (JPG, PNG)'}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {/* 2. Song Title */}
+              <View style={mStyles.sectionGroup}>
+                <Text style={mStyles.fieldLabel}>
+                  {t('Song Title') || 'عنوان الأغنية'} *
+                </Text>
+                <View style={mStyles.inputBox}>
+                  <TextInput
+                    value={title}
+                    onChangeText={setTitle}
+                    placeholder={
+                      t('Enter title (e.g. Song 1)') || 'أدخل عنوان الأغنية'
+                    }
+                    placeholderTextColor="#6E6B7B"
+                    style={mStyles.textInput}
+                  />
+                </View>
+              </View>
+
+              {/* 3. Album Name */}
+              <View style={mStyles.sectionGroup}>
+                <Text style={mStyles.fieldLabel}>
+                  {t('Album Name') || 'اسم الألبوم'} *
+                </Text>
+                <View style={mStyles.inputBox}>
+                  <TextInput
+                    value={albumName}
+                    onChangeText={setAlbumName}
+                    placeholder={
+                      t('Enter album name (e.g. Love Songs)') ||
+                      'أدخل اسم الألبوم'
+                    }
+                    placeholderTextColor="#6E6B7B"
+                    style={mStyles.textInput}
+                  />
+                </View>
+              </View>
+
+              {/* 4. Visibility Status */}
+              <View style={mStyles.sectionGroup}>
+                <Text style={mStyles.fieldLabel}>
+                  {t('Visibility / Status') || 'الحالة'}
+                </Text>
+                <View style={mStyles.statusPillRow}>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setStatus('private')}
+                    style={[
+                      mStyles.statusPill,
+                      status === 'private' && mStyles.statusPillActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        mStyles.statusPillText,
+                        status === 'private' && mStyles.statusPillTextActive,
+                      ]}
+                    >
+                      🔒 {t('Private') || 'خاص'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setStatus('public')}
+                    style={[
+                      mStyles.statusPill,
+                      status === 'public' && mStyles.statusPillActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        mStyles.statusPillText,
+                        status === 'public' && mStyles.statusPillTextActive,
+                      ]}
+                    >
+                      🌍 {t('Public') || 'عام'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Meta Summary Chips */}
+              <View style={mStyles.metaChipsRow}>
+                <View style={mStyles.metaChipItem}>
+                  <Text style={mStyles.metaChipLabel}>{t('DURATION')}</Text>
+                  <Text style={mStyles.metaChipValue}>
+                    {recordTime.slice(0, 5)}
+                  </Text>
+                </View>
+                <View style={mStyles.metaChipItem}>
+                  <Text style={mStyles.metaChipLabel}>{t('SONG ID')}</Text>
+                  <Text style={mStyles.metaChipValue}>
+                    {String(data?.id || data?.song_id || '669')}
+                  </Text>
+                </View>
+                <View style={mStyles.metaChipItem}>
+                  <Text style={mStyles.metaChipLabel}>{t('STATUS')}</Text>
+                  <Text
+                    style={[
+                      mStyles.metaChipValue,
+                      { color: saved ? '#27AE60' : '#FEC749' },
+                    ]}
+                  >
+                    {saved ? t('Saved') || 'Saved' : t('Ready') || 'Ready'}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Final Confirm Button */}
+              <TouchableOpacity
+                onPress={uploadRecording}
+                disabled={isUploading}
+                style={mStyles.uploadButtonWrap}
+              >
+                <LinearGradient
+                  colors={
+                    saved
+                      ? ['#27AE60', '#2ECC71']
+                      : ['#5002AE', '#160146']
+                  }
+                  start={{ x: 0.2, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={mStyles.uploadButtonGradient}
+                >
+                  {isUploading ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <>
+                      <AppImage
+                        source={saved ? Logo.filltick : Images.import}
+                        height={22}
+                        width={22}
+                        tintColor={'#FFFFFF'}
+                      />
+                      <Text style={mStyles.uploadButtonText}>
+                        {saved
+                          ? t('Update & Save Again') || 'تحديث وحفظ مجدداً'
+                          : t('Confirm & Upload Recording') ||
+                          'تأكيد وحفظ التسجيل'}
+                      </Text>
+                    </>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -1183,159 +1779,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
   },
-  songMainCard: {
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    borderRadius: 16,
-    padding: 12,
-    marginHorizontal: 16,
-    //   marginVertical: 8,
-    width: '95%',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    marginTop: 20,
-  },
-
-  songInfoCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  songCover: {
-    width: 64,
-    height: 64,
-    borderRadius: 10,
-  },
-
-  songCoverPlaceholder: {
-    width: 64,
-    height: 64,
-    borderRadius: 10,
-    backgroundColor: '#29251D',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  placeholderIcon: {
-    fontSize: 26,
-    color: '#F5BD55',
-  },
-
-  songInfo: {
-    flex: 1,
-    marginLeft: 10,
-  },
-
-  songTitle: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-
-  artistName: {
-    color: '#B8B4AA',
-    fontSize: 12,
-    marginTop: 2,
-  },
-
-  songMeta: {
-    color: '#858178',
-    fontSize: 10,
-    marginTop: 2,
-  },
-
-  instrumentalBadge: {
-    alignSelf: 'flex-start',
-    marginTop: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 12,
-    backgroundColor: 'rgba(245,189,85,0.12)',
-  },
-
-  instrumentalBadgeText: {
-    color: '#F5BD55',
-    fontSize: 8,
-    fontWeight: '800',
-  },
-
-  cardDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    marginVertical: 10,
-  },
-
-  playerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  playerTitle: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-
-  playerSubtitle: {
-    color: '#858178',
-    fontSize: 10,
-    marginTop: 1,
-  },
-
-  playButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#F5BD55',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 10,
-  },
-
-  playButtonText: {
-    color: '#17130B',
-    fontSize: 16,
-    fontWeight: '900',
-  },
-
-  progressTrack: {
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#39352D',
-    overflow: 'hidden',
-    marginTop: 12,
-  },
-
-  timeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 4,
-  },
-
-  timeText: {
-    color: '#8D897F',
-    fontSize: 9,
-  },
-
-
-
-
-
-
-  playerCard: {
-    padding: 0,
-  },
-
-
-
   completionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   circleContainer: {
-    width: 280,
-    height: 280,
-    marginVertical: 5,
+    width: 300,
+    height: 300,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1421,62 +1872,11 @@ const styles = StyleSheet.create({
     height: 1,
     marginHorizontal: 8,
   },
-  lyricsContainer: {
-    marginTop: 18,
-    padding: 16,
-    borderRadius: 20,
-    backgroundColor: '#17131F',
-    borderWidth: 1,
-    borderColor: '#39303F',
-  },
-
-  lyricsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-
-  lyricsIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: 'rgba(254, 199, 73, 0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  lyricsBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    backgroundColor: 'rgba(254, 199, 73, 0.12)',
-  },
-
-  lyricsDivider: {
-    height: 1,
-    backgroundColor: '#39303F',
-    marginVertical: 16,
-  },
-
-  lyricsScroll: {
-    maxHeight: 240,
-  },
-
-  lyricsContent: {
-    paddingBottom: 8,
-  },
-
-  lyricsText: {
-    lineHeight: 32,
-    textAlign: 'center',
-    writingDirection: 'rtl',
-  },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-
   lyricsHeaderButton: {
     height: 35,
     paddingHorizontal: 12,
@@ -1487,142 +1887,714 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.12)',
   },
-
   lyricsHeaderButtonActive: {
     backgroundColor: 'rgba(255,45,85,0.15)',
     borderColor: '#FF2D55',
   },
-  singleLyricCard: {
-    width: '92%',
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderRadius: 18,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    marginTop: 8,
-  },
-
-  lyricTouchWrap: {
+  countdownContainer: {
     alignItems: 'center',
+    justifyContent: 'center',
   },
-
-  singleLyricText: {
-    lineHeight: 27,
-    letterSpacing: -0.2,
-    textShadowColor: 'rgba(255,45,85,0.4)',
-    textShadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    textShadowRadius: 6,
+  countdownNumber: {
+    fontSize: 72,
+    fontWeight: '900',
+    color: '#FEC749',
+    textShadowColor: 'rgba(254, 199, 73, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 20,
   },
-
-  fullLyricsBadge: {
-    marginTop: 8,
-    backgroundColor: 'rgba(255,45,85,0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
+  stopIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(232, 3, 96, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  stopIconSquare: {
+    width: 26,
+    height: 26,
+    borderRadius: 6,
+    backgroundColor: '#E80360',
+  },
+});
 
-  fullLyricsContainer: {
+const mStyles = StyleSheet.create({
+  modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  sheetContainer: {
+    backgroundColor: '#141118',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 189, 85, 0.2)',
+    maxHeight: '85%',
+    overflow: 'hidden',
+  },
+  accentLine: {
+    height: 3,
     width: '100%',
-    paddingHorizontal: 22,
-    marginTop: 12,
-    minHeight: 300,
   },
-
-  lyricsModeHeader: {
+  sheetHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 14,
     borderBottomWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
   },
-
-  collapseBtn: {
-    backgroundColor: 'rgba(255,45,85,0.15)',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 12,
-  },
-
-  fullLyricsScroll: {
-    paddingTop: 24,
-    paddingBottom: 40,
-  },
-
-  fullLyricItem: {
-    paddingVertical: 12,
-  },
-
-  fullLyricItemActive: {
-    paddingVertical: 16,
-  },
-
-  fullLyricText: {
-    lineHeight: 32,
-    letterSpacing: -0.3,
-    textAlign: 'center',
-  },
-
-
-
-  lyricsCard: {
-    marginHorizontal: 10,
-    marginTop: 0,
-    marginBottom: 50,
-    padding: 18,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    width: '95%',
-  },
-  lyricsHeaderRow: {
+  headerLeft: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 18,
+    gap: 12,
   },
-  lyricsTitle: {
+  headerIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: 'rgba(245, 189, 85, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerIconText: {
+    fontSize: 18,
+  },
+  headerTitle: {
     color: '#FFFFFF',
-    fontSize: 19,
-    fontWeight: '700',
-  },
-  expandLyricsText: {
-    color: '#F5BD55',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  currentLyrics: {
-    alignItems: 'center',
-    gap: 15,
-    paddingVertical: 12,
-  },
-  lyricLine: {
-    color: '#AAA8B4',
     fontSize: 17,
-    lineHeight: 32,
-    textAlign: 'center',
-    paddingVertical: 5,
-    writingDirection: 'rtl',
-  },
-  activeLyricLine: {
-    color: '#F5BD55',
-    fontSize: 21,
     fontWeight: '800',
   },
-  noLyricsText: {
-    color: '#92909D',
-    textAlign: 'center',
-    paddingVertical: 20,
+  headerSubtitle: {
+    color: '#858178',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  sheetScrollContent: {
+    padding: 18,
+    paddingBottom: 32,
+  },
+  sectionGroup: {
+    marginBottom: 16,
+  },
+  fieldLabel: {
+    color: '#D4AF37',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  imageTouchArea: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  imagePreviewContainer: {
+    width: 130,
+    height: 130,
+    borderRadius: 16,
+    overflow: 'hidden',
+    position: 'relative',
+    borderWidth: 2,
+    borderColor: '#F5BD55',
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+  },
+  changePhotoOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingVertical: 5,
+    alignItems: 'center',
+  },
+  changePhotoText: {
+    color: '#F5BD55',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  placeholderBox: {
+    width: '100%',
+    height: 110,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(245, 189, 85, 0.4)',
+    backgroundColor: 'rgba(245, 189, 85, 0.04)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  uploadIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(245, 189, 85, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeholderTitle: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  placeholderSubtitle: {
+    color: '#858178',
+    fontSize: 10,
+  },
+  inputBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 12,
+    height: 48,
+    justifyContent: 'center',
+  },
+  textInput: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    padding: 0,
+  },
+  statusPillRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 2,
+  },
+  statusPill: {
+    flex: 1,
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusPillActive: {
+    borderColor: '#F5BD55',
+    backgroundColor: 'rgba(245, 189, 85, 0.14)',
+  },
+  statusPillText: {
+    color: '#858178',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  statusPillTextActive: {
+    color: '#F5BD55',
+    fontWeight: '800',
+  },
+  metaChipsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderRadius: 12,
+    paddingVertical: 10,
+    marginBottom: 20,
+    marginTop: 4,
+  },
+  metaChipItem: {
+    alignItems: 'center',
+  },
+  metaChipLabel: {
+    color: '#858178',
+    fontSize: 9,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  metaChipValue: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  uploadButtonWrap: {
+    height: 52,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  uploadButtonGradient: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  uploadButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+});
+
+const eStyles = StyleSheet.create({
+  card: {
+    backgroundColor: 'rgba(12, 10, 8, 0.85)',
+    borderRadius: 20,
+    marginHorizontal: 12,
+    marginTop: 20,
+    width: '95%',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 189, 85, 0.12)',
+    overflow: 'hidden',
+  },
+  accentLine: {
+    height: 2,
+    width: '100%',
+  },
+  songRow: {
+    flexDirection: 'row',
+    padding: 14,
+    paddingBottom: 0,
+  },
+  coverWrap: {
+    position: 'relative',
+  },
+  cover: {
+    width: 72,
+    height: 72,
+    borderRadius: 14,
+    zIndex: 1,
+  },
+  coverPlaceholder: {
+    width: 72,
+    height: 72,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  coverGlow: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    right: -4,
+    bottom: -4,
+    borderRadius: 14,
+    backgroundColor: 'rgba(245, 189, 85, 0.08)',
+    zIndex: 0,
+  },
+  songDetails: {
+    flex: 1,
+    marginLeft: 14,
+    justifyContent: 'center',
+  },
+  title: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  artist: {
+    color: '#B8B4AA',
+    fontSize: 12,
+    marginTop: 3,
+    fontWeight: '500',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+    gap: 6,
+  },
+  metaTag: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  metaTagText: {
+    color: '#858178',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  metaDot: {
+    color: '#858178',
+    fontSize: 10,
+  },
+  instrumentalBadge: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    alignItems: 'center',
+    marginTop: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    backgroundColor: 'rgba(245, 189, 85, 0.12)',
+    gap: 4,
+  },
+  instrumentalBadgeIcon: {
+    color: '#F5BD55',
+    fontSize: 9,
+  },
+  instrumentalBadgeText: {
+    color: '#F5BD55',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  divider: {
+    paddingHorizontal: 14,
+    marginVertical: 12,
+  },
+  playerSection: {
+    paddingHorizontal: 14,
+    paddingBottom: 16,
+  },
+  playerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  playerLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  playerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  playerTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  nowPlayingBadge: {
+    backgroundColor: 'rgba(232, 3, 96, 0.2)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(232, 3, 96, 0.4)',
+  },
+  nowPlayingText: {
+    color: '#E80360',
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  playerSubtitle: {
+    color: '#858178',
+    fontSize: 10,
+    marginTop: 2,
+  },
+  playBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#F5BD55',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
+  },
+  playBtnActive: {
+    backgroundColor: 'rgba(245, 189, 85, 0.15)',
+    borderWidth: 2,
+    borderColor: '#F5BD55',
+  },
+  playBtnText: {
+    color: '#17130B',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  playBtnTextActive: {
+    color: '#F5BD55',
+    fontSize: 12,
+  },
+  progressWrap: {
+    marginTop: 14,
+    position: 'relative',
+  },
+  progressTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    overflow: 'visible',
+    position: 'relative',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#F5BD55',
     borderRadius: 2,
+  },
+  progressThumb: {
+    position: 'absolute',
+    top: -4,
+    marginLeft: -6,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#F5BD55',
+    borderWidth: 2,
+    borderColor: '#17130B',
+    shadowColor: '#F5BD55',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
+  timeText: {
+    color: '#F5BD55',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  timeDuration: {
+    color: '#8D897F',
+    fontSize: 10,
+    fontWeight: '500',
+  },
+});
+
+const lStyles = StyleSheet.create({
+  card: {
+    marginHorizontal: 10,
+    marginTop: 0,
+    marginBottom: 50,
+    borderRadius: 20,
+    backgroundColor: 'rgba(12, 10, 8, 0.85)',
+    width: '95%',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 189, 85, 0.12)',
+    overflow: 'hidden',
+  },
+  accentLine: {
+    height: 2,
+    width: '100%',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 0,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  lyricsIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(245, 189, 85, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lyricsIconText: {
+    fontSize: 18,
+    color: '#F5BD55',
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  headerSubtitle: {
+    color: '#858178',
+    fontSize: 10,
+    marginTop: 1,
+    fontWeight: '500',
+  },
+  toggleBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: 'rgba(245, 189, 85, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 189, 85, 0.2)',
+  },
+  toggleBtnActive: {
+    backgroundColor: 'rgba(232, 3, 96, 0.12)',
+    borderColor: 'rgba(232, 3, 96, 0.3)',
+  },
+  toggleBtnText: {
+    color: '#F5BD55',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  toggleBtnTextActive: {
+    color: '#E80360',
+  },
+  dividerWrap: {
+    paddingHorizontal: 16,
+    marginVertical: 12,
+  },
+  compactBody: {
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 18,
+    gap: 6,
+  },
+  lineWrap: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+  },
+  lineWrapActive: {
+    backgroundColor: 'rgba(245, 189, 85, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 189, 85, 0.12)',
+  },
+  activeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#F5BD55',
+    marginRight: 10,
+    shadowColor: '#F5BD55',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  line: {
+    color: '#AAA8B4',
+    fontSize: 16,
+    lineHeight: 28,
+    textAlign: 'center',
+    writingDirection: 'rtl',
+    flex: 1,
+  },
+  lineActive: {
+    color: '#F5BD55',
+    fontSize: 19,
+    fontWeight: '800',
+    textShadowColor: 'rgba(245, 189, 85, 0.35)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 12,
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 14,
+    gap: 3,
+    flexWrap: 'wrap',
+    maxWidth: '80%',
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  dotActive: {
+    width: 14,
+    backgroundColor: '#F5BD55',
+    borderRadius: 4,
+  },
+  dotPast: {
+    backgroundColor: 'rgba(245, 189, 85, 0.3)',
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 28,
+    gap: 6,
+  },
+  emptyIcon: {
+    fontSize: 32,
+    color: 'rgba(245, 189, 85, 0.3)',
+    marginBottom: 4,
+  },
+  emptyTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  emptySubtitle: {
+    color: '#92909D',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  fullList: {
+    paddingHorizontal: 16,
+    paddingBottom: 18,
+  },
+  fullLineWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    marginBottom: 2,
+  },
+  fullLineWrapActive: {
+    backgroundColor: 'rgba(245, 189, 85, 0.08)',
+  },
+  lineNumber: {
+    width: 22,
+    color: 'rgba(255,255,255,0.12)',
+    fontSize: 9,
+    fontWeight: '700',
+    textAlign: 'right',
+  },
+  lineNumberActive: {
+    color: '#F5BD55',
+  },
+  lineBar: {
+    width: 2,
+    height: '80%',
+    minHeight: 16,
+    borderRadius: 1,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    marginHorizontal: 10,
+  },
+  lineBarActive: {
+    backgroundColor: '#F5BD55',
+    shadowColor: '#F5BD55',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  fullLine: {
+    flex: 1,
+    color: '#AAA8B4',
+    fontSize: 16,
+    lineHeight: 28,
+    textAlign: 'center',
+    writingDirection: 'rtl',
+  },
+  fullLineActive: {
+    color: '#F5BD55',
+    fontSize: 19,
+    fontWeight: '800',
+    textShadowColor: 'rgba(245, 189, 85, 0.35)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 12,
   },
 });
 

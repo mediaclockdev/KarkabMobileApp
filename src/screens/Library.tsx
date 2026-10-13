@@ -24,11 +24,13 @@ import Sound, {
   PlayBackType,
 } from 'react-native-nitro-sound';
 import { GlobalImage } from "../share/utils/GlobalImage";
+import { useTranslation } from "react-i18next";
 
 const LibrarylistComponent = Librarylist as ComponentType<{ data: any | null }>;
 const Library = () => {
   const color = useAppColors();
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const [favoritescount, setFavoritescount] = useState(0)
   const [recordingcount, setRecordingcount] = useState(0)
   const navigation = useNavigation();
@@ -48,6 +50,9 @@ const Library = () => {
   const [loadings, setLoadings] = useState(false);
   const playsong = useAppSelector(
     (state: any) => state.auth.playsong
+  );
+  const recordingRefresh = useAppSelector(
+    state => state.auth.recordingRefresh
   );
   const [currentPosition, setCurrentPosition] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -102,7 +107,7 @@ const Library = () => {
       return () => {
         // Cleanup if needed
       };
-    }, [])
+    }, [recordingRefresh])
   );
 
   // useEffect(() => {
@@ -122,7 +127,7 @@ const Library = () => {
 
       const response = await ApiService.get(apiUrls.getsonglist);
 
-      const data = response.data;
+      const data = (response as any).data;
       console.log(data, 'songlistAPI RESPONSEdddd');
 
       if (data?.success) {
@@ -229,7 +234,7 @@ const Library = () => {
       setIsLoading(true)
       const response = await ApiService.get(apiUrls.favorites)
 
-      const data = response.data
+      const data = (response as any).data
       console.log(data, "favorate API RESPONSE")
 
       if (data?.success) {
@@ -451,7 +456,7 @@ const Library = () => {
                 fontWeight="400"
                 fontFamily={Inter.regular}
               >
-                {"Rooms"}
+                {t('Library.Rooms')}
               </AppText>
             </TouchableOpacity>
           </LinearGradient>
@@ -535,6 +540,7 @@ const Library = () => {
                       fontWeight="500"
                       fontFamily={Inter.medium}
                     >
+
                       All Genres
                     </AppText>
                   </View>
@@ -763,7 +769,8 @@ const Library = () => {
                     <View style={[styles.titles, { width: '100%' }]}>
                       <View style={{ flexDirection: 'row', gap: 5, justifyContent: "center", alignItems: 'center' }}>
                         <AppText color={'#FB6B01'} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-                          Continue Singing
+
+                          {t('Library.continuesinging')}
                         </AppText>
                         <AppImage
                           source={Banner.brightstar}
@@ -783,7 +790,9 @@ const Library = () => {
 
                         style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
                         <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-                          View all
+
+
+                          {t('Library.Viewall')}
                         </AppText>
                         <AppImage
                           source={Images.arrow}
@@ -918,7 +927,8 @@ const Library = () => {
                           fontSize={14}
                           marginTop={10}
                         >
-                          No recording found
+                          {t('Library.norecordingfound')}
+
                         </AppText>
                       </View>
                     )}
@@ -949,13 +959,16 @@ const Library = () => {
 
 
                           <AppText color="#fff" fontSize={16} fontFamily={Inter.bold}>
-                            Featured Sudanese
+                            {t('Library.featuredsudanese')}
+
                           </AppText>
                           <AppText color="#F29803" fontSize={16} fontFamily={Inter.bold}>
-                            Karaoke
+
+                            {t('Library.Karaoke')}
                           </AppText>
                           <AppText color="#FFFFFF" fontSize={10} fontFamily={Inter.bold}>
-                            Made for your next gathering
+
+                            {t('Library.madeyournextgathering')}
                           </AppText>
 
                           <TouchableOpacity
@@ -993,7 +1006,8 @@ const Library = () => {
                                 />
 
                                 <AppText color="#FFFFFF" fontSize={11} fontFamily={Inter.bold}>
-                                  Sing Now
+
+                                  {t('Library.singnow')}
                                 </AppText>
                                 <AppImage
                                   source={Images.arrow}
@@ -1018,7 +1032,8 @@ const Library = () => {
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                       <View style={{ flexDirection: 'row' }}>
                         <AppText color="#F46E00" fontSize={12} fontFamily={Inter.regular}>
-                          {"All Songs"}
+
+                          {t('Library.allsongs')}
                         </AppText>
                         <AppText color="#CDCECB" fontSize={12} fontFamily={Inter.regular}>
                           {" (" + numberofsong + ")"}
@@ -1046,7 +1061,8 @@ const Library = () => {
                           <TextInput
                             value={searchText}
                             onChangeText={setSearchText}
-                            placeholder="Search songs, artists..."
+
+                            placeholder={t('Library.searchsongs,artists...')}
                             placeholderTextColor={"#CDCECB"}
                             style={{ fontSize: 10, color: '#FFFF', flex: 1 }}
                           />

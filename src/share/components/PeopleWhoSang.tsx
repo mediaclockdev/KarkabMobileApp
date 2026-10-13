@@ -4,6 +4,7 @@ import {
     Image,
     StyleSheet,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from 'react-native';
 
@@ -75,13 +76,25 @@ const PeopleWhoSang = ({
         });
     };
     const renderArtist = ({ item }: { item: Artist }) => {
+
         return (
             <View style={styles.artistCard}>
                 {/* Artist Image */}
-                {console.log(item, "hwhdjwjhkwdlwjldw")}
 
-                <Image source={GlobalImage(profileimage?.avatar_url)} style={styles.artistImage} />
 
+                <Image source={GlobalImage(item?.album_picture_url)} style={styles.artistImage} />
+
+                {item?.public_request_status === 'approved' && (
+                    <View style={styles.approvedLabel}>
+                        <AppText
+                            fontSize={8}
+                            fontFamily={Inter.semibold}
+                            color="#FFFFFF"
+                        >
+                            Live
+                        </AppText>
+                    </View>
+                )}
                 {/* Artist Info */}
                 <View style={styles.artistInfo}>
                     <AppText
@@ -89,7 +102,7 @@ const PeopleWhoSang = ({
                         fontFamily={Inter.semibold}
                         color="#FFFFFF"
                         numberOfLines={1}>
-                        {item?.title}
+                        {item?.album_name}
                     </AppText>
 
                     <AppText
@@ -98,7 +111,7 @@ const PeopleWhoSang = ({
                         fontFamily={Inter.regular}
                         color="#A9A9A9"
                     >
-                        {formatCreatedAt(item?.created_at)}
+                        {item?.title}
                     </AppText>
                 </View>
 
@@ -118,7 +131,7 @@ const PeopleWhoSang = ({
             </View>
         );
     };
-
+    const { width } = useWindowDimensions();
     return (
         <View style={styles.container}>
             {/* Header */}
@@ -136,7 +149,9 @@ const PeopleWhoSang = ({
                     flex: 1,
                     justifyContent: 'center',
                     alignItems: 'center',
-                    paddingVertical: 40,
+                    paddingVertical: 20,
+                    width: width - 32,
+                    alignSelf: 'center'
                 }}>
                     <AppImage
                         source={Logo.ymusic}
@@ -148,7 +163,7 @@ const PeopleWhoSang = ({
                         fontSize={14}
                         marginTop={10}
                     >
-                        No songs found
+                        No recorded songs found
                     </AppText>
                 </View>}
 
@@ -188,19 +203,6 @@ const styles = StyleSheet.create({
         gap: 10,
     },
 
-    artistCard: {
-        width: 140,
-        height: 55,
-        borderRadius: 10,
-        backgroundColor: '#111111',
-        borderWidth: 1,
-        borderColor: '#252525',
-
-        flexDirection: 'row',
-        alignItems: 'center',
-
-        paddingHorizontal: 12,
-    },
 
     artistImage: {
         width: 34,
@@ -230,5 +232,27 @@ const styles = StyleSheet.create({
 
     playIcon: {
         marginLeft: 2,
+    },
+    artistCard: {
+        width: 140,
+        height: 65,
+        borderRadius: 10,
+        backgroundColor: '#111111',
+        borderWidth: 1,
+        borderColor: '#252525',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        position: 'relative',
+    },
+    approvedLabel: {
+        position: 'absolute',
+        top: 3,
+        right: 5,
+        backgroundColor: color.mgyellow,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 5,
+        zIndex: 10,
     },
 });

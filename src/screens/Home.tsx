@@ -35,6 +35,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { addsong } from '../auth/redux/authSlice';
 import { getLastPlayed } from '../services/lastPlayed';
 import { GlobalImage } from '../share/utils/GlobalImage';
+import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 
@@ -42,6 +43,10 @@ const Home = () => {
   const navigation = useNavigation<any>();
   const color = useAppColors();
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
+  const recordingRefresh = useAppSelector(
+    state => state.auth.recordingRefresh
+  );
   const [profiledetail, setProfileDetail] = useState<any>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [populardatas, setPopulardatas] = useState<any[]>([]);
@@ -52,6 +57,7 @@ const Home = () => {
   const [songsArtistLoading, setSongsArtistLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [recdata, setRecdata] = useState(null);
+  const [recdatapu, setRecdatapu] = useState(null);
   const [selectedFilter, setSelectedFilter] = useState<'Latest' | 'Popular' | 'A-Z'>(
     'Latest'
   );
@@ -75,6 +81,7 @@ const Home = () => {
         recommendedsongfun(),
         getartistfun(),
         getRecording(),
+        getpublicRecording(),
         newreleasesdata(),
         fetchArtistsByFilter(selectedFilter),
       ]);
@@ -84,6 +91,12 @@ const Home = () => {
       setRefreshing(false);
     }
   }, [selectedFilter]);
+
+  useEffect(() => {
+    getRecording();
+    getpublicRecording();
+    fetchArtistsByFilter(selectedFilter);
+  }, [recordingRefresh]);
 
   const newreleasesdata = async () => {
     console.log("popular api called")
@@ -131,6 +144,21 @@ const Home = () => {
       console.log('getrecording ERROR:', error);
     }
   };
+
+
+  const getpublicRecording = async () => {
+    try {
+      const response = await ApiService.get(apiUrls.getrecordingpublic);
+      const data = (response as any).data;
+      console.log(data, "ppppppppppppppp")
+      if (data?.success) {
+        setRecdatapu(data.recordings);
+      }
+    } catch (error) {
+      console.log('getrecording ERROR:', error);
+    }
+  };
+
 
   const categorydata = async () => {
     try {
@@ -253,12 +281,17 @@ const Home = () => {
     recommendedsongfun();
     getartistfun();
     getRecording();
+    getpublicRecording();
     newreleasesdata();
   }, []);
+
+
 
   useEffect(() => {
     fetchArtistsByFilter(selectedFilter);
   }, [selectedFilter]);
+
+
 
   // Spotify Navigation helper
   const openPlayer = (songId: number) => {
@@ -314,7 +347,8 @@ const Home = () => {
               fontWeight="500"
               fontFamily={Inter.medium}
             >
-              Selected Artists - Mix Song
+              {t('Home.SelectedArtistsMixSong')}
+
             </AppText>
 
             <TouchableOpacity
@@ -338,7 +372,9 @@ const Home = () => {
                 fontWeight="500"
                 fontFamily={Inter.medium}
               >
-                See all
+
+                {t('Home.Seeall')}
+
               </AppText>
               <AppImage source={Images.arrow} width={5} height={8} />
             </TouchableOpacity>
@@ -362,7 +398,8 @@ const Home = () => {
               fontWeight="500"
               fontFamily={Inter.medium}
             >
-              Recommended Songs
+              {t('Home.recommendedsongs')}
+
             </AppText>
 
             <TouchableOpacity
@@ -386,7 +423,7 @@ const Home = () => {
                 fontWeight="500"
                 fontFamily={Inter.medium}
               >
-                See all
+                {t('Home.Seeall')}
               </AppText>
               <AppImage source={Images.arrow} width={5} height={8} />
             </TouchableOpacity>
@@ -396,7 +433,7 @@ const Home = () => {
             songs={recommendedsongdata}
             onSeeAll={() => { }}
             onPlay={(song) => {
-              openPlayer(song.id); // 👈 Fixed
+              openPlayer((song as any).id);
             }}
             onMore={(song) => {
               console.log('More:', song);
@@ -411,7 +448,9 @@ const Home = () => {
               fontWeight="500"
               fontFamily={Inter.medium}
             >
-              Browse moods
+              {t('Home.Browsemoods')}
+
+
             </AppText>
             <TouchableOpacity
               activeOpacity={0.4}
@@ -431,7 +470,7 @@ const Home = () => {
                 fontWeight="500"
                 fontFamily={Inter.medium}
               >
-                See all
+                {t('Home.Seeall')}
               </AppText>
               <AppImage source={Images.arrow} width={5} height={8} />
             </TouchableOpacity>
@@ -446,7 +485,9 @@ const Home = () => {
               fontWeight="500"
               fontFamily={Inter.medium}
             >
-              Selected Artists
+              {t('Home.selectedartists')}
+
+
             </AppText>
 
             <TouchableOpacity
@@ -467,7 +508,7 @@ const Home = () => {
                 fontWeight="500"
                 fontFamily={Inter.medium}
               >
-                See all
+                {t('Home.Seeall')}
               </AppText>
               <AppImage source={Images.arrow} width={5} height={8} />
             </TouchableOpacity>
@@ -497,7 +538,9 @@ const Home = () => {
               fontSize={14}
               fontWeight="500"
               fontFamily={Inter.medium}>
-              New Releases
+              {t('Home.newreleases')}
+
+
             </AppText>
             <TouchableOpacity
               onPress={() => {
@@ -508,7 +551,7 @@ const Home = () => {
               }}
               activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
               <AppText color={'#FFB300'} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
-                View all
+                {t('Home.Seeall')}
               </AppText>
               <AppImage
                 source={Images.arrow}
@@ -545,11 +588,15 @@ const Home = () => {
 
                   <AppText
                     style={styles.emptyTitle}>
-                    No New Releases
+                    {t('Home.nonewreleases')}
+
+
                   </AppText>
 
                   <AppText style={styles.emptySubtitle}>
-                    New songs will appear here soon.
+
+                    {t('Home.newsongswillheresoon')}
+
                   </AppText>
                 </View>
               )}
@@ -591,7 +638,9 @@ const Home = () => {
               fontWeight="500"
               fontFamily={Inter.medium}
             >
-              Selected Artist - All Songs
+              {t('Home.selectedartistallsongs')}
+
+
             </AppText>
             <TouchableOpacity
               onPress={() => {
@@ -614,7 +663,7 @@ const Home = () => {
                 fontWeight="500"
                 fontFamily={Inter.medium}
               >
-                See all
+                {t('Home.Seeall')}
               </AppText>
               <AppImage source={Images.arrow} width={5} height={8} />
             </TouchableOpacity>
@@ -707,13 +756,15 @@ const Home = () => {
               fontWeight="500"
               fontFamily={Inter.medium}
             >
-              Recorded Songs
+              {t('Home.recordedsongs')}
+
             </AppText>
 
             <TouchableOpacity
               onPress={() => {
                 navigation.navigate('RecordingList', {
                   recordings: recdata,
+                  isRecordings: true,
                   previousScreen: 'Home',
                 });
               }}
@@ -731,7 +782,7 @@ const Home = () => {
                 fontWeight="500"
                 fontFamily={Inter.medium}
               >
-                See all
+                {t('Home.Seeall')}
               </AppText>
               <AppImage source={Images.arrow} width={5} height={8} />
             </TouchableOpacity>
@@ -747,6 +798,63 @@ const Home = () => {
             onSeeAll={() => { }}
           />
 
+
+          <View style={styles.titles}>
+            <AppText
+              color={color.darkthemetext}
+              fontSize={14}
+              fontWeight="500"
+              fontFamily={Inter.medium}
+            >
+              {t('Home.publicommunityfeed')}
+
+            </AppText>
+
+            <TouchableOpacity
+
+
+              onPress={() => {
+                navigation.navigate('SongsListScreen', {
+                  songs: recdatapu,
+                  previousScreen: 'Home',
+                });
+              }}
+
+              activeOpacity={0.4}
+              style={{
+                flexDirection: 'row',
+                gap: 5,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <AppText
+                color={color.mgred}
+                fontSize={14}
+                fontWeight="500"
+                fontFamily={Inter.medium}
+              >
+                {t('Home.Seeall')}
+              </AppText>
+              <AppImage source={Images.arrow} width={5} height={8} />
+            </TouchableOpacity>
+          </View>
+
+          <PeopleWhoSang
+            artists={recdatapu}
+            profileimage={profiledetail}
+            onPlay={(artist) => {
+              console.log('Playing:', artist.name);
+              navigation.navigate('.', { id: artist.id, type: 'recordings' });
+            }}
+            onSeeAll={() => { }}
+          />
+
+
+
+
+
+
           {/* Popular Songs */}
           <View style={styles.titles}>
             <AppText
@@ -755,7 +863,9 @@ const Home = () => {
               fontWeight="500"
               fontFamily={Inter.medium}
             >
-              Popular Songs
+              {t('Home.popularsongs')}
+
+
             </AppText>
 
             <TouchableOpacity
@@ -779,7 +889,7 @@ const Home = () => {
                 fontWeight="500"
                 fontFamily={Inter.medium}
               >
-                See all
+                {t('Home.Seeall')}
               </AppText>
               <AppImage source={Images.arrow} width={5} height={8} />
             </TouchableOpacity>

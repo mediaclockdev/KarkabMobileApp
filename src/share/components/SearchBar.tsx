@@ -11,6 +11,7 @@ import { useAppColors } from '../constants/color';
 import { BottomIcons } from '../constants/media';
 import { Inter } from '../constants/fonts';
 import AppText from './AppText';
+import { useTranslation } from 'react-i18next';
 
 interface SearchBarProps {
   value?: string;
@@ -30,6 +31,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
   IsPressable = true,
 }) => {
   const color = useAppColors();
+  const { t } = useTranslation();
+
 
   return (
     <View
@@ -63,14 +66,14 @@ const SearchBar: React.FC<SearchBarProps> = ({
             fontSize={14}
             fontFamily={Inter.regular}
           >
-            {placeholder}
+            {t('Home.Searchbarplaceholder')}
           </AppText>
         </TouchableOpacity>
       ) : (
         <TextInput
           value={value}
           onChangeText={onChangeText}
-          placeholder={placeholder}
+          placeholder={t('Home.Searchbarplaceholder')}
           placeholderTextColor="#777"
           style={[
             styles.input,

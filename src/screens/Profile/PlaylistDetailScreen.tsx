@@ -19,8 +19,8 @@ import { Images } from '../../share/constants/media';
 import { useAppColors } from '../../share/constants/color';
 import { Inter } from '../../share/constants/fonts';
 import apiUrls from '../../services/apiUrls';
-import { showToast } from '../../auth/redux/authSlice';
-import { useAppDispatch } from '../../share/hooks/useAppSelector';
+import { openSongAction, showToast } from '../../auth/redux/authSlice';
+import { useAppDispatch, useAppSelector } from '../../share/hooks/useAppSelector';
 
 type PlaylistSong = {
     id: string;
@@ -59,7 +59,9 @@ const PlaylistDetailScreen = () => {
     const [addSongsVisible, setAddSongsVisible] = useState(false);
     const [songSearch, setSongSearch] = useState('');
     const [selectedSongs, setSelectedSongs] = useState<string[]>([]);
-
+    const recordingRefresh = useAppSelector(
+        state => state.auth.recordingRefresh
+    );
     /**
      * ==========================================
      * GET PLAYLIST DETAILS / SONGS
@@ -83,9 +85,9 @@ const PlaylistDetailScreen = () => {
             );
 
             const data = response?.data;
-
+            console.log(data, "ebehdhevhdvdh")
             if (data?.success) {
-                const playlistData = data?.data;
+                const playlistData = data?.playlist;
 
                 const playlistSongs =
                     playlistData?.songs ||
@@ -135,7 +137,7 @@ const PlaylistDetailScreen = () => {
         } finally {
             setLoading(false);
         }
-    }, [playlistId, dispatch]);
+    }, [playlistId, dispatch, recordingRefresh]);
 
     /**
      * ==========================================
@@ -154,7 +156,7 @@ const PlaylistDetailScreen = () => {
              */
 
             const response = await ApiService.get(
-                apiUrls.songs,
+                apiUrls.allsongs,
             );
 
             const data = response?.data;
@@ -207,6 +209,8 @@ const PlaylistDetailScreen = () => {
      * OPEN ADD SONGS
      * ==========================================
      */
+
+
     const openAddSongs = () => {
         setSongSearch('');
         setSelectedSongs([]);
@@ -239,6 +243,8 @@ const PlaylistDetailScreen = () => {
      * SELECT / UNSELECT SONG
      * ==========================================
      */
+
+
     const toggleSong = (songId: string) => {
         setSelectedSongs(prev => {
             if (prev.includes(songId)) {
@@ -273,7 +279,7 @@ const PlaylistDetailScreen = () => {
             const response = await ApiService.post(
                 apiUrls.addSongToPlaylist(playlistId),
                 {
-                    songIds: selectedSongs,
+                    song_ids: selectedSongs,
                 },
             );
 
@@ -339,6 +345,9 @@ const PlaylistDetailScreen = () => {
             <TouchableOpacity
                 activeOpacity={0.8}
                 style={styles.songCard}
+                onPress={() => {
+                    navigation.navigate('.', { id: item.id, prevScreen: 'PlaylistDetailScreen' });
+                }}
             >
                 <AppImage
                     source={item.image}
@@ -380,6 +389,15 @@ const PlaylistDetailScreen = () => {
                 </View>
 
                 <TouchableOpacity
+                    onPress={() => {
+                        dispatch(
+                            openSongAction({
+                                ...item,
+                                songType: 'Playlist',
+                                playlistId: playlistId
+                            }),
+                        );
+                    }}
                     style={styles.songMore}
                     activeOpacity={0.7}
                 >
@@ -547,7 +565,7 @@ const PlaylistDetailScreen = () => {
             {/* HEADER */}
             <View style={styles.header}>
                 <TouchableOpacity
-                    onPress={() => navigation.goBack()}
+                    onPress={() => navigation.navigate('CreatePlaylist')}
                     style={styles.backButton}
                 >
                     <AppText
@@ -568,7 +586,9 @@ const PlaylistDetailScreen = () => {
                     Playlist
                 </AppText>
 
-                <TouchableOpacity style={styles.headerMore}>
+                <TouchableOpacity
+
+                    style={styles.headerMore}>
                     <View style={styles.headerDot} />
                     <View style={styles.headerDot} />
                     <View style={styles.headerDot} />
@@ -631,7 +651,7 @@ const PlaylistDetailScreen = () => {
                         </AppText>
 
                         {/* PLAY ALL */}
-                        {songs.length > 0 && (
+                        {/* {songs.length > 0 && (
                             <TouchableOpacity
                                 activeOpacity={0.85}
                                 style={styles.playAllButton}
@@ -663,7 +683,7 @@ const PlaylistDetailScreen = () => {
                                     </AppText>
                                 </LinearGradient>
                             </TouchableOpacity>
-                        )}
+                        )} */}
                     </View>
 
                     {/* SONG HEADER */}
@@ -1021,7 +1041,7 @@ const styles = StyleSheet.create({
     playAllGradient: {
         height: 42,
         minWidth: 130,
-        paddingHorizontal: 22,
+
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
@@ -1036,7 +1056,7 @@ const styles = StyleSheet.create({
 
     addButton: {
         height: 35,
-        paddingHorizontal: 14,
+        width: 90,
         borderRadius: 18,
         justifyContent: 'center',
         alignItems: 'center',
@@ -1114,7 +1134,7 @@ const styles = StyleSheet.create({
     emptyButtonGradient: {
         height: 40,
         minWidth: 125,
-        paddingHorizontal: 18,
+
         justifyContent: 'center',
         alignItems: 'center',
     },

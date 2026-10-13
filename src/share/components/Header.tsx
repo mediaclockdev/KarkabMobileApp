@@ -15,6 +15,7 @@ import { Inter } from '../constants/fonts'
 import AppImage from './AppImage'
 import LinearGradient from 'react-native-linear-gradient'
 import { navigate } from '../../navigation/NavigationService'
+import { useTranslation } from 'react-i18next'
 
 interface HeaderProps {
   headername?: string
@@ -24,10 +25,10 @@ interface HeaderProps {
   rightView?: any
   backpress?: () => void
 }
-
+const { t } = useTranslation();
 const Header: React.FC<HeaderProps> = ({
   headername = 'Library',
-  headertitle = 'Your music collection',
+  headertitle = t('Library.Yourmusiccollection'),
   rightIcon,
   onRightPress,
   rightView,

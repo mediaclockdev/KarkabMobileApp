@@ -944,6 +944,7 @@ const AudioRec = () => {
               </View>
 
               {/* Scrubber Slider */}
+
               <View style={styles.scrubberContainer}>
                 <View
                   ref={scrubberRef}
@@ -1010,173 +1011,176 @@ const AudioRec = () => {
               </View>
 
               {/* Controls Row */}
-              <View style={styles.controlsRow}>
-                {/* 🔀 Shuffle */}
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={toggleShuffle}
-                  style={[
-                    styles.featureBtn,
-                    isShuffle && styles.featureBtnActive,
-                  ]}
-                >
-                  <AppText
-                    color={isShuffle ? '#FF2D55' : 'rgba(255,255,255,0.45)'}
-                    fontSize={18}
-                    fontWeight="700"
-                    fontFamily={Inter.bold}
+              {!showFullLyrics ? (
+                <View style={styles.controlsRow}>
+                  {/* 🔀 Shuffle */}
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={toggleShuffle}
+                    style={[
+                      styles.featureBtn,
+                      isShuffle && styles.featureBtnActive,
+                    ]}
                   >
-                    ⇄
-                  </AppText>
-                </TouchableOpacity>
+                    <AppText
+                      color={isShuffle ? '#FF2D55' : 'rgba(255,255,255,0.45)'}
+                      fontSize={18}
+                      fontWeight="700"
+                      fontFamily={Inter.bold}
+                    >
+                      ⇄
+                    </AppText>
+                  </TouchableOpacity>
 
-                {/* Previous */}
-                <TouchableOpacity
-                  activeOpacity={0.6}
-                  disabled={!adjectprevdata?.id}
-                  onPress={() => {
-                    if (adjectprevdata?.id) getSongDetail(adjectprevdata.id);
-                  }}
-                  style={[
-                    styles.navBtn,
-                    !adjectprevdata?.id && { opacity: 0.3 },
-                  ]}
-                >
-                  <AppImage
-                    source={Images.leftarrow}
-                    width={20}
-                    height={24}
-                    tintColor="#FFFFFF"
-                  />
-                </TouchableOpacity>
-
-                {/* Hero Play / Pause */}
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  style={styles.heroPlayButton}
-                  onPress={handlePlayPause}
-                >
-                  {isBuffering ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : playing ? (
-                    <View style={styles.pauseContainer}>
-                      <View style={styles.pauseBar} />
-                      <View style={styles.pauseBar} />
-                    </View>
-                  ) : (
+                  {/* Previous */}
+                  <TouchableOpacity
+                    activeOpacity={0.6}
+                    disabled={!adjectprevdata?.id}
+                    onPress={() => {
+                      if (adjectprevdata?.id) getSongDetail(adjectprevdata.id);
+                    }}
+                    style={[
+                      styles.navBtn,
+                      !adjectprevdata?.id && { opacity: 0.3 },
+                    ]}
+                  >
                     <AppImage
-                      source={Images.playicon}
-                      width={28}
-                      height={28}
+                      source={Images.leftarrow}
+                      width={20}
+                      height={24}
                       tintColor="#FFFFFF"
                     />
-                  )}
-                </TouchableOpacity>
+                  </TouchableOpacity>
 
-                {/* Next */}
-                <TouchableOpacity
-                  activeOpacity={0.6}
-                  disabled={!adjectnextdata?.id}
-                  onPress={() => {
-                    if (adjectnextdata?.id) getSongDetail(adjectnextdata.id);
-                  }}
-                  style={[
-                    styles.navBtn,
-                    !adjectnextdata?.id && { opacity: 0.3 },
-                    { transform: [{ rotate: '180deg' }] },
-                  ]}
-                >
-                  <AppImage
-                    source={Images.leftarrow}
-                    width={20}
-                    height={24}
-                    tintColor="#FFFFFF"
-                  />
-                </TouchableOpacity>
-
-                {/* 🔁 Repeat */}
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={toggleRepeatMode}
-                  style={[
-                    styles.featureBtn,
-                    repeatMode !== 'off' && styles.featureBtnActive,
-                  ]}
-                >
-                  <AppText
-                    color={
-                      repeatMode !== 'off' ? '#FF2D55' : 'rgba(255,255,255,0.45)'
-                    }
-                    fontSize={18}
-                    fontWeight="700"
-                    fontFamily={Inter.bold}
+                  {/* Hero Play / Pause */}
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.heroPlayButton}
+                    onPress={handlePlayPause}
                   >
-                    ↻
-                  </AppText>
-                  {repeatMode === 'one' && (
-                    <View style={styles.repeatBadge}>
-                      <AppText color="#FFFFFF" fontSize={8} fontWeight="800">
-                        1
-                      </AppText>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </View>
+                    {isBuffering ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : playing ? (
+                      <View style={styles.pauseContainer}>
+                        <View style={styles.pauseBar} />
+                        <View style={styles.pauseBar} />
+                      </View>
+                    ) : (
+                      <AppImage
+                        source={Images.playicon}
+                        width={28}
+                        height={28}
+                        tintColor="#FFFFFF"
+                      />
+                    )}
+                  </TouchableOpacity>
+
+                  {/* Next */}
+                  <TouchableOpacity
+                    activeOpacity={0.6}
+                    disabled={!adjectnextdata?.id}
+                    onPress={() => {
+                      if (adjectnextdata?.id) getSongDetail(adjectnextdata.id);
+                    }}
+                    style={[
+                      styles.navBtn,
+                      !adjectnextdata?.id && { opacity: 0.3 },
+                      { transform: [{ rotate: '180deg' }] },
+                    ]}
+                  >
+                    <AppImage
+                      source={Images.leftarrow}
+                      width={20}
+                      height={24}
+                      tintColor="#FFFFFF"
+                    />
+                  </TouchableOpacity>
+
+                  {/* 🔁 Repeat */}
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={toggleRepeatMode}
+                    style={[
+                      styles.featureBtn,
+                      repeatMode !== 'off' && styles.featureBtnActive,
+                    ]}
+                  >
+                    <AppText
+                      color={
+                        repeatMode !== 'off' ? '#FF2D55' : 'rgba(255,255,255,0.45)'
+                      }
+                      fontSize={18}
+                      fontWeight="700"
+                      fontFamily={Inter.bold}
+                    >
+                      ↻
+                    </AppText>
+                    {repeatMode === 'one' && (
+                      <View style={styles.repeatBadge}>
+                        <AppText color="#FFFFFF" fontSize={8} fontWeight="800">
+                          1
+                        </AppText>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>) : null}
 
               {/* Bottom Quick Tools */}
-              <View style={[
-                styles.bottomDock,
-                {
-                  marginBottom: Platform.OS === 'ios' ? 10 : 60,
-                },
-              ]}>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={async () => {
-                    setCurrentPosition(0);
-                    await TrackPlayer.seekTo(0);
-                  }}
-                  style={styles.dockItem}
-                >
-                  <AppImage
-                    source={Images.restart}
-                    width={18}
-                    height={18}
-                    tintColor="rgba(255,255,255,0.7)"
-                  />
-                  <AppText
-                    color="rgba(255,255,255,0.7)"
-                    fontSize={11}
-                    fontFamily={Inter.medium}
+              {!showFullLyrics ? (
+                <View style={[
+                  styles.bottomDock,
+                  {
+                    marginBottom: Platform.OS === 'ios' ? 10 : 60,
+                  },
+                ]}>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={async () => {
+                      setCurrentPosition(0);
+                      await TrackPlayer.seekTo(0);
+                    }}
+                    style={styles.dockItem}
                   >
-                    Restart
-                  </AppText>
-                </TouchableOpacity>
+                    <AppImage
+                      source={Images.restart}
+                      width={18}
+                      height={18}
+                      tintColor="rgba(255,255,255,0.7)"
+                    />
+                    <AppText
+                      color="rgba(255,255,255,0.7)"
+                      fontSize={11}
+                      fontFamily={Inter.medium}
+                    >
+                      Restart
+                    </AppText>
+                  </TouchableOpacity>
 
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={async () => {
-                    await TrackPlayer.stop();
-                    navigation.goBack();
-                  }}
-                  style={styles.dockFinishPill}
-                >
-                  <AppImage
-                    source={Images.tick}
-                    width={15}
-                    height={15}
-                    tintColor="#FFFFFF"
-                  />
-                  <AppText
-                    color="#FFFFFF"
-                    fontSize={12}
-                    fontWeight="700"
-                    fontFamily={Inter.bold}
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={async () => {
+                      await TrackPlayer.stop();
+                      navigation.goBack();
+                    }}
+                    style={styles.dockFinishPill}
                   >
-                    Finish Session
-                  </AppText>
-                </TouchableOpacity>
-              </View>
+                    <AppImage
+                      source={Images.tick}
+                      width={15}
+                      height={15}
+                      tintColor="#FFFFFF"
+                    />
+                    <AppText
+                      color="#FFFFFF"
+                      fontSize={12}
+                      fontWeight="700"
+                      fontFamily={Inter.bold}
+                    >
+                      Finish Session
+                    </AppText>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
             </View>
           </View>
         )}

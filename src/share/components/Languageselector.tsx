@@ -55,23 +55,23 @@ export default function LanguageSelector() {
             { backgroundColor: color.darkbackround, borderColor: '#4E5050' },
           ]}
         >
-         {LANGUAGE_LIST.map((lang, index) => (
-  <View key={lang.code}>
-    {index > 0 && <View style={styles.divider} />}
-    <TouchableOpacity
-      style={styles.option}
-      onPress={() => onSelect(lang.code)}
-    >
-      <AppText
-        color={
-          lang.code === activeCode ? '#EA9305' : color.darkthemetext
-        }
-      >
-        {lang.label}
-      </AppText>
-    </TouchableOpacity>
-  </View>
-))}
+          {LANGUAGE_LIST.map((lang, index) => (
+            <View key={lang.code}>
+              {index > 0 && <View style={styles.divider} />}
+              <TouchableOpacity
+                style={styles.option}
+                onPress={() => onSelect(lang.code)}
+              >
+                <AppText
+                  color={
+                    lang.code === activeCode ? '#EA9305' : color.darkthemetext
+                  }
+                >
+                  {lang.label}
+                </AppText>
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
       )}
     </View>
@@ -82,6 +82,7 @@ const styles = StyleSheet.create({
   wrapper: {
     alignSelf: 'flex-end',
     zIndex: 999,
+    marginTop: 15
   },
   trigger: {
     borderWidth: 1,

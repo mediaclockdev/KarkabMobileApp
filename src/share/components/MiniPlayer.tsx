@@ -52,14 +52,14 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     const [trackDuration, setTrackDuration] = useState(0);
     const [switchingTrack, setSwitchingTrack] = useState(false);
     const isAutoNextingRef = useRef(false);
+    const isInitialMount = useRef(true); // Track initial screen/app load
     const appState = useRef(AppState.currentState);
-    /**
-     * 1. ACTIVE PROGRESS POLLING + AUTO NEXT SONG ON FINISH
-     */
-
 
     const wasPausedByBackground = useRef(false);
 
+    /**
+     * 1. APP STATE CHANGE LISTENER
+     */
     useEffect(() => {
         const subscription = AppState.addEventListener(
             'change',
@@ -70,7 +70,8 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                     previousState === 'active' &&
                     (
                         nextState === 'inactive' ||
-                        (nextState as string) === 'unknown'
+                        (nextState as string) === 'unknown' ||
+                        nextState === 'background'
                     )
                 ) {
                     try {
@@ -79,10 +80,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                             await TrackPlayer.pause();
                         }
                     } catch (error) {
-                        console.log(
-                            'PAUSE ON APP CLOSE/KILL ERROR:',
-                            error
-                        );
+                        console.log('PAUSE ON APP CLOSE/KILL ERROR:', error);
                     }
                 }
 
@@ -93,13 +91,11 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
         return () => {
             subscription.remove();
         };
-    }, [playing]);
+    }, [playsong?.id, playing]);
 
-
-
-
-
-
+    /**
+     * 2. ACTIVE PROGRESS POLLING + AUTO NEXT SONG ON FINISH
+     */
     useEffect(() => {
         if (!playsong?.id || hideMiniPlayer) return;
 
@@ -137,22 +133,37 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     }, [playbackState]);
 
     /**
-     * 2. LOAD & PLAY SONG WHEN REDUX SONG CHANGES
+     * 3. LOAD SONG WHEN REDUX SONG CHANGES OR ON APP MOUNT (PAUSED IF INITIAL)
      */
     useEffect(() => {
-        if (!playsong?.id) return;
+        console.log('MiniPlayer: playsong changed:', playsong?.id, playsong?.title);
+        if (!playsong?.id) {
+            pauseSongItem();
+            return;
+        }
 
         try {
             const activeSong = TrackPlayer.getActiveMediaItem();
             if (activeSong?.mediaId === playsong.id.toString()) return;
 
-            playSongItem(playsong);
+            // If initial load on app opening, do NOT auto-play
+            const autoPlay = !isInitialMount.current;
+            isInitialMount.current = false;
+
+            playSongItem(playsong, autoPlay);
         } catch (e) {
-            playSongItem(playsong);
+            const autoPlay = !isInitialMount.current;
+            isInitialMount.current = false;
+
+            playSongItem(playsong, autoPlay);
         }
     }, [playsong?.id]);
 
-    const playSongItem = async (song: any) => {
+    const pauseSongItem = async () => {
+        await TrackPlayer.pause();
+    };
+
+    const playSongItem = async (song: any, autoPlay: boolean = true) => {
         try {
             if (!song?.id) return;
 
@@ -171,14 +182,19 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
             };
 
             await TrackPlayer.setMediaItem(mediaItem);
-            await TrackPlayer.play();
+
+            if (autoPlay) {
+                await TrackPlayer.play();
+            } else {
+                await TrackPlayer.pause();
+            }
         } catch (error) {
             console.log('PLAY SONG ERROR:', error);
         }
     };
 
     /**
-     * 3. PLAY / PAUSE
+     * 4. PLAY / PAUSE
      */
     const handlePlayPause = () => {
         if (buffering) return;
@@ -190,13 +206,12 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     };
 
     /**
-     * 4. PREVIOUS SONG
+     * 5. PREVIOUS SONG
      */
     const handlePrevious = async () => {
         if (switchingTrack || !playsong?.id) return;
 
         try {
-            // 1. Try TrackPlayer queue first if available
             const index = TrackPlayer.getActiveMediaItemIndex();
             const queue = TrackPlayer.getQueue();
             if (index !== null && index > 0 && queue.length > 1) {
@@ -204,7 +219,6 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                 return;
             }
 
-            // 2. Fetch Previous Song from API
             setSwitchingTrack(true);
             const res = await ApiService.get(apiUrls.adjacentsong(playsong.id));
             if ((res as any).data?.success) {
@@ -214,7 +228,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                     if ((detailRes as any).data?.success) {
                         const song = (detailRes as any).data.song;
                         dispatch(addsong(song));
-                        await playSongItem(song);
+                        await playSongItem(song, true);
                     }
                 } else {
                     onPrevious?.();
@@ -237,10 +251,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
 
     const handleCloseMiniPlayer = async () => {
         try {
-            // Stop audio completely
             await TrackPlayer.stop();
-
-            // Hide MiniPlayer
             dispatch(addsong(''));
         } catch (error) {
             console.log('CLOSE MINI PLAYER ERROR:', error);
@@ -248,7 +259,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     };
 
     /**
-     * 5. NEXT SONG
+     * 6. NEXT SONG
      */
     const handleNext = async () => {
         if (switchingTrack || isAutoNextingRef.current || !playsong?.id) return;
@@ -257,7 +268,6 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
             isAutoNextingRef.current = true;
             setSwitchingTrack(true);
 
-            // 1. Try TrackPlayer queue first if available
             const index = TrackPlayer.getActiveMediaItemIndex();
             const queue = TrackPlayer.getQueue();
             if (index !== null && index < queue.length - 1 && queue.length > 1) {
@@ -265,7 +275,6 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                 return;
             }
 
-            // 2. Fetch Next Song from API
             const res = await ApiService.get(apiUrls.adjacentsong(playsong.id));
             if ((res as any).data?.success) {
                 const nextSong = (res as any).data.nextSong;
@@ -274,7 +283,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                     if ((detailRes as any).data?.success) {
                         const song = (detailRes as any).data.song;
                         dispatch(addsong(song));
-                        await playSongItem(song);
+                        await playSongItem(song, true);
                     }
                 } else {
                     onNext?.();
@@ -323,7 +332,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
 
     return (
         <View style={[styles.container, { bottom: bottomOffset }]}>
-            {/* 1. Clickable Info area to open AudioRec */}
+            {/* Clickable Info area */}
             <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={openFullPlayer}
@@ -344,10 +353,8 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                 </View>
             </TouchableOpacity>
 
-            {/* 2. Controls Row */}
             {/* Controls Row */}
             <View style={styles.actionsRow}>
-
                 {/* Previous */}
                 <TouchableOpacity
                     style={styles.controlButton}
@@ -399,19 +406,13 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                         />
                     </View>
                 </TouchableOpacity>
-
             </View>
 
-            {/* Close */}
+            {/* Close Button */}
             <TouchableOpacity
                 style={styles.closeButton}
                 onPress={handleCloseMiniPlayer}
-                hitSlop={{
-                    top: 12,
-                    bottom: 12,
-                    left: 12,
-                    right: 12,
-                }}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 activeOpacity={0.7}
             >
                 <View style={styles.closeIcon}>
@@ -420,7 +421,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                 </View>
             </TouchableOpacity>
 
-            {/* 3. Live Apple Music Progress Line */}
+            {/* Live Progress Line */}
             <TouchableWithoutFeedback onPress={openFullPlayer}>
                 <View style={styles.bottomProgressTrack}>
                     <View
@@ -530,14 +531,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         marginLeft: 2,
     },
-
     closeIcon: {
         width: 18,
         height: 18,
         alignItems: 'center',
         justifyContent: 'center',
     },
-
     closeLineOne: {
         position: 'absolute',
         width: 14,
@@ -546,7 +545,6 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.65)',
         transform: [{ rotate: '45deg' }],
     },
-
     closeLineTwo: {
         position: 'absolute',
         width: 14,

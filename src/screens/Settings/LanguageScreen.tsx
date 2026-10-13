@@ -46,26 +46,23 @@ const LanguageScreen = () => {
     };
 
 
-    const handleSave = async (code: AppLanguage) => {
 
+    const handleSave = async (codes: AppLanguage) => {
+        const code = codes === 'en' ? 'english' : 'arabic';
 
         try {
-
-
             const response = await ApiService.put(
-                apiUrls.profileApi + `?language=${code}`,
-
+                `${apiUrls.profileApi}?language=${code}`,
                 {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
+                    language: code
                 },
             );
 
-            const data = (response as any).data;
+            const data = (response as any)?.data;
+
+            console.log(code, data, 'llll');
 
             if (data?.success) {
-
                 dispatch(
                     showToast({
                         visible: true,
@@ -73,13 +70,14 @@ const LanguageScreen = () => {
                         type: 'success',
                     }),
                 );
-                await changeLanguage(code);
-                navigation.goBack();
+
+                await changeLanguage(codes);
             } else {
                 dispatch(
                     showToast({
                         visible: true,
-                        message: data?.message || 'Language failed to update.',
+                        message:
+                            data?.message || 'Language failed to update.',
                         type: 'error',
                     }),
                 );
@@ -99,10 +97,9 @@ const LanguageScreen = () => {
                     type: 'error',
                 }),
             );
-        } finally {
-
         }
     };
+
 
 
     return (

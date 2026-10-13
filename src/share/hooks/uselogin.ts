@@ -53,7 +53,7 @@ export const useLogin = () => {
 
             dispatch(loginSuccess(authData));
             dispatch(setAuthenticated(true));
-            dispatch(setLoginState('first'));
+            //dispatch(setLoginState('first'));
         },
         [dispatch],
     );
