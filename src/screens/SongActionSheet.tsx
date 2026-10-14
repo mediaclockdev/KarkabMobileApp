@@ -23,6 +23,7 @@ import { Inter } from '../share/constants/fonts';
 import { useAppDispatch } from '../share/hooks/useAppSelector';
 import { showToast } from '../auth/redux/authSlice';
 import { Images, Logo, Banner } from '../share/constants/media';
+import { useTranslation } from 'react-i18next';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -49,7 +50,7 @@ const SongActionSheet = ({
 
 }: SongActionSheetProps) => {
     const dispatch = useAppDispatch();
-
+    const { t } = useTranslation();
     const translateY = React.useRef(
         new Animated.Value(SCREEN_HEIGHT),
     ).current;

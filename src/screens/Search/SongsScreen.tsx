@@ -29,6 +29,7 @@ import { SvgUri } from 'react-native-svg';
 import { useAppDispatch } from '../../share/hooks/useAppSelector';
 import { loaderstate } from '../../auth/redux/authSlice';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 
@@ -212,6 +213,7 @@ const karaoke = [
 
 export default function SongsScreen() {
     const navigation = useNavigation();
+    const { t } = useTranslation();
     const [selected, setSelected] = useState('All');
     const [activeBanner, setActiveBanner] = useState(0);
     const [populardatas, setPopulardatas] = useState<any[]>([])
@@ -363,13 +365,14 @@ export default function SongsScreen() {
 
                             <View>
                                 <Text style={styles.title}>
-                                    {" "}Songs
+                                    {" "}{t('Home.Songs')}
                                 </Text>
 
                                 <Text style={styles.subtitle}>
-                                    {" "}Discover thousands of
+                                    {" "}{t('Home.Discoverthousandsof')}
                                     <Text style={{ color: '#D4AF37' }}>
-                                        {' '}Sudanese songs
+
+                                        {' '}{t('Home.Sudanesesongs')}
                                     </Text>
                                 </Text>
                             </View>
@@ -403,7 +406,7 @@ export default function SongsScreen() {
                     {/* <Text style={styles.searchIcon}>🔍</Text> */}
 
                     <TextInput
-                        placeholder="Search songs, artists or lyrics..."
+                        placeholder={t('Home.Searchbarplaceholder')}
                         placeholderTextColor="#777"
                         style={styles.input}
                         editable={false}
@@ -533,7 +536,7 @@ export default function SongsScreen() {
                 <View style={styles.sectionHeader}>
 
                     <Text style={styles.sectionTitle}>
-                        🔥 Trending Now
+                        🔥 {t('Search.TrendingNow')}
                     </Text>
 
                     <TouchableOpacity
@@ -546,7 +549,8 @@ export default function SongsScreen() {
                         }}
                         activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
                         <AppText color={'#FFB300'} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
-                            View all
+
+                            {t('Library.Viewall')}
                         </AppText>
                         <AppImage
                             source={Images.arrow}
@@ -574,11 +578,14 @@ export default function SongsScreen() {
                             />
 
                             <AppText style={styles.emptyTitle}>
-                                No Trending Songs
+                                {t('Search.NoTrendingSongs')}
+
                             </AppText>
 
                             <AppText style={styles.emptySubtitle}>
-                                Trending songs will appear here soon.
+
+                                {t('Search.Trendingwilappeasoon')}
+
                             </AppText>
                         </View>
                     )}
@@ -602,7 +609,7 @@ export default function SongsScreen() {
                 <View style={styles.sectionHeader}>
 
                     <Text style={styles.sectionTitle}>
-                        ✨ New Releases
+                        ✨   {t('Home.newreleases')}
                     </Text>
                     <TouchableOpacity
                         onPress={() => {
@@ -613,7 +620,7 @@ export default function SongsScreen() {
                         }}
                         activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
                         <AppText color={'#FFB300'} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
-                            View all
+                            {t('Library.Viewall')}
                         </AppText>
                         <AppImage
                             source={Images.arrow}
@@ -650,6 +657,7 @@ export default function SongsScreen() {
 
                                 <AppText
                                     style={styles.emptyTitle}>
+                                            {t('Library.Viewall')}
                                     No New Releases
                                 </AppText>
 

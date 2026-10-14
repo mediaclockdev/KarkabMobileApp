@@ -149,7 +149,9 @@
   "Search": {
     "whatwouldtosingtoday?": "ما الأغنية التي ترغب في غنائها اليوم؟",
     "browsebycategory": "تصفّح حسب الفئة",
-    "Recordings": "التسجيلات"
+    "Recordings": "التسجيلات",
+    "TrendingNow": "الرائج الآن",
+    "Trendingwilappeasoon": "ستظهر الأغاني الرائجة هنا قريبًا."
   },
   "Library": {
     "Rooms": "الغرف",

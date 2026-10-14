@@ -149,7 +149,10 @@
     "whatwouldtosingtoday?": "What would you like to sing today?",
     "browsebycategory": "Browse by category",
     "Recordings": "Recordings",
-    "Yourrecorded": "Your recorded"
+    "Yourrecorded": "Your recorded",
+    "TrendingNow": "Trending Now",
+    "NoTrendingSongs": "No Trending Songs",
+    "Trendingwilappeasoon.": "Trending songs will appear here soon."
   },
   "Library": {
     "Rooms": "Rooms",
