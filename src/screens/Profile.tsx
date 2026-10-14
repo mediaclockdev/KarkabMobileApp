@@ -876,7 +876,7 @@ const Profile = () => {
 
                                         }}>
                                             <ImageBackground
-                                                source={GlobalImage(profiledetail?.avatar_url)}
+                                                source={GlobalImage(item?.album_picture_url)}
                                                 resizeMode="cover"
                                                 style={{
                                                     width: '100%',

@@ -819,7 +819,7 @@ const Library = () => {
                             }}
                           >
                             <ImageBackground
-                              source={Images.singericon}
+                              source={GlobalImage(item?.album_picture_url)}
                               resizeMode="cover"
                               style={{
                                 flex: 1,
@@ -876,7 +876,7 @@ const Library = () => {
                                   color="#FFFFFF"
                                   numberOfLines={1}
                                 >
-                                  {item.title}
+                                  {item.album_name}
                                 </AppText>
 
                                 <AppText

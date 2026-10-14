@@ -21,7 +21,7 @@ export const setupAudioPlayer = async () => {
             android: {
                 wakeMode: 'network',
 
-                //continue Continue playing when the app is swiped away
+                //continue Continue playing when the app is swiped away stop
                 taskRemovedBehavior: 'stop',
 
                 notification: {

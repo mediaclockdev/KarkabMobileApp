@@ -54,6 +54,7 @@ const apiUrls = {
   deletesongplaylist: (playlistId: string | number, id: string | number) => `/api/playlists/${playlistId}/songs/${id}`,
   downloadsongs: (id: string | number) => `/api/songs/${id}/download`,
   requestPublicRecording: (id: string | number) => `/api/recordings/${id}/request-public`,
+  playlistreorder: (id: string | number) => `/api/playlists/${id}/reorder`,
 };
 
 export default apiUrls;

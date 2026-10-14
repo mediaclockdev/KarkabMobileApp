@@ -72,7 +72,7 @@ const Header: React.FC<HeaderProps> = ({
         {/* Left Content */}
 
         {
-          headername == 'Playlists' ?
+          headername == 'Playlists' || headername == 'Downloads' ?
             <TouchableOpacity
               onPress={backpress}
             >
