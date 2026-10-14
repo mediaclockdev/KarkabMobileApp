@@ -78,14 +78,8 @@ export const setupAudioPlayer = async () => {
 
             android: {
                 wakeMode: 'network',
-<<<<<<< Updated upstream
-
-                //continue Continue playing when the app is swiped away stop
-                taskRemovedBehavior: 'stop',
-=======
                 // Keep playing even if user swipes the app away from recents
                 taskRemovedBehavior: 'continue',
->>>>>>> Stashed changes
 
                 notification: {
                     channelId: 'karkab-music',
