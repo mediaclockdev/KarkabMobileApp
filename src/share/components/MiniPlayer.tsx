@@ -1,14 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
-    AppState,
     Image,
     StyleSheet,
     TouchableOpacity,
     TouchableWithoutFeedback,
     View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import TrackPlayer, {
     useIsPlaying,
     usePlaybackState,
@@ -19,12 +17,9 @@ import AppText from './AppText';
 import AppImage from './AppImage';
 import { Images } from '../constants/media';
 import { useAppDispatch, useAppSelector } from '../hooks/useAppSelector';
-
-import ApiService from '../../services/api';
-
 import { GlobalImage } from '../utils/GlobalImage';
-import { addsong, showToast } from '../../auth/redux/authSlice';
-import apiUrls from '../../services/apiUrls';
+import { addsong, openSongAction } from '../../auth/redux/authSlice';
+import { playAdjacentSong, playTrackSong } from '../../services/player';
 
 interface MiniPlayerProps {
     onNext?: () => void;
@@ -33,7 +28,6 @@ interface MiniPlayerProps {
 }
 
 const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) => {
-    const navigation = useNavigation<any>();
     const dispatch = useAppDispatch();
     const playing = useIsPlaying();
     const playbackState = usePlaybackState();
@@ -44,57 +38,18 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     const playsong = useAppSelector((state: any) => state.auth.playsong);
 
     const buffering =
-        playbackState === PlaybackState.Loading ||
-        playbackState === PlaybackState.Buffering;
+        playbackState === PlaybackState.Buffering ||
+        (playbackState as any) === 'loading';
 
     // Real-time progress state
     const [currentPosition, setCurrentPosition] = useState(0);
     const [trackDuration, setTrackDuration] = useState(0);
     const [switchingTrack, setSwitchingTrack] = useState(false);
     const isAutoNextingRef = useRef(false);
-    const isInitialMount = useRef(true); // Track initial screen/app load
-    const appState = useRef(AppState.currentState);
-
-    const wasPausedByBackground = useRef(false);
+    const isInitialMount = useRef(true);
 
     /**
-     * 1. APP STATE CHANGE LISTENER
-     */
-    useEffect(() => {
-        const subscription = AppState.addEventListener(
-            'change',
-            async nextState => {
-                const previousState = appState.current;
-
-                if (
-                    previousState === 'active' &&
-                    (
-                        nextState === 'inactive' ||
-                        (nextState as string) === 'unknown' ||
-                        nextState === 'background'
-                    )
-                ) {
-                    try {
-                        if (playing) {
-                            wasPausedByBackground.current = true;
-                            await TrackPlayer.pause();
-                        }
-                    } catch (error) {
-                        console.log('PAUSE ON APP CLOSE/KILL ERROR:', error);
-                    }
-                }
-
-                appState.current = nextState;
-            }
-        );
-
-        return () => {
-            subscription.remove();
-        };
-    }, [playsong?.id, playing]);
-
-    /**
-     * 2. ACTIVE PROGRESS POLLING + AUTO NEXT SONG ON FINISH
+     * 1. ACTIVE PROGRESS POLLING + AUTO NEXT SONG ON FINISH
      */
     useEffect(() => {
         if (!playsong?.id || hideMiniPlayer) return;
@@ -111,12 +66,12 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                         setTrackDuration(dur);
                     }
 
-                    // Trigger Next Track when song reaches the end
+                    // Trigger Next Track when song reaches the very end
                     if (dur > 0 && pos >= dur - 0.6 && !isAutoNextingRef.current) {
                         handleNext();
                     }
                 }
-            } catch (e) { }
+            } catch (e) {}
         }, 250);
 
         return () => clearInterval(interval);
@@ -133,10 +88,9 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     }, [playbackState]);
 
     /**
-     * 3. LOAD SONG WHEN REDUX SONG CHANGES OR ON APP MOUNT (PAUSED IF INITIAL)
+     * 2. LOAD SONG WHEN REDUX SONG CHANGES OR ON APP MOUNT
      */
     useEffect(() => {
-        console.log('MiniPlayer: playsong changed:', playsong?.id, playsong?.title);
         if (!playsong?.id) {
             pauseSongItem();
             return;
@@ -146,7 +100,6 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
             const activeSong = TrackPlayer.getActiveMediaItem();
             if (activeSong?.mediaId === playsong.id.toString()) return;
 
-            // If initial load on app opening, do NOT auto-play
             const autoPlay = !isInitialMount.current;
             isInitialMount.current = false;
 
@@ -160,7 +113,9 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     }, [playsong?.id]);
 
     const pauseSongItem = async () => {
-        await TrackPlayer.pause();
+        try {
+            await TrackPlayer.pause();
+        } catch (e) {}
     };
 
     const playSongItem = async (song: any, autoPlay: boolean = true) => {
@@ -172,75 +127,38 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                 setTrackDuration(dur > 1000 ? dur / 1000 : dur);
             }
 
-            const mediaItem = {
-                mediaId: song.id.toString(),
-                url: song?.original_song || song?.recording_url,
-                title: song.title || 'Unknown Song',
-                artist: song.artist || 'Unknown Artist',
-                artworkUrl: song.cover_image_url || undefined,
-                duration: dur || undefined,
-            };
-
-            await TrackPlayer.setMediaItem(mediaItem);
-
-            if (autoPlay) {
-                await TrackPlayer.play();
-            } else {
-                await TrackPlayer.pause();
-            }
+            await playTrackSong(song, autoPlay);
         } catch (error) {
             console.log('PLAY SONG ERROR:', error);
         }
     };
 
     /**
-     * 4. PLAY / PAUSE
+     * 3. PLAY / PAUSE
      */
-    const handlePlayPause = () => {
+    const handlePlayPause = async () => {
         if (buffering) return;
-        if (playing) {
-            TrackPlayer.pause();
-        } else {
-            TrackPlayer.play();
+        try {
+            if (playing) {
+                await TrackPlayer.pause();
+            } else {
+                await TrackPlayer.play();
+            }
+        } catch (e) {
+            console.log('handlePlayPause error:', e);
         }
     };
 
     /**
-     * 5. PREVIOUS SONG
+     * 4. PREVIOUS SONG
      */
     const handlePrevious = async () => {
         if (switchingTrack || !playsong?.id) return;
 
         try {
-            const index = TrackPlayer.getActiveMediaItemIndex();
-            const queue = TrackPlayer.getQueue();
-            if (index !== null && index > 0 && queue.length > 1) {
-                TrackPlayer.skipToPrevious();
-                return;
-            }
-
             setSwitchingTrack(true);
-            const res = await ApiService.get(apiUrls.adjacentsong(playsong.id));
-            if ((res as any).data?.success) {
-                const prevSong = (res as any).data.previousSong;
-                if (prevSong?.id) {
-                    const detailRes = await ApiService.get(apiUrls.singlesongdetail(prevSong.id));
-                    if ((detailRes as any).data?.success) {
-                        const song = (detailRes as any).data.song;
-                        dispatch(addsong(song));
-                        await playSongItem(song, true);
-                    }
-                } else {
-                    onPrevious?.();
-                    dispatch(
-                        showToast({
-                            visible: true,
-                            message: 'No previous track available',
-                            type: 'info',
-                        })
-                    );
-                }
-            }
+            await playAdjacentSong('prev', dispatch);
+            onPrevious?.();
         } catch (error) {
             console.log('PREVIOUS SONG ERROR:', error);
             onPrevious?.();
@@ -249,6 +167,9 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
         }
     };
 
+    /**
+     * 5. CLOSE MINI PLAYER
+     */
     const handleCloseMiniPlayer = async () => {
         try {
             await TrackPlayer.stop();
@@ -267,35 +188,8 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
         try {
             isAutoNextingRef.current = true;
             setSwitchingTrack(true);
-
-            const index = TrackPlayer.getActiveMediaItemIndex();
-            const queue = TrackPlayer.getQueue();
-            if (index !== null && index < queue.length - 1 && queue.length > 1) {
-                TrackPlayer.skipToNext();
-                return;
-            }
-
-            const res = await ApiService.get(apiUrls.adjacentsong(playsong.id));
-            if ((res as any).data?.success) {
-                const nextSong = (res as any).data.nextSong;
-                if (nextSong?.id) {
-                    const detailRes = await ApiService.get(apiUrls.singlesongdetail(nextSong.id));
-                    if ((detailRes as any).data?.success) {
-                        const song = (detailRes as any).data.song;
-                        dispatch(addsong(song));
-                        await playSongItem(song, true);
-                    }
-                } else {
-                    onNext?.();
-                    dispatch(
-                        showToast({
-                            visible: true,
-                            message: 'No next track available',
-                            type: 'info',
-                        })
-                    );
-                }
-            }
+            await playAdjacentSong('next', dispatch);
+            onNext?.();
         } catch (error) {
             console.log('NEXT SONG ERROR:', error);
             onNext?.();
@@ -307,10 +201,10 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
         }
     };
 
-    // Navigate to full player
+    // Open song action sheet / detail
     const openFullPlayer = () => {
         if (playsong?.id) {
-            navigation.navigate('.', { id: playsong.id });
+            dispatch(openSongAction(playsong));
         }
     };
 
@@ -360,6 +254,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                     style={styles.controlButton}
                     onPress={handlePrevious}
                     disabled={switchingTrack}
+                    hitSlop={{ top: 12, bottom: 12, left: 10, right: 8 }}
                 >
                     <AppImage
                         source={Images.leftarrow}
@@ -373,6 +268,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                 <TouchableOpacity
                     style={styles.playButton}
                     onPress={handlePlayPause}
+                    hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
                 >
                     {buffering || switchingTrack ? (
                         <ActivityIndicator size="small" color="#FFFFFF" />
@@ -396,6 +292,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                     style={styles.controlButton}
                     onPress={handleNext}
                     disabled={switchingTrack}
+                    hitSlop={{ top: 12, bottom: 12, left: 8, right: 10 }}
                 >
                     <View style={{ transform: [{ rotate: '180deg' }] }}>
                         <AppImage
