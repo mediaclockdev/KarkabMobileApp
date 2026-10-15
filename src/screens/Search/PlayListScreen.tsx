@@ -463,10 +463,12 @@ export default function PlayListScreen() {
                                 />
                             </View>
                         ) : songs.length > 0 ? (
-                            songs.map(item => (
+                            songs.map((item, idx) => (
                                 <ClassicSongItem
                                     key={item.id}
                                     item={item}
+                                    songList={songs}
+                                    index={idx}
                                 />
                             ))
                         ) : (

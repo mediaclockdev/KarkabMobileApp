@@ -1,6 +1,10 @@
 // service.js
 import TrackPlayer, { Event, registerRemoteHandlers } from '@rntp/player';
-import { playAdjacentSong } from './src/services/player';
+import {
+    skipToNextTrack,
+    skipToPreviousTrack,
+    syncTrackTransition,
+} from './src/services/player';
 import { store } from './src/app/store';
 
 /**
@@ -29,11 +33,11 @@ export default async function playbackService() {
                 },
                 next: async () => {
                     console.log('🎧 [RemoteHandler] Next song requested');
-                    await playAdjacentSong('next', store.dispatch);
+                    await skipToNextTrack(store.dispatch);
                 },
                 previous: async () => {
                     console.log('🎧 [RemoteHandler] Previous song requested');
-                    await playAdjacentSong('prev', store.dispatch);
+                    await skipToPreviousTrack(store.dispatch);
                 },
                 seek: async (cmd) => {
                     if (cmd && typeof cmd.position === 'number') {
@@ -70,12 +74,12 @@ export default async function playbackService() {
 
     TrackPlayer.addEventListener(Event.RemoteNext, async () => {
         console.log('🎧 [RemoteEvent] Next Track');
-        await playAdjacentSong('next', store.dispatch);
+        await skipToNextTrack(store.dispatch);
     });
 
     TrackPlayer.addEventListener(Event.RemotePrevious, async () => {
         console.log('🎧 [RemoteEvent] Previous Track');
-        await playAdjacentSong('prev', store.dispatch);
+        await skipToPreviousTrack(store.dispatch);
     });
 
     TrackPlayer.addEventListener(Event.RemoteStop, async () => {
@@ -102,11 +106,19 @@ export default async function playbackService() {
         await TrackPlayer.seekBy(-interval);
     });
 
-    // 3. Auto-advance to next song when current track finishes playing in background / lock screen
+    // 3. Track transition listener: automatically synchronizes Redux & storage when track changes
+    TrackPlayer.addEventListener(Event.MediaItemTransition, async (event) => {
+        if (event && event.item) {
+            console.log('🎵 [BackgroundService] MediaItemTransition to:', event.item.title, 'index:', event.index);
+            await syncTrackTransition(event.item, event.index);
+        }
+    });
+
+    // 4. Auto-advance to next song when current track finishes playing in background / lock screen
     TrackPlayer.addEventListener(Event.PlaybackStateChanged, async (event) => {
         if (event && event.state === 'ended') {
-            console.log('🎵 [BackgroundService] Track ended, auto-advancing to next song...');
-            await playAdjacentSong('next', store.dispatch);
+            console.log('🎵 [BackgroundService] Track ended, advancing to next song...');
+            await skipToNextTrack(store.dispatch);
         }
     });
 }

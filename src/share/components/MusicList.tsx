@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 import {
   View,
@@ -14,18 +14,13 @@ import { Images, Logo } from '../constants/media'
 import color, { useAppColors } from '../constants/color'
 import { Inter } from '../constants/fonts'
 import Sound, {
-  AudioEncoderAndroidType,
-  AudioSourceAndroidType,
-  AVEncoderAudioQualityIOSType,
-  AVEncodingOption,
-  RecordBackType,
-  PlayBackType,
 } from 'react-native-nitro-sound';
 import { GlobalImage } from '../utils/GlobalImage'
 import { addsong, isPausesd, openSongAction } from '../../auth/redux/authSlice'
 import { useAppDispatch, useAppSelector } from '../hooks/useAppSelector'
 import { useNavigation } from '@react-navigation/native'
-import SongActionSheet from '../../screens/SongActionSheet'
+import TrackPlayer from '@rntp/player'
+import { playSongList, playTrackSong } from '../../services/player'
 
 const musicData = [
   {
@@ -70,9 +65,21 @@ const MusicList: React.FC<{
     const playsong = useAppSelector(
       (state: any) => state.auth.playsong
     );
+    const isPaused = useAppSelector(
+      (state: any) => state.auth.isPaused
+    );
     const navigation = useNavigation();
     const [selectedSong, setSelectedSong] = useState<any>(null);
     const [showActions, setShowActions] = useState(false);
+
+    // Sync playingId with Redux playsong so active track highlight updates automatically
+    useEffect(() => {
+      if (playsong?.id) {
+        setPlayingId(playsong.id.toString());
+      } else {
+        setPlayingId(null);
+      }
+    }, [playsong?.id]);
 
     const openSongActions = (song: any) => {
       setSelectedSong(song);
@@ -85,49 +92,38 @@ const MusicList: React.FC<{
     };
 
     const playRecording = async (item: any) => {
-      await Sound.stopPlayer();
-      Sound.removePlayBackListener();
-      setPlayingId(item.id);
-      setLoadings(true)
+      try {
+        await Sound.stopPlayer();
+        Sound.removePlayBackListener();
+      } catch (e) { }
+
+      setPlayingId(item.id?.toString());
+      setLoadings(true);
       await dispatch(isPausesd(false));
-      console.log(item.id, item.original_song, "dkdkbkdbkdb5")
-      // try {
-      //   const result = await Sound.startPlayer(item.original_song);
 
-      //   console.log('Playing:', result);
-      //   await Sound.removePlayBackListener();
-      //   Sound.addPlayBackListener((e) => {
-      //     setLoadings(false)
-      //     console.log(
-      //       'Current:',
-      //       Sound.mmssss(Math.floor(e.currentPosition)),
-      //     );
-
-      dispatch(
-        addsong({
-          ...item,
-        }),)
-      setLoadings(false)
-      console.log(playsong, "dkdkbkdbkdb5")
-      //     if (e.currentPosition >= e.duration) {
-      //       Sound.stopPlayer();
-      //       Sound.removePlayBackListener();
-      //       setPlay(true)
-      //       setPlayingId(null)
-      //     }
-      //   });
-      // } catch (error) {
-      //   console.log('Play error:', error);
-      // }
+      try {
+        const list = Array.isArray(data) && data.length > 0 ? data : [item];
+        const songIndex = list.findIndex(
+          (s: any) => s.id?.toString() === item.id?.toString()
+        );
+        const initialIndex = songIndex >= 0 ? songIndex : 0;
+        await playSongList(list, initialIndex, true);
+      } catch (error) {
+        console.log('MusicList play error:', error);
+        dispatch(addsong({ ...item }));
+      } finally {
+        setLoadings(false);
+      }
     };
 
     const stopRecording = async () => {
       try {
-        console.log('Stopping player');
+        console.log('Stopping player in MusicList');
         await dispatch(isPausesd(true));
-        await Sound.pausePlayer();
-
-        setPlayingId(null);
+        await TrackPlayer.pause();
+        try {
+          await Sound.pausePlayer();
+        } catch (e) { }
       } catch (error) {
         console.log('Stop Error:', error);
       }
@@ -220,17 +216,17 @@ const MusicList: React.FC<{
             />
             {/* Play Button */}
             <TouchableOpacity style={styles.playButton} onPress={() => {
-              playingId === item.id
+              (playingId?.toString() === item.id?.toString() && !isPaused)
                 ? stopRecording()
                 : playRecording(item)
             }}
             >
-              {loadings && playingId == item.id ? (
+              {loadings && playingId?.toString() === item.id?.toString() ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <>
                   {
-                    playingId == item.id ?
+                    playingId?.toString() === item.id?.toString() && !isPaused ?
                       <View style={styles.pauseContainer}>
                         <View style={styles.pauseLine} />
                         <View style={styles.pauseLine} />
@@ -243,10 +239,6 @@ const MusicList: React.FC<{
                       />
                   }
                 </>)}
-
-
-
-
             </TouchableOpacity>
 
             {/* Menu */}

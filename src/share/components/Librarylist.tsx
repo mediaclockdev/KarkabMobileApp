@@ -26,8 +26,10 @@ import { GlobalImage } from '../utils/GlobalImage'
 import apiUrls, { BASE_URL } from '../../services/apiUrls'
 import { useNavigation } from '@react-navigation/native'
 import ApiService from '../../services/api';
-import { useAppDispatch } from '../hooks/useAppSelector'
+import { useAppDispatch, useAppSelector } from '../hooks/useAppSelector'
 import { addsong, isPausesd, openSongAction } from '../../auth/redux/authSlice'
+import TrackPlayer from '@rntp/player'
+import { playSongList, playTrackSong } from '../../services/player'
 
 type MusicItem = {
   id: string;
@@ -82,6 +84,8 @@ const Librarylist = ({ musicData,
   type }: LibrarylistProps) => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const playsong = useAppSelector((state: any) => state.auth.playsong);
+  const isPaused = useAppSelector((state: any) => state.auth.isPaused);
   const color = useAppColors();
   const [play, setPlay] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -94,44 +98,42 @@ const Librarylist = ({ musicData,
     setSongs(musicData || []);
   }, [musicData]);
 
-
-
+  // Sync playingId with Redux playsong for active track highlight
+  useEffect(() => {
+    if (playsong?.id) {
+      setPlayingId(playsong.id.toString());
+    } else {
+      setPlayingId(null);
+    }
+  }, [playsong?.id]);
 
   const playRecording = async (item: any) => {
-    await Sound.stopPlayer();
-    await Sound.removePlayBackListener();
-    setPlayingId(item.id);
-    setLoadings(true)
+    try {
+      await Sound.stopPlayer();
+      await Sound.removePlayBackListener();
+    } catch (e) {}
+
+    setPlayingId(item.id?.toString());
+    setLoadings(true);
     await dispatch(isPausesd(false));
-    console.log(item.id, item.original_song, "dkdkbkdbkdb5")
-    // try {
-    //   const result = await Sound.startPlayer(item.original_song);
 
-    //   console.log('Playing:', result);
-    //   await Sound.removePlayBackListener();
-    //   Sound.addPlayBackListener((e) => {
-    //     setLoadings(false)
-    //     console.log(
-    //       'Current:',
-    //       Sound.mmssss(Math.floor(e.currentPosition)),
-    //     );
-
-    await dispatch(
-      addsong({
-        ...item,
-      }),)
-    setLoadings(false)
-    // console.log(playsong, "dkdkbkdbkdb5")
-    //     if (e.currentPosition >= e.duration) {
-    //       Sound.stopPlayer();
-    //       Sound.removePlayBackListener();
-    //       setPlay(true)
-    //       setPlayingId(null)
-    //     }
-    //   });
-    // } catch (error) {
-    //   console.log('Play error:', error);
-    // }
+    try {
+      const list = songs.length > 0 ? songs : musicData || [];
+      const songIndex = list.findIndex(
+        (s: any) => s.id?.toString() === item.id?.toString()
+      );
+      const initialIndex = songIndex >= 0 ? songIndex : 0;
+      if (list.length > 0) {
+        await playSongList(list, initialIndex, true);
+      } else {
+        await playTrackSong(item, true);
+      }
+    } catch (error) {
+      console.log('Librarylist play error:', error);
+      dispatch(addsong({ ...item }));
+    } finally {
+      setLoadings(false);
+    }
   };
 
 
@@ -172,16 +174,13 @@ const Librarylist = ({ musicData,
 
   const stopRecording = async () => {
     try {
-      console.log('Stopping player');
-
-      //   await Sound.stopPlayer();
-      //  await Sound.removePlayBackListener();
-      await Sound.pausePlayer();
-      // await Sound.stopPlayer();
-      // Sound.removePlayBackListener();
+      console.log('Stopping player in Librarylist');
       await dispatch(isPausesd(true));
+      await TrackPlayer.pause();
+      try {
+        await Sound.pausePlayer();
+      } catch (e) {}
       setPlay(true);
-      setPlayingId(null);
     } catch (error) {
       console.log('Stop Error:', error);
     }
@@ -423,16 +422,16 @@ const Librarylist = ({ musicData,
 /> */}
           {/* Play Button */}
           <TouchableOpacity style={styles.playButton} onPress={() => {
-            playingId === item.id
+            (playingId?.toString() === item.id?.toString() && !isPaused)
               ? stopRecording()
               : playRecording(item)
           }}>
-            {loadings && playingId == item.id ? (
+            {loadings && playingId?.toString() === item.id?.toString() ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
               <>
                 {
-                  playingId == item.id ?
+                  playingId?.toString() === item.id?.toString() && !isPaused ?
                     <View style={styles.pauseContainer}>
                       <View style={styles.pauseLine} />
                       <View style={styles.pauseLine} />

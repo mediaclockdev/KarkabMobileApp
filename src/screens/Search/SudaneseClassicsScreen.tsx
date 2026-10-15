@@ -378,10 +378,12 @@ export default function SudaneseClassicsScreen() {
                     </AppText>
                 </View>
                 {classics?.length > 0 ? (
-                    classics.map((item) => (
+                    classics.map((item, idx) => (
                         <ClassicSongItem
                             key={item.id}
                             item={item}
+                            songList={classics}
+                            index={idx}
                         />
                     ))
                 ) : (

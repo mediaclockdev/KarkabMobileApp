@@ -19,7 +19,12 @@ import { Images } from '../constants/media';
 import { useAppDispatch, useAppSelector } from '../hooks/useAppSelector';
 import { GlobalImage } from '../utils/GlobalImage';
 import { addsong, openSongAction } from '../../auth/redux/authSlice';
-import { playAdjacentSong, playTrackSong } from '../../services/player';
+import {
+    skipToNextTrack,
+    skipToPreviousTrack,
+    playTrackSong,
+    isPlayerSwitching,
+} from '../../services/player';
 
 interface MiniPlayerProps {
     onNext?: () => void;
@@ -49,7 +54,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     const isInitialMount = useRef(true);
 
     /**
-     * 1. ACTIVE PROGRESS POLLING + AUTO NEXT SONG ON FINISH
+     * 1. ACTIVE PROGRESS POLLING
      */
     useEffect(() => {
         if (!playsong?.id || hideMiniPlayer) return;
@@ -65,11 +70,6 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                     if (dur && dur > 0) {
                         setTrackDuration(dur);
                     }
-
-                    // Trigger Next Track when song reaches the very end
-                    if (dur > 0 && pos >= dur - 0.6 && !isAutoNextingRef.current) {
-                        handleNext();
-                    }
                 }
             } catch (e) {}
         }, 250);
@@ -77,7 +77,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
         return () => clearInterval(interval);
     }, [playsong?.id, hideMiniPlayer]);
 
-    // Handle Playback State Ended
+    // Handle Playback State Ended (auto-advance)
     useEffect(() => {
         if (
             (playbackState === PlaybackState.Ended || (playbackState as any) === 'ended') &&
@@ -96,9 +96,21 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
             return;
         }
 
+        // Avoid re-triggering playback if a track switch is already in progress
+        if (isPlayerSwitching() || switchingTrack) {
+            console.log('Track switch in progress, skipping playSongItem reload');
+            return;
+        }
+
         try {
             const activeSong = TrackPlayer.getActiveMediaItem();
-            if (activeSong?.mediaId === playsong.id.toString()) return;
+            if (activeSong?.mediaId === playsong.id.toString()) {
+                const dur = Number(playsong.duration) || 0;
+                if (dur > 0) {
+                    setTrackDuration(dur > 1000 ? dur / 1000 : dur);
+                }
+                return;
+            }
 
             const autoPlay = !isInitialMount.current;
             isInitialMount.current = false;
@@ -121,6 +133,12 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     const playSongItem = async (song: any, autoPlay: boolean = true) => {
         try {
             if (!song?.id) return;
+
+            const activeSong = TrackPlayer.getActiveMediaItem();
+            if (activeSong?.mediaId === song.id.toString()) {
+                console.log('Track is already active in TrackPlayer, skipping reload');
+                return;
+            }
 
             const dur = Number(song.duration) || 0;
             if (dur > 0) {
@@ -157,7 +175,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
 
         try {
             setSwitchingTrack(true);
-            await playAdjacentSong('prev', dispatch);
+            await skipToPreviousTrack(dispatch);
             onPrevious?.();
         } catch (error) {
             console.log('PREVIOUS SONG ERROR:', error);
@@ -188,7 +206,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
         try {
             isAutoNextingRef.current = true;
             setSwitchingTrack(true);
-            await playAdjacentSong('next', dispatch);
+            await skipToNextTrack(dispatch);
             onNext?.();
         } catch (error) {
             console.log('NEXT SONG ERROR:', error);

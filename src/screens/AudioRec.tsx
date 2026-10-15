@@ -28,9 +28,14 @@ import { Inter } from '../share/constants/fonts';
 import ApiService from '../services/api';
 import apiUrls from '../services/apiUrls';
 import { GlobalImage } from '../share/utils/GlobalImage';
-import { useAppDispatch } from '../share/hooks/useAppSelector';
+import { useAppDispatch, useAppSelector } from '../share/hooks/useAppSelector';
 import { addsong, setHideMiniPlayer, showToast } from '../auth/redux/authSlice';
 import { saveLastPlayed } from '../services/lastPlayed';
+import {
+  formatSongToMediaItem,
+  skipToNextTrack,
+  skipToPreviousTrack,
+} from '../services/player';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -43,6 +48,8 @@ const AudioRec = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const dispatch = useAppDispatch();
+  const playsong = useAppSelector((state: any) => state.auth.playsong);
+  const playlistQueue = useAppSelector((state: any) => state.auth.playlistQueue);
   const { id = 1, type } = (route?.params as {
     id?: number;
     type?: string;
@@ -92,11 +99,24 @@ const AudioRec = () => {
   const scrubberRef = useRef<View>(null);
   const dragProgressRef = useRef<number | null>(null);
   const effectiveDurationRef = useRef(0);
+
+  // 📝 Word-by-word synced lyrics data structures
+  interface LyricWord {
+    text: string;
+    start: number; // in ms
+    end: number;   // in ms
+  }
+
+  interface LyricLine {
+    text: string;
+    start: number; // in ms
+    end: number;   // in ms
+    words: LyricWord[];
+  }
+
   const lyricsListRef = useRef<FlatList>(null);
-  const [lyricsLines, setLyricsLines] = useState<
-    { text: string; start: number; end: number }[]
-  >([]);
-  const lyricsLinesRef = useRef<{ text: string; start: number; end: number }[]>([]);
+  const [lyricsLines, setLyricsLines] = useState<LyricLine[]>([]);
+  const lyricsLinesRef = useRef<LyricLine[]>([]);
   const [activeLyricIndex, setActiveLyricIndex] = useState(0);
 
   // 💿 CONTINUOUS ROTATING VINYL CONTROLLER
@@ -176,6 +196,27 @@ const AudioRec = () => {
 
   }, [id]);
 
+  // 🔄 Sync AudioRec state when song changes via remote controls (lock screen, notification, bluetooth, carplay)
+  useEffect(() => {
+    if (!playsong?.id) return;
+
+    if (
+      (!songdetail?.id && !screenLoading) ||
+      (songdetail?.id && playsong.id.toString() !== songdetail.id.toString())
+    ) {
+      console.log('🎧 [AudioRec] Synchronizing with remote song switch:', playsong.title);
+      setSongDetail(playsong);
+      prepareLyrics(playsong);
+      getSongadjacent(playsong.id);
+      setCurrentPosition(0);
+      setActiveLyricIndex(0);
+      const dur = Number(playsong.duration) || 0;
+      if (dur > 0) {
+        setTrackDuration(dur > 1000 ? dur / 1000 : dur);
+      }
+    }
+  }, [playsong?.id]);
+
   /**
    * 1. REPEAT / SHUFFLE / AUTO-NEXT CONTROLLER
    */
@@ -197,33 +238,15 @@ const AudioRec = () => {
       return;
     }
 
-    const nextSong = adjectNextRef.current;
-    if (nextSong?.id) {
-      try {
-        isAutoNextingRef.current = true;
-        await getSongDetail(nextSong.id);
-      } catch (e) {
-      } finally {
-        setTimeout(() => {
-          isAutoNextingRef.current = false;
-        }, 1000);
-      }
-    } else if (repeatModeRef.current === 'all') {
-      try {
-        isAutoNextingRef.current = true;
-        setCurrentPosition(0);
-        await TrackPlayer.seekTo(0);
-        await TrackPlayer.play();
-      } finally {
-        setTimeout(() => {
-          isAutoNextingRef.current = false;
-        }, 1000);
-      }
-    } else {
-      try {
-        await TrackPlayer.stop();
-        setCurrentPosition(0);
-      } catch (e) { }
+    try {
+      isAutoNextingRef.current = true;
+      await skipToNextTrack(dispatch);
+    } catch (e) {
+      console.log('AutoNext error:', e);
+    } finally {
+      setTimeout(() => {
+        isAutoNextingRef.current = false;
+      }, 1000);
     }
   };
 
@@ -258,7 +281,7 @@ const AudioRec = () => {
       } catch (e) {
         console.log('Progress error:', e);
       }
-    }, 150);
+    }, 100);
 
     return () => clearInterval(interval);
   }, []);
@@ -282,9 +305,20 @@ const AudioRec = () => {
     if (!lines || lines.length === 0 || isDraggingRef.current) return;
 
     const currentPosMs = currentPosition * 1000;
-    const index = lines.findIndex(
+
+    // Find the matching line: within [start, end) or latest started line
+    let index = lines.findIndex(
       (line) => currentPosMs >= line.start && currentPosMs < line.end
     );
+
+    if (index === -1 && currentPosMs >= lines[0].start) {
+      for (let i = lines.length - 1; i >= 0; i--) {
+        if (currentPosMs >= lines[i].start) {
+          index = i;
+          break;
+        }
+      }
+    }
 
     if (index !== -1 && index !== activeLyricIndex) {
       setActiveLyricIndex(index);
@@ -298,6 +332,90 @@ const AudioRec = () => {
     }
   }, [currentPosition, activeLyricIndex, showFullLyrics]);
 
+  /**
+   * Helper: parses words within a lyric line and computes exact or character-weighted timestamps
+   */
+  const parseWordsForLine = (
+    rawText: string,
+    lineStart: number,
+    lineEnd: number,
+  ): LyricWord[] => {
+    if (!rawText) return [];
+
+    // 1. Check for Enhanced LRC inline timestamps: <mm:ss.xx>word
+    const tagRegex = /<(\d{1,2}):(\d{2}(?:\.\d+)?)>([^<]*)/g;
+    const taggedMatches: { start: number; text: string }[] = [];
+    let match: RegExpExecArray | null;
+
+    while ((match = tagRegex.exec(rawText)) !== null) {
+      const minutes = Number(match[1]);
+      const seconds = Number(match[2]);
+      const wordStart = (minutes * 60 + seconds) * 1000;
+      const wordText = match[3].trim();
+      if (wordText) {
+        taggedMatches.push({ start: wordStart, text: wordText });
+      }
+    }
+
+    if (taggedMatches.length > 0) {
+      return taggedMatches.map((item, idx) => {
+        const nextWord = taggedMatches[idx + 1];
+        const wordEnd = nextWord
+          ? nextWord.start
+          : Math.max(lineEnd, item.start + 600);
+        return {
+          text: item.text,
+          start: item.start,
+          end: wordEnd,
+        };
+      });
+    }
+
+    // 2. Standard LRC: clean text & split by whitespace
+    const cleanText = rawText.replace(/<[^>]+>/g, '').trim();
+    const rawWords = cleanText.split(/\s+/).filter(Boolean);
+    if (rawWords.length === 0) return [];
+
+    const rawDuration = lineEnd - lineStart;
+    const lineDuration = rawDuration > 400 ? rawDuration : rawWords.length * 600;
+
+    // Phrasing: cap maximum singing duration so long pauses don't over-stretch words
+    const maxSingDuration = Math.max(rawWords.length * 750, 3000);
+    const effectiveSingDuration = Math.min(lineDuration, maxSingDuration);
+
+    // Character-weighted distribution: longer words get more time than short words
+    const totalWeight = rawWords.reduce(
+      (sum, w) => sum + Math.max(w.length, 2),
+      0,
+    );
+
+    let currentWordStart = lineStart;
+    const words: LyricWord[] = [];
+
+    rawWords.forEach((wordText, i) => {
+      const weight = Math.max(wordText.length, 2);
+      const wordDuration = Math.max(
+        Math.round((weight / totalWeight) * effectiveSingDuration),
+        180,
+      );
+
+      const isLast = i === rawWords.length - 1;
+      const wordEnd = isLast
+        ? lineStart + effectiveSingDuration
+        : currentWordStart + wordDuration;
+
+      words.push({
+        text: wordText,
+        start: currentWordStart,
+        end: wordEnd,
+      });
+
+      currentWordStart = wordEnd;
+    });
+
+    return words;
+  };
+
   const prepareLyrics = (song: any) => {
     if (!song?.lyrics) {
       setLyricsLines([]);
@@ -305,7 +423,7 @@ const AudioRec = () => {
       return;
     }
 
-    const lines: { text: string; start: number; end: number }[] = [];
+    const lines: LyricLine[] = [];
     const lyricRows = song.lyrics
       .split('\n')
       .map((l: string) => l.trim())
@@ -329,9 +447,40 @@ const AudioRec = () => {
         }
       }
 
-      const text = match[3].trim();
-      if (text) lines.push({ text, start, end });
+      const rawText = match[3].trim();
+      const cleanText = rawText.replace(/<[^>]+>/g, '').trim();
+      if (cleanText) {
+        const words = parseWordsForLine(rawText, start, end);
+        lines.push({
+          text: cleanText,
+          start,
+          end,
+          words,
+        });
+      }
     });
+
+    // Fallback: If song.lyrics exists but has no [mm:ss] timestamp tags
+    if (lines.length === 0 && lyricRows.length > 0) {
+      const totalDurSec = Number(song.duration) || 180;
+      const durationMs = totalDurSec > 1000 ? totalDurSec : totalDurSec * 1000;
+      const rowDuration = Math.max(durationMs / lyricRows.length, 3000);
+
+      lyricRows.forEach((rowText: string, idx: number) => {
+        const start = idx * rowDuration;
+        const end = start + rowDuration;
+        const cleanText = rowText.trim();
+        if (cleanText) {
+          const words = parseWordsForLine(cleanText, start, end);
+          lines.push({
+            text: cleanText,
+            start,
+            end,
+            words,
+          });
+        }
+      });
+    }
 
     lyricsLinesRef.current = lines;
     setLyricsLines(lines);
@@ -362,22 +511,27 @@ const AudioRec = () => {
         );
       }
 
-      const mediaItem = {
-        mediaId: song.id.toString(),
-        url: song.original_song || song.recording_url,
-        title: song.title || 'Unknown Title',
-        artist: song.artist || 'Unknown Artist',
-        artworkUrl: song.cover_image_url || undefined,
-        duration: dur > 0
-          ? dur > 1000
-            ? dur / 1000
-            : dur
-          : undefined,
-      };
-      console.log('Loading media item:', mediaItem);
-      await TrackPlayer.setMediaItem(mediaItem);
-
-      await TrackPlayer.play();
+      const mediaItem = formatSongToMediaItem(song);
+      if (mediaItem) {
+        console.log('Loading formatted media item:', mediaItem.title);
+        await TrackPlayer.setMediaItem(mediaItem);
+        await TrackPlayer.play();
+      } else {
+        const rawAudio = song.original_song || song.recording_url;
+        if (rawAudio) {
+          const directItem = {
+            mediaId: song.id.toString(),
+            url: rawAudio,
+            title: song.title || 'Unknown Title',
+            artist: song.artist || 'Unknown Artist',
+            artworkUrl: song.cover_image_url || undefined,
+            duration: dur > 0 ? (dur > 1000 ? dur / 1000 : dur) : undefined,
+          };
+          console.log('Loading direct media item:', directItem);
+          await TrackPlayer.setMediaItem(directItem);
+          await TrackPlayer.play();
+        }
+      }
 
     } catch (error) {
       console.log('PLAY ERROR:', error);
@@ -652,10 +806,15 @@ const AudioRec = () => {
     return `${m}:${String(s).padStart(2, '0')}`;
   };
 
+  const activeLyricLine =
+    lyricsLines.length > 0 &&
+    activeLyricIndex >= 0 &&
+    activeLyricIndex < lyricsLines.length
+      ? lyricsLines[activeLyricIndex]
+      : null;
+
   const currentLyricLine =
-    lyricsLines.length > 0 && activeLyricIndex >= 0 && activeLyricIndex < lyricsLines.length
-      ? lyricsLines[activeLyricIndex]?.text
-      : songdetail?.title || 'Sing along...';
+    activeLyricLine?.text || songdetail?.title || 'Sing along...';
 
   return (
     <View style={styles.screen}>
@@ -769,17 +928,60 @@ const AudioRec = () => {
                     onPress={() => setShowFullLyrics(true)}
                     style={styles.lyricTouchWrap}
                   >
-                    <AppText
-                      color="#FFFFFF"
-                      fontSize={18}
-                      fontWeight="700"
-                      fontFamily={Inter.bold}
-                      textAlign="center"
-                      numberOfLines={2}
-                      style={styles.singleLyricText}
-                    >
-                      "{currentLyricLine}"
-                    </AppText>
+                    {activeLyricLine &&
+                    activeLyricLine.words &&
+                    activeLyricLine.words.length > 0 ? (
+                      <AppText
+                        textAlign="center"
+                        numberOfLines={3}
+                        style={styles.singleLyricText}
+                      >
+                        {activeLyricLine.words.map((word, wIdx) => {
+                          const currentPosMs = currentPosition * 1000;
+                          const isCurrent =
+                            currentPosMs >= word.start && currentPosMs < word.end;
+                          const isPast = currentPosMs >= word.end;
+
+                          const wordColor = isCurrent
+                            ? '#FF2D55'
+                            : isPast
+                            ? '#FFFFFF'
+                            : 'rgba(255, 255, 255, 0.35)';
+
+                          return (
+                            <AppText
+                              key={wIdx}
+                              color={wordColor}
+                              fontSize={isCurrent ? 20 : 18}
+                              fontWeight={
+                                isCurrent ? '900' : isPast ? '800' : '600'
+                              }
+                              fontFamily={Inter.bold}
+                              style={
+                                isCurrent ? styles.activeWordHighlight : undefined
+                              }
+                            >
+                              {word.text}
+                              {wIdx < activeLyricLine.words.length - 1
+                                ? ' '
+                                : ''}
+                            </AppText>
+                          );
+                        })}
+                      </AppText>
+                    ) : (
+                      <AppText
+                        color="#FFFFFF"
+                        fontSize={18}
+                        fontWeight="700"
+                        fontFamily={Inter.bold}
+                        textAlign="center"
+                        numberOfLines={2}
+                        style={styles.singleLyricText}
+                      >
+                        "{currentLyricLine}"
+                      </AppText>
+                    )}
 
                     {/* Button to switch to Full Lyrics */}
                     <View style={styles.fullLyricsBadge}>
@@ -831,6 +1033,7 @@ const AudioRec = () => {
                   <FlatList
                     ref={lyricsListRef}
                     data={lyricsLines}
+                    extraData={currentPosition}
                     keyExtractor={(item, idx) => `${item.start}-${idx}`}
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.fullLyricsScroll}
@@ -845,6 +1048,8 @@ const AudioRec = () => {
                     }}
                     renderItem={({ item, index }) => {
                       const isActive = index === activeLyricIndex;
+                      const currentPosMs = currentPosition * 1000;
+
                       return (
                         <TouchableOpacity
                           activeOpacity={0.7}
@@ -860,17 +1065,62 @@ const AudioRec = () => {
                           ]}
                         >
                           <AppText
-                            color={
-                              isActive
-                                ? '#FFFFFF'
-                                : 'rgba(255, 255, 255, 0.28)'
-                            }
                             fontSize={isActive ? 25 : 21}
                             fontWeight={isActive ? '800' : '600'}
                             fontFamily={Inter.bold}
                             style={styles.fullLyricText}
                           >
-                            {item.text}
+                            {isActive && item.words && item.words.length > 0 ? (
+                              item.words.map((word, wIdx) => {
+                                const isCurrent =
+                                  currentPosMs >= word.start &&
+                                  currentPosMs < word.end;
+                                const isPast = currentPosMs >= word.end;
+
+                                const wordColor = isCurrent
+                                  ? '#FF2D55'
+                                  : isPast
+                                  ? '#FFFFFF'
+                                  : 'rgba(255, 255, 255, 0.35)';
+
+                                return (
+                                  <AppText
+                                    key={wIdx}
+                                    color={wordColor}
+                                    fontSize={isCurrent ? 27 : 25}
+                                    fontWeight={
+                                      isCurrent
+                                        ? '900'
+                                        : isPast
+                                        ? '800'
+                                        : '600'
+                                    }
+                                    fontFamily={Inter.bold}
+                                    style={
+                                      isCurrent
+                                        ? styles.activeWordHighlight
+                                        : undefined
+                                    }
+                                  >
+                                    {word.text}
+                                    {wIdx < item.words.length - 1 ? ' ' : ''}
+                                  </AppText>
+                                );
+                              })
+                            ) : (
+                              <AppText
+                                color={
+                                  index < activeLyricIndex
+                                    ? 'rgba(255, 255, 255, 0.45)'
+                                    : 'rgba(255, 255, 255, 0.25)'
+                                }
+                                fontSize={21}
+                                fontWeight="600"
+                                fontFamily={Inter.bold}
+                              >
+                                {item.text}
+                              </AppText>
+                            )}
                           </AppText>
                         </TouchableOpacity>
                       );
@@ -1035,13 +1285,22 @@ const AudioRec = () => {
                   {/* Previous */}
                   <TouchableOpacity
                     activeOpacity={0.6}
-                    disabled={!adjectprevdata?.id}
-                    onPress={() => {
-                      if (adjectprevdata?.id) getSongDetail(adjectprevdata.id);
+                    disabled={!adjectprevdata?.id && currentPosition <= 3 && (!playlistQueue || playlistQueue.length <= 1)}
+                    onPress={async () => {
+                      if (currentPosition > 3) {
+                        setCurrentPosition(0);
+                        await TrackPlayer.seekTo(0);
+                        return;
+                      }
+                      if (adjectprevdata?.id && (!playlistQueue || playlistQueue.length <= 1)) {
+                        getSongDetail(adjectprevdata.id);
+                      } else {
+                        await skipToPreviousTrack(dispatch);
+                      }
                     }}
                     style={[
                       styles.navBtn,
-                      !adjectprevdata?.id && { opacity: 0.3 },
+                      !adjectprevdata?.id && currentPosition <= 3 && (!playlistQueue || playlistQueue.length <= 1) && { opacity: 0.3 },
                     ]}
                   >
                     <AppImage
@@ -1078,13 +1337,15 @@ const AudioRec = () => {
                   {/* Next */}
                   <TouchableOpacity
                     activeOpacity={0.6}
-                    disabled={!adjectnextdata?.id}
-                    onPress={() => {
-                      if (adjectnextdata?.id) getSongDetail(adjectnextdata.id);
+                    onPress={async () => {
+                      if (adjectnextdata?.id && (!playlistQueue || playlistQueue.length <= 1)) {
+                        getSongDetail(adjectnextdata.id);
+                      } else {
+                        await skipToNextTrack(dispatch);
+                      }
                     }}
                     style={[
                       styles.navBtn,
-                      !adjectnextdata?.id && { opacity: 0.3 },
                       { transform: [{ rotate: '180deg' }] },
                     ]}
                   >
@@ -1360,6 +1621,12 @@ const styles = StyleSheet.create({
   fullLyricText: {
     lineHeight: 32,
     letterSpacing: -0.3,
+  },
+  activeWordHighlight: {
+    color: '#FF2D55',
+    textShadowColor: 'rgba(255, 45, 85, 0.85)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
   // PLAYER DECK
   playerDeck: {

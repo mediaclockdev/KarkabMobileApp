@@ -17,6 +17,8 @@ interface AuthState {
     error: string | null,
     userCountry: any | null,
     playsong: any | null,
+    playlistQueue: any[],
+    playlistIndex: number,
     toast: ToastState
     isPaused: boolean,
     hideMiniPlayer: boolean,
@@ -49,6 +51,8 @@ const initialState: AuthState = {
         type: 'success',
     },
     playsong: null,
+    playlistQueue: [],
+    playlistIndex: 0,
     hideMiniPlayer: false,
     songAction: {
         visible: false,
@@ -110,7 +114,28 @@ const authSlice = createSlice({
             state.userCountry = action.payload
         },
         addsong: (state, action) => {
-            state.playsong = action.payload
+            state.playsong = action.payload;
+            if (action.payload?.id && Array.isArray(state.playlistQueue) && state.playlistQueue.length > 0) {
+                const idx = state.playlistQueue.findIndex(
+                    (s: any) => s?.id?.toString() === action.payload.id.toString()
+                );
+                if (idx !== -1) {
+                    state.playlistIndex = idx;
+                }
+            }
+        },
+        setPlaylistQueue: (state, action: PayloadAction<{ songs: any[]; initialIndex?: number }>) => {
+            state.playlistQueue = action.payload.songs || [];
+            state.playlistIndex = action.payload.initialIndex ?? 0;
+            if (state.playlistQueue[state.playlistIndex]) {
+                state.playsong = state.playlistQueue[state.playlistIndex];
+            }
+        },
+        setPlaylistIndex: (state, action: PayloadAction<number>) => {
+            state.playlistIndex = action.payload;
+            if (state.playlistQueue && state.playlistQueue[action.payload]) {
+                state.playsong = state.playlistQueue[action.payload];
+            }
         },
         setHideMiniPlayer: (state, action) => {
             state.hideMiniPlayer = action.payload;
@@ -156,6 +181,8 @@ export const {
     isPausesd,
     updateUserCoyntry,
     addsong,
+    setPlaylistQueue,
+    setPlaylistIndex,
     showToast,
     hideToast,
     setHideMiniPlayer,
