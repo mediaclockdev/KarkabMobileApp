@@ -407,7 +407,7 @@ const SettingScreen = () => {
                 <View style={styles.settingsCard}>
                     {renderSettingRow({
                         icon: 'ⓘ',
-                        title: 'About Sudanese Karaoke',
+                        title: 'About Karaoke',
                         subtitle: 'Learn more about the app',
                     })}
 
@@ -442,7 +442,7 @@ const SettingScreen = () => {
                 </TouchableOpacity>
 
                 <AppText style={styles.version}>
-                    Sudanese Karaoke
+                    Karaoke
                     {'\n'}
                     Version 1.0.0
                 </AppText>

@@ -20,17 +20,26 @@ import AppText from '../../share/components/AppText';
 import AppImage from '../../share/components/AppImage';
 import color, { useAppColors } from '../../share/constants/color';
 import { Inter } from '../../share/constants/fonts';
-import { Images } from '../../share/constants/media';
+import { Images, Logo } from '../../share/constants/media';
 import { storage } from '../../share/storage/mmkv';
 import { GlobalImage } from '../../share/utils/GlobalImage';
+import { useAppDispatch, useAppSelector } from '../../share/hooks/useAppSelector';
+import { playSongList, playTrackSong } from '../../services/player'
+import { addsong, isPausesd } from '../../auth/redux/authSlice';
+import TrackPlayer from '@rntp/player';
 
 const DownloadsScreen = () => {
     const navigation = useNavigation<any>();
     const colors = useAppColors();
     const route = useRoute();
+    const dispatch = useAppDispatch();
+    const isPaused = useAppSelector(
+        (state: any) => state.auth.isPaused
+    );
     const [downloads, setDownloads] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [loadings, setLoadings] = useState(false);
     const [playingId, setPlayingId] = useState<string | number | null>(null);
 
     /**
@@ -140,6 +149,7 @@ const DownloadsScreen = () => {
     /**
      * Remove download: cleans up local file, MMKV, and state
      */
+
     const removeDownload = (id: string | number) => {
         Alert.alert(
             'Remove Download',
@@ -202,42 +212,42 @@ const DownloadsScreen = () => {
      * Play offline audio file (falls back to stream URL if offline path unavailable)
      */
     const playRecording = async (item: any) => {
-        stopRecording();
         try {
-            const playUri =
-                item.local_path ||
-                item.original_song ||
-                item.download_url ||
-                item.song_url;
-
-            if (!playUri) {
-                Alert.alert('Error', 'Audio file not found for this song.');
-                return;
-            }
-
-            await Sound.startPlayer(playUri);
-            setPlayingId(item.id);
-
+            await Sound.stopPlayer();
             Sound.removePlayBackListener();
-            Sound.addPlayBackListener((e: any) => {
-                if (e.currentPosition >= e.duration) {
-                    stopRecording();
-                }
-            });
+        } catch (e) { }
+
+        setPlayingId(item.id?.toString());
+        setLoadings(true);
+        await dispatch(isPausesd(false));
+
+        try {
+            const list = Array.isArray(downloads) && downloads.length > 0 ? downloads : [item];
+            const songIndex = list.findIndex(
+                (s: any) => s.id?.toString() === item.id?.toString()
+            );
+            const initialIndex = songIndex >= 0 ? songIndex : 0;
+            await playSongList(list, initialIndex, true);
         } catch (error) {
-            console.log('Play error:', error);
-            Alert.alert('Error', 'Could not play the downloaded file.');
+            console.log('MusicList play error:', error);
+            dispatch(addsong({ ...item }));
+        } finally {
+            setLoadings(false);
         }
     };
 
-    const stopRecording = () => {
+
+    const stopRecording = async () => {
         try {
-            Sound.stopPlayer();
-            Sound.removePlayBackListener();
-        } catch (e) {
-            // ignore
+            console.log('Stopping player in MusicList');
+            await dispatch(isPausesd(true));
+            await TrackPlayer.pause();
+            try {
+                await Sound.pausePlayer();
+            } catch (e) { }
+        } catch (error) {
+            console.log('Stop Error:', error);
         }
-        setPlayingId(null);
     };
 
     const renderItem = ({ item }: { item: any }) => {
@@ -299,22 +309,29 @@ const DownloadsScreen = () => {
                     <TouchableOpacity
                         activeOpacity={0.7}
                         style={[styles.playButton, { borderColor: '#F3870C' }]}
-                        onPress={() => (isPlaying ? stopRecording() : playRecording(item))}
+
+                        onPress={() => {
+                            (playingId?.toString() === item.id?.toString() && !isPaused)
+                                ? stopRecording()
+                                : playRecording(item)
+                        }}
                     >
-                        {isPlaying ? (
-                            <View style={styles.pauseContainer}>
-                                <View style={styles.pauseLine} />
-                                <View style={styles.pauseLine} />
-                            </View>
-                        ) : (
-                            <AppImage
-                                source={Images.playicon}
-                                width={10}
-                                height={10}
-                                tintColor="#F3870C"
-                                resizeMode="contain"
-                            />
-                        )}
+                        {
+                            playingId?.toString() === item.id?.toString() && !isPaused
+                                ? (
+                                    <View style={styles.pauseContainer}>
+                                        <View style={styles.pauseLine} />
+                                        <View style={styles.pauseLine} />
+                                    </View>
+                                ) : (
+                                    <AppImage
+                                        source={Images.playicon}
+                                        width={10}
+                                        height={10}
+                                        tintColor="#F3870C"
+                                        resizeMode="contain"
+                                    />
+                                )}
                     </TouchableOpacity>
 
                     {/* Delete Download Button */}
@@ -324,7 +341,7 @@ const DownloadsScreen = () => {
                         onPress={() => removeDownload(item.id)}
                     >
                         <AppImage
-                            source={Images.import}
+                            source={Logo.dustbin}
                             width={18}
                             height={18}
                             tintColor="#E52450"

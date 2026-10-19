@@ -8,6 +8,7 @@ import {
     addsong,
     setPlaylistQueue,
     setPlaylistIndex,
+    isPausesd,
 } from '../auth/redux/authSlice';
 import { saveLastPlayed, getLastPlayed } from './lastPlayed';
 import ApiService from './api';
@@ -24,16 +25,21 @@ export const getMediaAudioUrl = (url?: string | null): string => {
     if (!url || typeof url !== 'string') return '';
     const clean = url.trim();
     if (!clean || clean === 'null' || clean === 'undefined') return '';
+    let fullUrl = clean;
     if (
-        clean.startsWith('http://') ||
-        clean.startsWith('https://') ||
-        clean.startsWith('file://')
+        !clean.startsWith('http://') &&
+        !clean.startsWith('https://') &&
+        !clean.startsWith('file://')
     ) {
-        return clean;
+        const base = BASE_URL.replace(/\/$/, '');
+        const path = clean.replace(/^\//, '');
+        fullUrl = `${base}/${path}`;
     }
-    const base = BASE_URL.replace(/\/$/, '');
-    const path = clean.replace(/^\//, '');
-    return `${base}/${path}`;
+    try {
+        return encodeURI(decodeURI(fullUrl));
+    } catch (e) {
+        return fullUrl;
+    }
 };
 
 /**
@@ -52,6 +58,34 @@ export const getArtworkUrl = (url?: string | null): string | undefined => {
 };
 
 /**
+ * Converts various duration formats (e.g., "00:06", "02:45", "01:23:45", raw seconds or ms)
+ * into numeric seconds.
+ */
+export const parseDurationToSeconds = (duration: any): number => {
+    if (duration == null || duration === '') return 0;
+    if (typeof duration === 'number') {
+        if (isNaN(duration) || duration <= 0) return 0;
+        return duration > 1000 ? duration / 1000 : duration;
+    }
+    if (typeof duration === 'string') {
+        const trimmed = duration.trim();
+        if (trimmed.includes(':')) {
+            const parts = trimmed.split(':').map((p) => parseFloat(p));
+            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                return parts[0] * 60 + parts[1];
+            } else if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+                return parts[0] * 3600 + parts[1] * 60 + parts[2];
+            }
+        }
+        const num = parseFloat(trimmed);
+        if (!isNaN(num) && num > 0) {
+            return num > 1000 ? num / 1000 : num;
+        }
+    }
+    return 0;
+};
+
+/**
  * Formats an individual song into a TrackPlayer MediaItem.
  */
 export const formatSongToMediaItem = (
@@ -60,8 +94,9 @@ export const formatSongToMediaItem = (
 ): MediaItem | null => {
     if (!song?.id) return null;
     const rawAudio =
-        song.original_song ||
         song.recording_url ||
+        song.original_song ||
+        song.file_path ||
         song.path ||
         song.url ||
         song.audio_url ||
@@ -69,13 +104,14 @@ export const formatSongToMediaItem = (
     const audioUrl = getMediaAudioUrl(rawAudio);
     if (!audioUrl) return null;
 
-    const dur = Number(song.duration) || 0;
-    const durationSec = dur > 1000 ? dur / 1000 : dur;
+    const durationSec = parseDurationToSeconds(song.duration);
     const artwork = getArtworkUrl(
         song.cover_image_url ||
             song.cover_image ||
             song.image_url ||
             song.artwork ||
+            song.album_picture_url ||
+            song.album_picture ||
             (typeof song.image === 'string' ? song.image : undefined),
     );
 
@@ -83,7 +119,14 @@ export const formatSongToMediaItem = (
         mediaId: song.id.toString(),
         url: audioUrl,
         title: song.title || song.song_name || song.name || 'Unknown Title',
-        artist: song.artist || song.artist_name || song.singer || 'KarKab Music',
+        artist:
+            song.artist ||
+            song.artist_name ||
+            song.singer ||
+            song.user?.name ||
+            song.album_name ||
+            'KarKab Music',
+        albumTitle: song.album_name || undefined,
         artworkUrl: artwork,
         duration: durationSec > 0 ? durationSec : undefined,
         extras: {
@@ -128,8 +171,10 @@ export const setupAudioPlayer = async () => {
 
             android: {
                 wakeMode: 'network',
-                // Keep playing even if user swipes app from recents
-                taskRemovedBehavior: 'continue',
+                // Stop playback when the app is force-killed (swiped from recents).
+                // Background mode (app minimised but still in recents) is unaffected —
+                // audio continues to play there.
+                taskRemovedBehavior: 'stop',
 
                 notification: {
                     channelId: 'karkab-music',
@@ -140,7 +185,8 @@ export const setupAudioPlayer = async () => {
         });
 
         // Enable full lock-screen, notification bar, CarPlay & Bluetooth capabilities
-        // Previous and Next occupy primary navigation slots (SLOT_BACK and SLOT_FORWARD)
+        // Previous, Next, SkipForward, and SkipBackward ensure system controls
+        // on both Android (Media3 notification tracker) and iOS (MPRemoteCommandCenter) show the Next button
         TrackPlayer.setCommands({
             capabilities: [
                 PlayerCommand.PlayPause,
@@ -148,8 +194,12 @@ export const setupAudioPlayer = async () => {
                 PlayerCommand.Previous,
                 PlayerCommand.Seek,
                 PlayerCommand.Stop,
+                PlayerCommand.SkipForward,
+                PlayerCommand.SkipBackward,
             ],
             handling: 'js',
+            forwardInterval: 15,
+            backwardInterval: 15,
         });
 
         initialized = true;
@@ -158,6 +208,134 @@ export const setupAudioPlayer = async () => {
     } catch (error) {
         console.log('❌ TrackPlayer setup error:', error);
         return false;
+    }
+};
+
+/**
+ * Restores the last played song on app launch.
+ * Loads it into TrackPlayer PAUSED so the MiniPlayer shows the track info
+ * without auto-playing audio.
+ */
+export const restoreLastPlayedSong = async () => {
+    try {
+        await setupAudioPlayer();
+
+        // Check if TrackPlayer already has an active media item (e.g. background session still alive)
+        let activeSong: any = null;
+        try {
+            activeSong = TrackPlayer.getActiveMediaItem();
+        } catch (e) { }
+
+        // If TrackPlayer already has an active song playing in background, don't interrupt it!
+        if (activeSong?.mediaId) {
+            console.log('🎵 TrackPlayer already active in background, keeping playback intact');
+            return;
+        }
+
+        // App launched from killed state: Native TrackPlayer is empty.
+        // Retrieve the last played song from Redux or MMKV storage.
+        const authState = (store.getState() as any)?.auth;
+        const lastSong = authState?.playsong?.id ? authState.playsong : getLastPlayed();
+
+        if (!lastSong?.id) {
+            console.log('ℹ️ No last-played song found to restore');
+            return;
+        }
+
+        console.log('🔄 Loading last played song (paused) from killed state:', lastSong.title);
+
+        const mediaItem = formatSongToMediaItem(lastSong, 0);
+        if (!mediaItem) {
+            console.log('❌ Could not format last-played song into media item');
+            return;
+        }
+
+        // Set into TrackPlayer and keep PAUSED
+        await TrackPlayer.setMediaItem(mediaItem);
+        await TrackPlayer.pause();
+
+        // Ensure Redux state is set to PAUSED so UI shows play button, not pause button
+        store.dispatch(isPausesd(true));
+        store.dispatch(setPlaylistQueue({ songs: [lastSong], initialIndex: 0 }));
+        store.dispatch(addsong(lastSong));
+
+        console.log('✅ Last played song restored in PAUSED state on fresh app launch:', lastSong.title);
+    } catch (error) {
+        console.log('❌ restoreLastPlayedSong error:', error);
+    }
+};
+
+/**
+ * Automatically prefetches and appends the adjacent next song to TrackPlayer's native queue.
+ * This guarantees that native media controls (lock screen, notification tracker,
+ * CarPlay & Bluetooth) always see hasNextMediaItem() === true, keeping the "Next" button
+ * active, enabled, and visible on the tracker at all times.
+ */
+export const prefetchNextSongForQueue = async (
+    currentSongId?: string | number | null,
+) => {
+    try {
+        if (!currentSongId) return;
+
+        const res = await ApiService.get(apiUrls.adjacentsong(currentSongId));
+        if (!(res as any).data?.success) return;
+
+        const nextRef = (res as any).data?.nextSong;
+        if (!nextRef?.id) return;
+
+        const queue = await TrackPlayer.getQueue();
+        const activeIdx = (await TrackPlayer.getActiveMediaItemIndex()) ?? 0;
+
+        // If TrackPlayer already has subsequent items in queue, no need to append
+        if (queue && queue.length > 0 && activeIdx < queue.length - 1) {
+            return;
+        }
+
+        const detailRes = await ApiService.get(apiUrls.singlesongdetail(nextRef.id));
+        if (!(detailRes as any).data?.success) return;
+
+        const nextSong =
+            (detailRes as any).data?.song || (detailRes as any).data?.recording;
+        if (!nextSong?.id) return;
+
+        // Ensure we don't duplicate
+        const currentQueue = await TrackPlayer.getQueue();
+        const isAlreadyQueued = currentQueue.some(
+            (item) => item.mediaId?.toString() === nextSong.id?.toString(),
+        );
+
+        if (!isAlreadyQueued) {
+            const nextMediaItem = formatSongToMediaItem(
+                nextSong,
+                currentQueue ? currentQueue.length : 1,
+            );
+            if (nextMediaItem) {
+                await TrackPlayer.addMediaItem(nextMediaItem);
+                console.log(
+                    '⏭️ [Tracker] Queued next song into TrackPlayer for active Next button:',
+                    nextSong.title,
+                );
+
+                // Keep Redux playlistQueue in sync
+                const authState = (store.getState() as any)?.auth;
+                const reduxQueue = authState?.playlistQueue || [];
+                if (Array.isArray(reduxQueue) && reduxQueue.length > 0) {
+                    const existsInRedux = reduxQueue.some(
+                        (s: any) => s.id?.toString() === nextSong.id?.toString(),
+                    );
+                    if (!existsInRedux) {
+                        store.dispatch(
+                            setPlaylistQueue({
+                                songs: [...reduxQueue, nextSong],
+                                initialIndex: authState?.playlistIndex ?? 0,
+                            }),
+                        );
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.log('Notice: prefetchNextSongForQueue error:', e);
     }
 };
 
@@ -173,6 +351,8 @@ export const playSongList = async (
     autoPlay: boolean = true,
 ) => {
     try {
+        await setupAudioPlayer();
+
         if (!Array.isArray(songs) || songs.length === 0) {
             console.log('playSongList: Empty songs array provided');
             return null;
@@ -225,6 +405,11 @@ export const playSongList = async (
         store.dispatch(addsong(currentSong));
         saveLastPlayed(currentSong);
 
+        // Preload next track if near or at the end of playlist so Next button stays active on tracker
+        if (targetIndex >= validSongs.length - 1 && currentSong?.id) {
+            prefetchNextSongForQueue(currentSong.id);
+        }
+
         return currentSong;
     } catch (error) {
         console.log('❌ playSongList error:', error);
@@ -239,6 +424,8 @@ export const playSongList = async (
 export const playTrackSong = async (song: any, autoPlay: boolean = true) => {
     try {
         if (!song?.id) return null;
+
+        await setupAudioPlayer();
 
         // Check if Redux already has a queue containing this song
         const state = (store.getState() as any)?.auth;
@@ -270,6 +457,9 @@ export const playTrackSong = async (song: any, autoPlay: boolean = true) => {
         store.dispatch(setPlaylistQueue({ songs: [song], initialIndex: 0 }));
         store.dispatch(addsong(song));
         saveLastPlayed(song);
+
+        // Prefetch adjacent next song and queue it into TrackPlayer so Next button is active on notification tracker
+        prefetchNextSongForQueue(song.id);
 
         return song;
     } catch (error) {
@@ -449,6 +639,11 @@ export const syncTrackTransition = async (
             store.dispatch(setPlaylistIndex(index));
             store.dispatch(addsong(song));
             saveLastPlayed(song);
+
+            // Continuously preload the next track so Next button on tracker is always available
+            if (song.id) {
+                prefetchNextSongForQueue(song.id);
+            }
         }
     } catch (e) {
         console.log('❌ syncTrackTransition error:', e);

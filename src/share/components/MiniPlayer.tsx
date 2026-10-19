@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
+    AppState,
+    AppStateStatus,
     Image,
     StyleSheet,
     TouchableOpacity,
@@ -24,7 +26,9 @@ import {
     skipToPreviousTrack,
     playTrackSong,
     isPlayerSwitching,
+    restoreLastPlayedSong,
 } from '../../services/player';
+import { useNavigation } from '@react-navigation/native';
 
 interface MiniPlayerProps {
     onNext?: () => void;
@@ -35,6 +39,7 @@ interface MiniPlayerProps {
 const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) => {
     const dispatch = useAppDispatch();
     const playing = useIsPlaying();
+    const navigation = useNavigation<any>();
     const playbackState = usePlaybackState();
 
     const hideMiniPlayer = useAppSelector(
@@ -52,6 +57,42 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     const [switchingTrack, setSwitchingTrack] = useState(false);
     const isAutoNextingRef = useRef(false);
     const isInitialMount = useRef(true);
+    const isLoadingRef = useRef(false);          // NEW: prevents re-entry loop
+    const appStateRef = useRef(AppState.currentState);  // NEW: tracks app state
+    const lastLoadedIdRef = useRef<string | null>(null); // NEW: tracks last loaded song id
+
+    /**
+     * 0. RESTORE LAST PLAYED SONG ON MOUNT
+     *    Loads the song into the player (paused) so the MiniPlayer shows it.
+     */
+    useEffect(() => {
+        restoreLastPlayedSong();
+    }, []);
+
+    /**
+     * 0b. PAUSE WHEN APP COMES BACK TO FOREGROUND
+     *     Prevents audio from unexpectedly continuing after the user
+     *     returns to the app.
+     */
+    useEffect(() => {
+        const handleAppStateChange = async (nextState: AppStateStatus) => {
+            if (
+                appStateRef.current.match(/inactive|background/) &&
+                nextState === 'active'
+            ) {
+                // App came to foreground — pause playback
+                try {
+                    await TrackPlayer.pause();
+                } catch (e) {
+                    // player may not be ready yet, safe to ignore
+                }
+            }
+            appStateRef.current = nextState;
+        };
+
+        const subscription = AppState.addEventListener('change', handleAppStateChange);
+        return () => subscription?.remove();
+    }, []);
 
     /**
      * 1. ACTIVE PROGRESS POLLING
@@ -71,7 +112,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                         setTrackDuration(dur);
                     }
                 }
-            } catch (e) {}
+            } catch (e) { }
         }, 250);
 
         return () => clearInterval(interval);
@@ -88,53 +129,75 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     }, [playbackState]);
 
     /**
-     * 2. LOAD SONG WHEN REDUX SONG CHANGES OR ON APP MOUNT
+     * 2. LOAD SONG WHEN REDUX SONG CHANGES
+     *    Guards against re-entry and duplicate loads to prevent the
+     *    "render song again and again" loop.
      */
     useEffect(() => {
         if (!playsong?.id) {
             pauseSongItem();
+            lastLoadedIdRef.current = null;
             return;
         }
 
-        // Avoid re-triggering playback if a track switch is already in progress
-        if (isPlayerSwitching() || switchingTrack) {
-            console.log('Track switch in progress, skipping playSongItem reload');
+        const songIdStr = playsong.id.toString();
+
+        // Skip if we already loaded this exact song id
+        if (lastLoadedIdRef.current === songIdStr) {
             return;
         }
 
+        // Skip if a track switch or load is already in progress
+        if (isPlayerSwitching() || switchingTrack || isLoadingRef.current) {
+            console.log('Track switch/load in progress, skipping playSongItem reload');
+            return;
+        }
+
+        // Check if TrackPlayer already has this song active
+        let activeSong: any = null;
         try {
-            const activeSong = TrackPlayer.getActiveMediaItem();
-            if (activeSong?.mediaId === playsong.id.toString()) {
-                const dur = Number(playsong.duration) || 0;
-                if (dur > 0) {
-                    setTrackDuration(dur > 1000 ? dur / 1000 : dur);
-                }
-                return;
-            }
-
-            const autoPlay = !isInitialMount.current;
-            isInitialMount.current = false;
-
-            playSongItem(playsong, autoPlay);
+            activeSong = TrackPlayer.getActiveMediaItem();
         } catch (e) {
-            const autoPlay = !isInitialMount.current;
-            isInitialMount.current = false;
-
-            playSongItem(playsong, autoPlay);
+            // getActiveMediaItem can throw if player isn't ready — not an error
         }
+
+        if (activeSong?.mediaId === songIdStr) {
+            lastLoadedIdRef.current = songIdStr;
+            const dur = Number(playsong.duration) || 0;
+            if (dur > 0) {
+                setTrackDuration(dur > 1000 ? dur / 1000 : dur);
+            }
+            return;
+        }
+
+        const autoPlay = !isInitialMount.current;
+        isInitialMount.current = false;
+
+        // Mark as loading to prevent re-entry
+        isLoadingRef.current = true;
+        lastLoadedIdRef.current = songIdStr;
+
+        playSongItem(playsong, autoPlay).finally(() => {
+            isLoadingRef.current = false;
+        });
     }, [playsong?.id]);
 
     const pauseSongItem = async () => {
         try {
             await TrackPlayer.pause();
-        } catch (e) {}
+        } catch (e) { }
     };
 
     const playSongItem = async (song: any, autoPlay: boolean = true) => {
         try {
             if (!song?.id) return;
 
-            const activeSong = TrackPlayer.getActiveMediaItem();
+            // Double-check the active item to prevent duplicate loads
+            let activeSong: any = null;
+            try {
+                activeSong = TrackPlayer.getActiveMediaItem();
+            } catch (e) { }
+
             if (activeSong?.mediaId === song.id.toString()) {
                 console.log('Track is already active in TrackPlayer, skipping reload');
                 return;
@@ -191,6 +254,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     const handleCloseMiniPlayer = async () => {
         try {
             await TrackPlayer.stop();
+            lastLoadedIdRef.current = null;
             dispatch(addsong(''));
         } catch (error) {
             console.log('CLOSE MINI PLAYER ERROR:', error);
@@ -222,7 +286,11 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     // Open song action sheet / detail
     const openFullPlayer = () => {
         if (playsong?.id) {
-            dispatch(openSongAction(playsong));
+            (navigation as any).navigate('.', {
+                id: playsong.id,
+            });
+
+            // dispatch(openSongAction(playsong));
         }
     };
 
@@ -251,7 +319,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                 style={styles.infoTouchArea}
             >
                 <Image
-                    source={GlobalImage(playsong.cover_image_url) || Images.singericon}
+                    source={GlobalImage(playsong.cover_image_url) || playsong.album_picture_url || Images.singericon}
                     style={styles.image}
                 />
 
@@ -260,7 +328,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                         {playsong.title || 'Unknown Song'}
                     </AppText>
                     <AppText numberOfLines={1} style={styles.artist}>
-                        {playsong.artist || 'Unknown Artist'}
+                        {playsong.artist || playsong.album_name || 'Unknown Artist'}
                     </AppText>
                 </View>
             </TouchableOpacity>

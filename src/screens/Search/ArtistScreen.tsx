@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     FlatList,
 
     ScrollView,
@@ -109,7 +110,7 @@ const ArtistScreen = () => {
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [artistdata, setArtistdata] = useState<any[]>([]);
     const [artisttopdata, setArtisttopdata] = useState<any[]>([]);
-
+    const [loader, setLoader] = useState(false);
 
 
     useEffect(() => {
@@ -120,7 +121,7 @@ const ArtistScreen = () => {
     const getartistfun = async () => {
         console.log("popular api called")
         try {
-
+            setLoader(true)
 
             const response = await ApiService.get(apiUrls.artists);
 
@@ -133,7 +134,7 @@ const ArtistScreen = () => {
         } catch (error) {
             console.log('populardata ERROR:', error);
         } finally {
-
+            setLoader(false)
         }
     };
 
@@ -165,231 +166,237 @@ const ArtistScreen = () => {
             backgroundColor: color.darkbackround,
             flex: 1,
         }}>
+            <View style={styles.header}>
+                <View style={styles.headerContent}>
+
+                    <TouchableOpacity
+                        onPress={() => {
+
+                            (navigation as any).navigate('Search')
+                        }}
+                    >
+
+                        {/* <Text style={styles.back}>←</Text> */}
+                        <AppImage
+                            source={Logo.arrowline}
+                            height={25}
+                            width={19}
+                            resizeMode='cover'
+                            tintColor={"#FFFF"}
+                        />
+                    </TouchableOpacity>
+                    <View>
 
 
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                nestedScrollEnabled={true}
-                contentContainerStyle={{
-                    paddingBottom: 130,
-                    // gap: 10,
-                    paddingHorizontal: 15
+                        <AppText
+                            style={[
+                                styles.title,
+                                {
+                                    color: color.darkthemetext,
+                                },
+                            ]}>
+                            Artist
+                        </AppText>
+
+                        <AppText style={styles.subtitle}>
+                            What would you like to sing today?
+                        </AppText>
+                    </View>
+                </View>
+
+                <TouchableOpacity style={styles.micContainer}>
+                    <AppImage
+                        source={Images.mics}
+                        height={15}
+                        width={18}
+                        resizeMode="contain"
+                    />
+                </TouchableOpacity>
+            </View>
+
+            <SearchBar
+                onPress={() => {
+                    ; (navigation as any).navigate('SearchSongSecreen', { previousScreen: 'ArtistScreen' })
                 }}
-            >
+            />
 
-                <View style={styles.header}>
-                    <View style={styles.headerContent}>
+            {loader ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color="#EFCB61" />
+                </View>
+            ) : (
 
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    nestedScrollEnabled={true}
+                    contentContainerStyle={{
+                        paddingBottom: 130,
+                        // gap: 10,
+                        paddingHorizontal: 15
+                    }}
+                >
+
+
+
+
+
+                    <FlatList
+
+                        horizontal
+
+                        showsHorizontalScrollIndicator={false}
+
+                        data={categories}
+
+                        keyExtractor={(item) => item}
+
+                        renderItem={({ item }) => (
+
+                            <CategoryChip
+                                key={item}
+                                title={item}
+                                selected={selectedCategory === item}
+                                onPress={() => setSelectedCategory(item)}
+                            />
+
+                        )}
+
+                    />
+
+
+
+                    <BannerCard />
+
+
+
+
+                    <View style={styles.sectionHeader}>
+
+                        <AppText style={styles.sectionTitle}>
+                            Top Artists
+                        </AppText>
                         <TouchableOpacity
                             onPress={() => {
-
-                                (navigation as any).navigate('Search')
+                                (navigation as any).navigate('AllArtistScreen', { previousScreen: 'ArtistScreen' })
                             }}
                         >
 
-                            {/* <Text style={styles.back}>←</Text> */}
-                            <AppImage
-                                source={Logo.arrowline}
-                                height={25}
-                                width={19}
-                                resizeMode='cover'
-                                tintColor={"#FFFF"}
-                            />
+
+                            <AppText style={styles.view}>
+                                View all  ›
+                            </AppText>
                         </TouchableOpacity>
-                        <View>
-
-
-                            <AppText
-                                style={[
-                                    styles.title,
-                                    {
-                                        color: color.darkthemetext,
-                                    },
-                                ]}>
-                                Artist
-                            </AppText>
-
-                            <AppText style={styles.subtitle}>
-                                What would you like to sing today?
-                            </AppText>
-                        </View>
                     </View>
 
-                    <TouchableOpacity style={styles.micContainer}>
-                        <AppImage
-                            source={Images.mics}
-                            height={15}
-                            width={18}
-                            resizeMode="contain"
-                        />
-                    </TouchableOpacity>
-                </View>
-
-                <SearchBar
-                    onPress={() => {
-                        ; (navigation as any).navigate('SearchSongSecreen', { previousScreen: 'ArtistScreen' })
-                    }}
-                />
 
 
+                    <FlatList
 
-                <FlatList
+                        horizontal
 
-                    horizontal
+                        showsHorizontalScrollIndicator={false}
 
-                    showsHorizontalScrollIndicator={false}
+                        data={artisttopdata?.slice(0, 10)}
 
-                    data={categories}
+                        keyExtractor={(item) => item.id}
+                        //style={{ height: 340 }}
+                        renderItem={({ item }) => (
 
-                    keyExtractor={(item) => item}
+                            <TopArtist item={item}
+                                onPress={() => {
+                                    (navigation as any).navigate('SongsListScreen', {
+                                        artist: item,
+                                        previousScreen: 'ArtistScreen',
+                                    });
+                                }}
+                            />
 
-                    renderItem={({ item }) => (
+                        )}
 
-                        <CategoryChip
-                            key={item}
-                            title={item}
-                            selected={selectedCategory === item}
-                            onPress={() => setSelectedCategory(item)}
-                        />
-
-                    )}
-
-                />
+                    />
 
 
 
-                <BannerCard />
+                    <View style={[styles.sectionHeader]}>
+
+                        <AppText style={styles.sectionTitle}>
+                            All Artists
+                        </AppText>
+                        <TouchableOpacity
+                            onPress={() => {
+                                (navigation as any).navigate('AllArtistScreen', { previousScreen: 'ArtistScreen' })
+                            }}
+                        >
+                            <AppText style={styles.view}>
+                                View all  ›
+                            </AppText>
+                        </TouchableOpacity>
+
+
+                    </View>
+
+
+
+                    {
+                        artistdata?.slice(0, 20).map(item => (
+
+                            <ArtistListItem
+
+                                key={item.id}
+
+                                item={item}
+                                onPress={() => {
+                                    (navigation as any).navigate('SongsListScreen', {
+                                        artist: item,
+                                        previousScreen: 'ArtistScreen',
+                                    });
+                                }}
+
+                            />
+
+                        ))
+                    }
 
 
 
 
-                <View style={styles.sectionHeader}>
+                    {/* <View style={[styles.sectionHeader, { marginTop: 5 }]}>
 
-                    <AppText style={styles.sectionTitle}>
-                        Top Artists
-                    </AppText>
-                    <TouchableOpacity
-                        onPress={() => {
-                            (navigation as any).navigate('AllArtistScreen', { previousScreen: 'ArtistScreen' })
-                        }}
-                    >
-
+                        <AppText style={[styles.sectionTitle,]}>
+                            Groups & Bands
+                        </AppText>
 
                         <AppText style={styles.view}>
                             View all  ›
                         </AppText>
-                    </TouchableOpacity>
-                </View>
+
+                    </View> */}
 
 
 
-                <FlatList
+                    {/* <FlatList
 
-                    horizontal
+                        horizontal
 
-                    showsHorizontalScrollIndicator={false}
+                        showsHorizontalScrollIndicator={false}
 
-                    data={artisttopdata?.slice(0, 10)}
+                        data={bands}
 
-                    keyExtractor={(item) => item.id}
-                    //style={{ height: 340 }}
-                    renderItem={({ item }) => (
+                        keyExtractor={(item) => item.id}
 
-                        <TopArtist item={item}
-                            onPress={() => {
-                                (navigation as any).navigate('SongsListScreen', {
-                                    artist: item,
-                                    previousScreen: 'ArtistScreen',
-                                });
-                            }}
-                        />
+                        renderItem={({ item }) => (
 
-                    )}
+                            <BandCard item={item} />
 
-                />
+                        )}
+
+                    /> */}
 
 
 
-                <View style={[styles.sectionHeader]}>
+                </ScrollView>
 
-                    <AppText style={styles.sectionTitle}>
-                        All Artists
-                    </AppText>
-                    <TouchableOpacity
-                        onPress={() => {
-                            (navigation as any).navigate('AllArtistScreen', { previousScreen: 'ArtistScreen' })
-                        }}
-                    >
-                        <AppText style={styles.view}>
-                            View all  ›
-                        </AppText>
-                    </TouchableOpacity>
-
-
-                </View>
-
-
-
-                {
-                    artistdata?.slice(0, 8).map(item => (
-
-                        <ArtistListItem
-
-                            key={item.id}
-
-                            item={item}
-                            onPress={() => {
-                                (navigation as any).navigate('SongsListScreen', {
-                                    artist: item,
-                                    previousScreen: 'ArtistScreen',
-                                });
-                            }}
-
-                        />
-
-                    ))
-                }
-
-
-
-
-                <View style={[styles.sectionHeader, { marginTop: 5 }]}>
-
-                    <AppText style={[styles.sectionTitle,]}>
-                        Groups & Bands
-                    </AppText>
-
-                    <AppText style={styles.view}>
-                        View all  ›
-                    </AppText>
-
-                </View>
-
-
-
-                <FlatList
-
-                    horizontal
-
-                    showsHorizontalScrollIndicator={false}
-
-                    data={bands}
-
-                    keyExtractor={(item) => item.id}
-
-                    renderItem={({ item }) => (
-
-                        <BandCard item={item} />
-
-                    )}
-
-                />
-
-
-
-            </ScrollView>
-
-
+            )}
 
 
             {/* <MiniPlayer /> */}

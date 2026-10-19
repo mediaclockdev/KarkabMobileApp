@@ -645,7 +645,7 @@ const Home = () => {
             <TouchableOpacity
               onPress={() => {
                 navigation.navigate('SongsListScreen', {
-                  songs: populardatas,
+                  songs: songsartistdata,
                   previousScreen: 'Home',
                 });
               }}
@@ -817,6 +817,7 @@ const Home = () => {
                 navigation.navigate('SongsListScreen', {
                   songs: recdatapu,
                   previousScreen: 'Home',
+                  type: 'recordings',
                 });
               }}
 

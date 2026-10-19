@@ -85,7 +85,7 @@ export default function PlayListScreen() {
 
     const [songs, setSongs] = useState<Song[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
-
+    const [loader, setLoader] = useState(false);
     const [loading, setLoading] = useState(false);
     const [songsLoading, setSongsLoading] = useState(false);
 
@@ -110,8 +110,8 @@ export default function PlayListScreen() {
      */
     const getPlaylists = async () => {
         try {
+            setLoader(true)
             setLoading(true);
-
             const response = await ApiService.get(apiUrls.getplaylists);
 
             console.log('Playlist API response:', response);
@@ -139,6 +139,7 @@ export default function PlayListScreen() {
             setPlaylists([]);
         } finally {
             setLoading(false);
+            setLoader(false)
         }
     };
 
@@ -246,263 +247,272 @@ export default function PlayListScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{
-                    paddingBottom: 130,
+            {/* HEADER */}
+
+            <View style={styles.header}>
+                <TouchableOpacity
+                    onPress={() => navigation.navigate('Search')}
+                    style={styles.backButton}
+                >
+                    <AppImage
+                        source={Logo.arrowline}
+                        width={20}
+                        height={20}
+                        tintColor="#FFFFFF"
+                    />
+                </TouchableOpacity>
+
+                <View style={styles.headerText}>
+                    <AppText style={styles.title}>
+                        Classic Playlists
+                    </AppText>
+
+                    <AppText style={styles.subtitle}>
+                        Discover timeless Sudanese collections
+                    </AppText>
+                </View>
+
+                <TouchableOpacity style={styles.mic}>
+                    <AppImage
+                        source={Images.mics}
+                        width={16}
+                        height={18}
+                        resizeMode="contain"
+                    />
+                </TouchableOpacity>
+            </View>
+
+            {/* SEARCH */}
+
+            <SearchBar
+                onPress={() => {
+                    (navigation as any).navigate(
+                        'SearchSongSecreen' as never,
+                        {
+                            previousScreen:
+                                'PlayListScreen',
+                        } as never,
+                    );
                 }}
-            >
-                {/* HEADER */}
+            />
 
-                <View style={styles.header}>
-                    <TouchableOpacity
-                        onPress={() => navigation.goBack()}
-                        style={styles.backButton}
-                    >
-                        <AppImage
-                            source={Logo.arrowline}
-                            width={20}
-                            height={20}
-                            tintColor="#FFFFFF"
-                        />
-                    </TouchableOpacity>
-
-                    <View style={styles.headerText}>
-                        <AppText style={styles.title}>
-                            Classic Playlists
-                        </AppText>
-
-                        <AppText style={styles.subtitle}>
-                            Discover timeless Sudanese collections
-                        </AppText>
-                    </View>
-
-                    <TouchableOpacity style={styles.mic}>
-                        <AppImage
-                            source={Images.mics}
-                            width={16}
-                            height={18}
-                            resizeMode="contain"
-                        />
-                    </TouchableOpacity>
+            {loader ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color="#EFCB61" />
                 </View>
+            ) : (
 
-                {/* SEARCH */}
-
-                <SearchBar
-                    onPress={() => {
-                        (navigation as any).navigate(
-                            'SearchSongSecreen' as never,
-                            {
-                                previousScreen:
-                                    'PlayListScreen',
-                            } as never,
-                        );
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{
+                        paddingBottom: 130,
                     }}
-                />
+                >
 
-                {/* CATEGORIES */}
 
-                {categories.length > 0 && (
-                    <FlatList
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        data={categoryList}
-                        keyExtractor={item => item.id}
-                        contentContainerStyle={{
-                            paddingVertical: 16,
-                        }}
-                        renderItem={({ item }) => (
-                            <CategoryChip
-                                title={item.title}
-                                selected={
-                                    selected === item.title
-                                }
-                                onPress={() => {
-                                    setSelected(item.title);
-                                }}
-                            />
-                        )}
-                    />
-                )}
+                    {/* CATEGORIES */}
 
-                {/* PLAYLIST SECTION */}
-
-                <View style={styles.section}>
-                    <View>
-                        <AppText style={styles.sectionTitle}>
-                            🎼 Classic Playlists
-                        </AppText>
-
-                        <AppText style={styles.sectionSubtitle}>
-                            Explore curated collections
-                        </AppText>
-                    </View>
-                </View>
-
-                {loading ? (
-                    <View style={styles.loaderContainer}>
-                        <ActivityIndicator
-                            size="small"
-                            color="#F4A000"
-                        />
-                    </View>
-                ) : playlists.length > 0 ? (
-                    <FlatList
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        data={playlists}
-                        keyExtractor={item => item.id}
-                        renderItem={renderPlaylist}
-                        contentContainerStyle={{
-                            paddingBottom: 8,
-                        }}
-                    />
-                ) : (
-                    <View style={styles.emptyContainer}>
-                        <AppImage
-                            source={Images.music}
-                            width={32}
-                            height={32}
-                            resizeMode="contain"
-                        />
-
-                        <AppText style={styles.emptyTitle}>
-                            No Playlists Found
-                        </AppText>
-
-                        <AppText style={styles.emptySubtitle}>
-                            There are no playlists available.
-                        </AppText>
-                    </View>
-                )}
-
-                {/* SELECTED PLAYLIST */}
-
-                {selectedPlaylist && (
-                    <>
-                        <View style={styles.selectedHeader}>
-                            <AppImage
-                                source={{
-                                    uri: selectedPlaylist.image,
-                                }}
-                                width={82}
-                                height={82}
-                                resizeMode="cover"
-                            />
-
-                            <View style={styles.selectedInfo}>
-                                <AppText
-                                    style={styles.selectedTitle}
-                                    numberOfLines={1}
-                                >
-                                    {selectedPlaylist.name}
-                                </AppText>
-
-                                <AppText
-                                    style={styles.selectedDescription}
-                                    numberOfLines={2}
-                                >
-                                    {selectedPlaylist.description ||
-                                        'A beautiful collection of timeless Sudanese music.'}
-                                </AppText>
-
-                                <AppText style={styles.selectedCount}>
-                                    {selectedPlaylist.songs ||
-                                        '0 songs'}
-                                </AppText>
-                            </View>
-
-                            <TouchableOpacity
-                                style={styles.mainPlayButton}
-                                activeOpacity={0.8}
-                                onPress={() => {
-                                    if (songs.length > 0) {
-                                        // Play first song
-                                        // Add your player dispatch here
+                    {categories.length > 0 && (
+                        <FlatList
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            data={categoryList}
+                            keyExtractor={item => item.id}
+                            contentContainerStyle={{
+                                paddingVertical: 16,
+                            }}
+                            renderItem={({ item }) => (
+                                <CategoryChip
+                                    title={item.title}
+                                    selected={
+                                        selected === item.title
                                     }
-                                }}
-                            >
-                                <AppImage
-                                    source={Images.play}
-                                    width={20}
-                                    height={20}
-                                    resizeMode="contain"
+                                    onPress={() => {
+                                        setSelected(item.title);
+                                    }}
                                 />
-                            </TouchableOpacity>
-                        </View>
+                            )}
+                        />
+                    )}
 
-                        {/* SONG HEADER */}
+                    {/* PLAYLIST SECTION */}
 
-                        <View style={styles.songHeader}>
-                            <AppText style={styles.songTitle}>
-                                🎵 Songs
+                    <View style={styles.section}>
+                        <View>
+                            <AppText style={styles.sectionTitle}>
+                                🎼 Classic Playlists
                             </AppText>
 
-                            <TouchableOpacity
-                                onPress={() => {
-                                    (navigation as any).navigate('SongsListScreen', {
-                                        songs: songs,
-                                        previousScreen: 'PlayListScreen',
-                                    });
-                                }}
-                            >
-                                <AppText style={styles.view}>
-                                    Play All
-                                </AppText>
-                            </TouchableOpacity>
+                            <AppText style={styles.sectionSubtitle}>
+                                Explore curated collections
+                            </AppText>
                         </View>
+                    </View>
 
-                        {/* SONGS */}
+                    {loading ? (
+                        <View style={styles.loaderContainer}>
+                            <ActivityIndicator
+                                size="small"
+                                color="#F4A000"
+                            />
+                        </View>
+                    ) : playlists.length > 0 ? (
+                        <FlatList
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            data={playlists}
+                            keyExtractor={item => item.id}
+                            renderItem={renderPlaylist}
+                            contentContainerStyle={{
+                                paddingBottom: 8,
+                            }}
+                        />
+                    ) : (
+                        <View style={styles.emptyContainer}>
+                            <AppImage
+                                source={Images.music}
+                                width={32}
+                                height={32}
+                                resizeMode="contain"
+                            />
 
-                        {songsLoading ? (
-                            <View style={styles.loaderContainer}>
-                                <ActivityIndicator
-                                    size="small"
-                                    color="#F4A000"
-                                />
-                            </View>
-                        ) : songs.length > 0 ? (
-                            songs.map((item, idx) => (
-                                <ClassicSongItem
-                                    key={item.id}
-                                    item={item}
-                                    songList={songs}
-                                    index={idx}
-                                />
-                            ))
-                        ) : (
-                            <View
-                                style={
-                                    styles.emptySongsContainer
-                                }
-                            >
+                            <AppText style={styles.emptyTitle}>
+                                No Playlists Found
+                            </AppText>
+
+                            <AppText style={styles.emptySubtitle}>
+                                There are no playlists available.
+                            </AppText>
+                        </View>
+                    )}
+
+                    {/* SELECTED PLAYLIST */}
+
+                    {selectedPlaylist && (
+                        <>
+                            <View style={styles.selectedHeader}>
                                 <AppImage
-                                    source={Images.music}
-                                    width={28}
-                                    height={28}
-                                    resizeMode="contain"
+                                    source={{
+                                        uri: selectedPlaylist?.cover_image_url,
+                                    }}
+                                    width={82}
+                                    height={82}
+                                    resizeMode="cover"
                                 />
 
-                                <AppText
-                                    style={styles.emptyTitle}
+                                <View style={styles.selectedInfo}>
+                                    <AppText
+                                        style={styles.selectedTitle}
+                                        numberOfLines={1}
+                                    >
+                                        {selectedPlaylist.name}
+                                    </AppText>
+
+                                    <AppText
+                                        style={styles.selectedDescription}
+                                        numberOfLines={2}
+                                    >
+                                        {selectedPlaylist.description ||
+                                            'A beautiful collection of timeless Sudanese music.'}
+                                    </AppText>
+
+                                    <AppText style={styles.selectedCount}>
+                                        {selectedPlaylist.song_count ||
+                                            '0 songs'}
+                                    </AppText>
+                                </View>
+
+                                <TouchableOpacity
+                                    style={styles.mainPlayButton}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        if (songs.length > 0) {
+                                            // Play first song
+                                            // Add your player dispatch here
+                                        }
+                                    }}
                                 >
-                                    No Songs Found
+                                    <AppImage
+                                        source={Images.playicon}
+                                        width={20}
+                                        height={20}
+                                        resizeMode="contain"
+                                    />
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* SONG HEADER */}
+
+                            <View style={styles.songHeader}>
+                                <AppText style={styles.songTitle}>
+                                    🎵 Songs
                                 </AppText>
 
-                                <AppText
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        (navigation as any).navigate('SongsListScreen', {
+                                            songs: songs,
+                                            previousScreen: 'PlayListScreen',
+                                        });
+                                    }}
+                                >
+                                    <AppText style={styles.view}>
+                                        Play All
+                                    </AppText>
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* SONGS */}
+
+                            {songsLoading ? (
+                                <View style={styles.loaderContainer}>
+                                    <ActivityIndicator
+                                        size="small"
+                                        color="#F4A000"
+                                    />
+                                </View>
+                            ) : songs.length > 0 ? (
+                                songs.map((item, idx) => (
+                                    <ClassicSongItem
+                                        key={item.id}
+                                        item={item}
+                                        songList={songs}
+                                        index={idx}
+                                    />
+                                ))
+                            ) : (
+                                <View
                                     style={
-                                        styles.emptySubtitle
+                                        styles.emptySongsContainer
                                     }
                                 >
-                                    This playlist doesn't have
-                                    any songs yet.
-                                </AppText>
-                            </View>
-                        )}
-                    </>
-                )}
-            </ScrollView>
+                                    <AppImage
+                                        source={Images.music}
+                                        width={28}
+                                        height={28}
+                                        resizeMode="contain"
+                                    />
+
+                                    <AppText
+                                        style={styles.emptyTitle}
+                                    >
+                                        No Songs Found
+                                    </AppText>
+
+                                    <AppText
+                                        style={
+                                            styles.emptySubtitle
+                                        }
+                                    >
+                                        This playlist doesn't have
+                                        any songs yet.
+                                    </AppText>
+                                </View>
+                            )}
+                        </>
+                    )}
+                </ScrollView>
+            )}
         </SafeAreaView>
     );
 }

@@ -45,15 +45,13 @@ export default async function playbackService() {
                         await TrackPlayer.seekTo(cmd.position);
                     }
                 },
-                skipForward: async (cmd) => {
-                    const interval = cmd?.interval || 15;
-                    console.log('🎧 [RemoteHandler] Skip forward:', interval);
-                    await TrackPlayer.seekBy(interval);
+                skipForward: async () => {
+                    console.log('🎧 [RemoteHandler] Skip forward requested -> skipping to next track');
+                    await skipToNextTrack(store.dispatch);
                 },
-                skipBackward: async (cmd) => {
-                    const interval = cmd?.interval || 15;
-                    console.log('🎧 [RemoteHandler] Skip backward:', interval);
-                    await TrackPlayer.seekBy(-interval);
+                skipBackward: async () => {
+                    console.log('🎧 [RemoteHandler] Skip backward requested -> skipping to prev track');
+                    await skipToPreviousTrack(store.dispatch);
                 },
             });
         }
@@ -94,16 +92,14 @@ export default async function playbackService() {
         }
     });
 
-    TrackPlayer.addEventListener(Event.RemoteSkipForward, async (event) => {
-        const interval = event?.interval || 15;
-        console.log('🎧 [RemoteEvent] Skip Forward:', interval);
-        await TrackPlayer.seekBy(interval);
+    TrackPlayer.addEventListener(Event.RemoteSkipForward, async () => {
+        console.log('🎧 [RemoteEvent] Skip Forward -> Next Track');
+        await skipToNextTrack(store.dispatch);
     });
 
-    TrackPlayer.addEventListener(Event.RemoteSkipBackward, async (event) => {
-        const interval = event?.interval || 15;
-        console.log('🎧 [RemoteEvent] Skip Backward:', interval);
-        await TrackPlayer.seekBy(-interval);
+    TrackPlayer.addEventListener(Event.RemoteSkipBackward, async () => {
+        console.log('🎧 [RemoteEvent] Skip Backward -> Previous Track');
+        await skipToPreviousTrack(store.dispatch);
     });
 
     // 3. Track transition listener: automatically synchronizes Redux & storage when track changes

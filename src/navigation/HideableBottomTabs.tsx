@@ -10,8 +10,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import CustomTabBar from './CustomTabBar';
 import { useAppDispatch, useAppSelector } from '../share/hooks/useAppSelector';
 import MiniPlayer from '../share/components/MiniPlayer';
-import { getLastPlayed } from '../services/lastPlayed';
-import { addsong } from '../auth/redux/authSlice';
+import { restoreLastPlayedSong } from '../services/player';
 
 const Tab = createBottomTabNavigator();
 
@@ -34,15 +33,7 @@ export const HideableBottomTabs = ({ screens }: Props) => {
   const isTablet = width >= 768;
   const TAB_HEIGHT = isTablet ? 85 : 65;
   useEffect(() => {
-    const restoreSession = async () => {
-      const lastSong = await getLastPlayed();
-      if (lastSong && !playsong?.id) {
-        // Restore to Redux so MiniPlayer shows it
-        dispatch(addsong(lastSong));
-        // Don't auto-play — just restore state like Spotify
-      }
-    };
-    restoreSession();
+    restoreLastPlayedSong();
   }, []);
 
   return (

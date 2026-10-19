@@ -29,12 +29,15 @@ import ApiService from '../services/api';
 import apiUrls from '../services/apiUrls';
 import { GlobalImage } from '../share/utils/GlobalImage';
 import { useAppDispatch, useAppSelector } from '../share/hooks/useAppSelector';
-import { addsong, setHideMiniPlayer, showToast } from '../auth/redux/authSlice';
+import { addsong, openSongAction, setHideMiniPlayer, showToast } from '../auth/redux/authSlice';
 import { saveLastPlayed } from '../services/lastPlayed';
 import {
   formatSongToMediaItem,
+  prefetchNextSongForQueue,
   skipToNextTrack,
   skipToPreviousTrack,
+  playTrackSong,
+  parseDurationToSeconds,
 } from '../services/player';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -44,16 +47,17 @@ type RepeatMode = 'off' | 'one' | 'all';
 const AudioRec = () => {
   const color = useAppColors();
   const route = useRoute();
-  const previousScreen = route?.params?.previousScreen
+  const previousScreen = (route?.params as any)?.previousScreen;
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const dispatch = useAppDispatch();
   const playsong = useAppSelector((state: any) => state.auth.playsong);
   const playlistQueue = useAppSelector((state: any) => state.auth.playlistQueue);
-  const { id = 1, type } = (route?.params as {
-    id?: number;
+  const routeParams = (route?.params as {
+    id?: number | string;
     type?: string;
   }) ?? {};
+  const { id, type } = routeParams;
 
   // @rntp/player States
   const playing = useIsPlaying();
@@ -187,14 +191,18 @@ const AudioRec = () => {
   );
 
   useEffect(() => {
-    if (type == 'recordings') {
-      getrecDetail(id)
-    }
-    else {
-      getSongDetail(id);
+    console.log(id, type, "kkkkkkkkk");
+    if (!id) {
+      getrendomsong();
+      return;
     }
 
-  }, [id]);
+    if (type === 'recordings') {
+      getrecDetail(id);
+    } else {
+      getSongDetail(id);
+    }
+  }, [id, type]);
 
   // 🔄 Sync AudioRec state when song changes via remote controls (lock screen, notification, bluetooth, carplay)
   useEffect(() => {
@@ -207,12 +215,14 @@ const AudioRec = () => {
       console.log('🎧 [AudioRec] Synchronizing with remote song switch:', playsong.title);
       setSongDetail(playsong);
       prepareLyrics(playsong);
-      getSongadjacent(playsong.id);
+      if (type !== 'recordings') {
+        getSongadjacent(playsong.id);
+      }
       setCurrentPosition(0);
       setActiveLyricIndex(0);
-      const dur = Number(playsong.duration) || 0;
+      const dur = parseDurationToSeconds(playsong.duration);
       if (dur > 0) {
-        setTrackDuration(dur > 1000 ? dur / 1000 : dur);
+        setTrackDuration(dur);
       }
     }
   }, [playsong?.id]);
@@ -462,8 +472,8 @@ const AudioRec = () => {
 
     // Fallback: If song.lyrics exists but has no [mm:ss] timestamp tags
     if (lines.length === 0 && lyricRows.length > 0) {
-      const totalDurSec = Number(song.duration) || 180;
-      const durationMs = totalDurSec > 1000 ? totalDurSec : totalDurSec * 1000;
+      const totalDurSec = parseDurationToSeconds(song.duration) || 180;
+      const durationMs = totalDurSec * 1000;
       const rowDuration = Math.max(durationMs / lyricRows.length, 3000);
 
       lyricRows.forEach((rowText: string, idx: number) => {
@@ -491,48 +501,12 @@ const AudioRec = () => {
     if (!song?.id) return;
 
     try {
-      await dispatch(addsong(song));
-      await saveLastPlayed(song);
-
-      const activeItem = TrackPlayer.getActiveMediaItem();
-
-      // DO NOT reload the same song.
-      // Reloading it resets position to 0.
-      if (activeItem?.mediaId === song.id.toString()) {
-        console.log('Same track - keeping current position');
-        return;
-      }
-
-      const dur = Number(song.duration) || 0;
-
+      const dur = parseDurationToSeconds(song.duration);
       if (dur > 0) {
-        setTrackDuration(
-          dur > 1000 ? dur / 1000 : dur
-        );
+        setTrackDuration(dur);
       }
 
-      const mediaItem = formatSongToMediaItem(song);
-      if (mediaItem) {
-        console.log('Loading formatted media item:', mediaItem.title);
-        await TrackPlayer.setMediaItem(mediaItem);
-        await TrackPlayer.play();
-      } else {
-        const rawAudio = song.original_song || song.recording_url;
-        if (rawAudio) {
-          const directItem = {
-            mediaId: song.id.toString(),
-            url: rawAudio,
-            title: song.title || 'Unknown Title',
-            artist: song.artist || 'Unknown Artist',
-            artworkUrl: song.cover_image_url || undefined,
-            duration: dur > 0 ? (dur > 1000 ? dur / 1000 : dur) : undefined,
-          };
-          console.log('Loading direct media item:', directItem);
-          await TrackPlayer.setMediaItem(directItem);
-          await TrackPlayer.play();
-        }
-      }
-
+      await playTrackSong(song, true);
     } catch (error) {
       console.log('PLAY ERROR:', error);
     }
@@ -570,22 +544,28 @@ const AudioRec = () => {
       const response = await ApiService.get(apiUrls.singlerecdetail(songid));
       if ((response as any).data?.success) {
         const song = (response as any).data.recording;
+        console.log(song, "llll");
         setSongDetail(song);
         prepareLyrics(song);
+        const dur = parseDurationToSeconds(song?.duration);
+        if (dur > 0) {
+          setTrackDuration(dur);
+        }
         await playSongItem(song);
-        getSongadjacent(song.id);
+        setAdjectprevdata(null);
+        setAdjectnextvdata(null);
+        adjectNextRef.current = null;
       }
     } catch (error: any) {
-      getrendomsong()
+      console.log('getrecDetail error:', error);
       dispatch(
         showToast({
           visible: true,
-          message: error?.message || 'Failed to load track.',
+          message: error?.message || 'Failed to load recording.',
           type: 'error',
         })
       );
     } finally {
-
       setScreenLoading(false);
     }
   };
@@ -624,6 +604,9 @@ const AudioRec = () => {
         setAdjectprevdata(data.previousSong);
         setAdjectnextvdata(data.nextSong);
         adjectNextRef.current = data.nextSong;
+        if (data.nextSong?.id) {
+          prefetchNextSongForQueue(songid);
+        }
       }
     } catch (e) { }
   };
@@ -783,13 +766,12 @@ const AudioRec = () => {
     }),
   ).current;
 
+  const songDurationSec = parseDurationToSeconds(songdetail?.duration);
   const effectiveDuration =
     trackDuration > 0
       ? trackDuration
-      : Number(songdetail?.duration) > 0
-        ? Number(songdetail.duration) > 1000
-          ? Number(songdetail.duration) / 1000
-          : Number(songdetail.duration)
+      : songDurationSec > 0
+        ? songDurationSec
         : 1;
 
   const currentPercent =
@@ -808,8 +790,8 @@ const AudioRec = () => {
 
   const activeLyricLine =
     lyricsLines.length > 0 &&
-    activeLyricIndex >= 0 &&
-    activeLyricIndex < lyricsLines.length
+      activeLyricIndex >= 0 &&
+      activeLyricIndex < lyricsLines.length
       ? lyricsLines[activeLyricIndex]
       : null;
 
@@ -912,7 +894,7 @@ const AudioRec = () => {
                     {/* Artist Profile Photo inside Vinyl */}
                     <View style={styles.profileCircleWrapper}>
                       <AppImage
-                        source={GlobalImage(songdetail?.cover_image_url)}
+                        source={GlobalImage(songdetail?.cover_image_url || songdetail?.album_picture_url)}
                         width={110}
                         height={110}
                       />
@@ -929,8 +911,8 @@ const AudioRec = () => {
                     style={styles.lyricTouchWrap}
                   >
                     {activeLyricLine &&
-                    activeLyricLine.words &&
-                    activeLyricLine.words.length > 0 ? (
+                      activeLyricLine.words &&
+                      activeLyricLine.words.length > 0 ? (
                       <AppText
                         textAlign="center"
                         numberOfLines={3}
@@ -945,8 +927,8 @@ const AudioRec = () => {
                           const wordColor = isCurrent
                             ? '#FF2D55'
                             : isPast
-                            ? '#FFFFFF'
-                            : 'rgba(255, 255, 255, 0.35)';
+                              ? '#FFFFFF'
+                              : 'rgba(255, 255, 255, 0.35)';
 
                           return (
                             <AppText
@@ -1080,8 +1062,8 @@ const AudioRec = () => {
                                 const wordColor = isCurrent
                                   ? '#FF2D55'
                                   : isPast
-                                  ? '#FFFFFF'
-                                  : 'rgba(255, 255, 255, 0.35)';
+                                    ? '#FFFFFF'
+                                    : 'rgba(255, 255, 255, 0.35)';
 
                                 return (
                                   <AppText
@@ -1092,8 +1074,8 @@ const AudioRec = () => {
                                       isCurrent
                                         ? '900'
                                         : isPast
-                                        ? '800'
-                                        : '600'
+                                          ? '800'
+                                          : '600'
                                     }
                                     fontFamily={Inter.bold}
                                     style={
@@ -1147,7 +1129,7 @@ const AudioRec = () => {
               <View style={styles.metaRow}>
                 <View style={styles.miniArtwork}>
                   <AppImage
-                    source={GlobalImage(songdetail?.cover_image_url)}
+                    source={GlobalImage(songdetail?.cover_image_url || songdetail?.album_picture_url)}
                     width={48}
                     height={48}
                   />
@@ -1170,7 +1152,7 @@ const AudioRec = () => {
                     numberOfLines={1}
                     style={{ marginTop: 2 }}
                   >
-                    {songdetail?.artist || 'Artist Name'}
+                    {songdetail?.artist || songdetail?.album_name}
                   </AppText>
                 </View>
 
@@ -1190,6 +1172,14 @@ const AudioRec = () => {
                   >
                     ❝❞
                   </AppText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => { dispatch(openSongAction(songdetail)); }}
+                  style={styles.menu}>
+                  <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
+                  <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
+                  <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
                 </TouchableOpacity>
               </View>
 
@@ -1779,5 +1769,18 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 18,
     marginLeft: 8,
+  },
+  menu: {
+    marginLeft: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 100,
+    backgroundColor: '#FFF',
+    marginVertical: 1.5,
   },
 });

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
     ImageBackground,
@@ -5,114 +6,90 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import AppImage from './AppImage';
+
 import AppText from './AppText';
-import { Images, Logo } from '../constants/media';
 import { Inter } from '../constants/fonts';
-
-
-
+import { GlobalImage } from '../utils/GlobalImage';
 
 interface Band {
     id: string;
     name: string;
-    songs: string;
-    image: string;
+    song_count: number | string;
+    cover_image_url?: string;
 }
-
 
 interface Props {
     item: Band;
+    onpressbtn?: (item: Band) => void;
 }
 
-
-const PlaylistCard = ({ item }: Props) => {
-
+const PlaylistCard: React.FC<Props> = ({ item, onpressbtn }) => {
     return (
-
         <TouchableOpacity
             style={styles.container}
             activeOpacity={0.8}
+            onPress={() => onpressbtn?.(item)}
         >
-
             <ImageBackground
-                source={Images.b2moodbanner}
+                source={
+                    item.cover_image_url
+                        ? GlobalImage(item.cover_image_url)
+                        : undefined
+                }
                 style={styles.image}
+                imageStyle={styles.imageStyle}
             >
-
-
                 <View style={styles.info}>
-                    <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
-                        <AppText style={styles.name}>
-                            {item.name}
-                        </AppText>
-
-                        {/* <AppImage
-                            source={Logo.Bluetick}
-                            height={8}
-                            width={8}
-                            resizeMode='conatin'
-                        /> */}
-                    </View>
-
-
-
-                    <AppText style={styles.songs}>
-                        {item.songs}
+                    <AppText style={styles.name} numberOfLines={1}>
+                        {item.name}
                     </AppText>
 
+                    <AppText style={styles.songs}>
+                        {item.song_count} songs
+                    </AppText>
                 </View>
             </ImageBackground>
-
         </TouchableOpacity>
-
     );
 };
 
-
 export default PlaylistCard;
 
-
-
 const styles = StyleSheet.create({
-
     container: {
         width: 90,
+        height: 80,
         marginRight: 8,
-        // backgroundColor: '#171717',
         borderRadius: 8,
         overflow: 'hidden',
-        height: 80
     },
-
 
     image: {
         width: '100%',
         height: '100%',
-        // alignItems: 'flex-end',
-        justifyContent: 'flex-end'
+        justifyContent: 'flex-end',
+        backgroundColor: '#171717',
     },
 
+    imageStyle: {
+        borderRadius: 8,
+    },
 
     info: {
-        padding: 12,
-        //  alignSelf: 'flex-end'
+        padding: 8,
+        backgroundColor: 'rgba(0,0,0,0.35)',
     },
-
 
     name: {
-        color: '#fff',
+        color: '#FFFFFF',
         fontSize: 10,
         fontWeight: '700',
-        fontFamily: Inter.semibold
+        fontFamily: Inter.semibold,
     },
-
 
     songs: {
         marginTop: 2,
         color: '#B4B1AD',
         fontSize: 8,
     },
-
-
 });

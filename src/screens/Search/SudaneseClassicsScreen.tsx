@@ -153,6 +153,11 @@ export default function SudaneseClassicsScreen() {
     const dispatch = useAppDispatch();
     const [loading, setLoading] = useState(false);
     const [artisttopdata, setArtisttopdata] = useState<any[]>([]);
+    const [playlists, setPlaylists] =
+        useState([]);
+    const [songs, setSongs] = useState([]);
+
+    const [songsLoading, setSongsLoading] = useState(false);
 
     const categorydata = async () => {
         console.log("sudanesecategory api called", apiUrls.sudanesecategory)
@@ -246,10 +251,72 @@ export default function SudaneseClassicsScreen() {
 
         }
     };
+    const getPlaylists = async () => {
+        try {
+            setLoading(true);
+
+            const response = await ApiService.get(apiUrls.getplaylists);
+
+            console.log('Playlist API response:', response);
+
+            const res = (response as any)?.data;
+
+            if (res?.success) {
+                const playlistData = res?.playlists || [];
+
+                setPlaylists(playlistData);
+
+                // Select first API playlist
+                if (playlistData.length > 0) {
+                    const firstPlaylist = playlistData[0];
+
+                    setSelected(firstPlaylist.id);
+
+                    await getPlaylistSongs(firstPlaylist.id);
+                }
+            } else {
+                setPlaylists([]);
+            }
+        } catch (error) {
+            console.log('Playlist API error:', error);
+            setPlaylists([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getPlaylistSongs = async (playlistId: string) => {
+        try {
+            setSongsLoading(true);
+            setSongs([]);
+
+            const response = await ApiService.get(
+                apiUrls.getplaylistsongs(playlistId),
+            );
+
+            console.log('Playlist songs API response:', response);
+
+            const res = (response as any)?.data;
+
+            if (res?.success) {
+                const playlistSongs = res?.playlist.songs || [];
+
+                setSongs(playlistSongs);
+            } else {
+                setSongs([]);
+            }
+        } catch (error) {
+            console.log('Playlist songs error:', error);
+            setSongs([]);
+        } finally {
+            setSongsLoading(false);
+        }
+    };
 
     useEffect(() => {
         classicdata()
         categorydata()
+        getPlaylists()
         gettopartistfun()
     }, [])
 
@@ -412,9 +479,9 @@ export default function SudaneseClassicsScreen() {
                         🎼 Classic Playlists
                     </AppText>
 
-                    <AppText style={styles.view}>
+                    {/* <AppText style={styles.view}>
                         View all
-                    </AppText>
+                    </AppText> */}
                 </View>
 
                 <FlatList
@@ -423,7 +490,14 @@ export default function SudaneseClassicsScreen() {
                     data={playlists}
                     keyExtractor={(i) => i.id}
                     renderItem={({ item }) => (
-                        <PlaylistCard item={item} />
+                        <PlaylistCard item={item}
+                            onpressbtn={() => {
+                                (navigation as any).navigate('SongsListScreen', {
+                                    songs: songs,
+                                    previousScreen: 'SudaneseClassicsScreen',
+                                });
+                            }}
+                        />
                     )}
                 />
             </ScrollView>

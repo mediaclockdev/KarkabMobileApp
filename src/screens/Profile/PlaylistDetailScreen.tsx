@@ -16,11 +16,13 @@ import ApiService from '../../services/api';
 import AppImage from '../../share/components/AppImage';
 import AppText from '../../share/components/AppText';
 import { Images } from '../../share/constants/media';
-import { useAppColors } from '../../share/constants/color';
+import color, { useAppColors } from '../../share/constants/color';
 import { Inter } from '../../share/constants/fonts';
 import apiUrls from '../../services/apiUrls';
-import { openSongAction, showToast } from '../../auth/redux/authSlice';
+import { addsong, isPausesd, openSongAction, showToast } from '../../auth/redux/authSlice';
 import { useAppDispatch, useAppSelector } from '../../share/hooks/useAppSelector';
+import TrackPlayer from '@rntp/player';
+import { playSongList, playTrackSong } from '../../services/player'
 
 type PlaylistSong = {
     id: string;
@@ -59,6 +61,9 @@ const PlaylistDetailScreen = () => {
     const [addSongsVisible, setAddSongsVisible] = useState(false);
     const [songSearch, setSongSearch] = useState('');
     const [selectedSongs, setSelectedSongs] = useState<string[]>([]);
+    const [playingId, setPlayingId] = useState<string | null>(null);
+    const [loadings, setLoadings] = useState(false);
+    const isPaused = useAppSelector((state: any) => state.auth.isPaused);
     const recordingRefresh = useAppSelector(
         state => state.auth.recordingRefresh
     );
@@ -336,6 +341,44 @@ const PlaylistDetailScreen = () => {
      * PLAYLIST SONG
      * ==========================================
      */
+    const stopRecording = async () => {
+        try {
+            await dispatch(isPausesd(true));
+            await TrackPlayer.pause();
+            try {
+
+            } catch (e) { }
+        } catch (error) {
+            console.log('Stop Error:', error);
+        }
+    };
+    const playRecording = async (item: any) => {
+        try {
+
+        } catch (e) { }
+
+        setPlayingId(item.id?.toString());
+        setLoadings(true);
+        await dispatch(isPausesd(false));
+
+        try {
+            const list = songs.length > 0 ? songs : [];
+            const songIndex = list.findIndex(
+                (s: any) => s.id?.toString() === item.id?.toString()
+            );
+            const initialIndex = songIndex >= 0 ? songIndex : 0;
+            if (list.length > 0) {
+                await playSongList(list, initialIndex, true);
+            } else {
+                await playTrackSong(item, true);
+            }
+        } catch (error) {
+            console.log('Librarylist play error:', error);
+            dispatch(addsong({ ...item }));
+        } finally {
+            setLoadings(false);
+        }
+    };
     const renderPlaylistSong = ({
         item,
     }: {
@@ -387,6 +430,34 @@ const PlaylistDetailScreen = () => {
                         {item.duration}
                     </AppText>
                 </View>
+                <TouchableOpacity
+                    style={styles.playButton}
+                    onPress={() => {
+                        playingId?.toString() === item.id?.toString() && !isPaused
+                            ? stopRecording()
+                            : playRecording(item);
+                    }}
+                >
+                    {loadings && playingId?.toString() === item.id?.toString() ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                        <>
+                            {playingId?.toString() === item.id?.toString() && !isPaused ? (
+                                <View style={styles.pauseContainer}>
+                                    <View style={styles.pauseLine} />
+                                    <View style={styles.pauseLine} />
+                                </View>
+                            ) : (
+                                <AppImage
+                                    source={Images.playicon}
+                                    width={10}
+                                    height={10}
+                                    tintColor={color.darkthemetext}
+                                />
+                            )}
+                        </>
+                    )}
+                </TouchableOpacity>
 
                 <TouchableOpacity
                     onPress={() => {
@@ -1253,6 +1324,27 @@ const styles = StyleSheet.create({
     noSongs: {
         paddingTop: 50,
         alignItems: 'center',
+    },
+    playButton: {
+        width: 34,
+        height: 34,
+        borderRadius: 100,
+        borderWidth: 1.5,
+        borderColor: '#FF5A00',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    pauseContainer: {
+        flexDirection: 'row',
+        gap: 4,
+    },
+
+    pauseLine: {
+        width: 3,
+        height: 14,
+        backgroundColor: '#FFF',
+        borderRadius: 10,
     },
 });
 

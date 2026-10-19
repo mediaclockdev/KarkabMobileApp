@@ -4,8 +4,11 @@ import {
     Alert,
     Animated,
     FlatList,
+    KeyboardAvoidingView,
     Modal,
     PanResponder,
+    Platform,
+    ScrollView,
     StyleSheet,
     TextInput,
     TouchableOpacity,
@@ -1096,116 +1099,129 @@ const CreatePlaylist = () => {
                 visible={createModalVisible}
                 transparent
                 animationType="slide"
+                statusBarTranslucent
                 onRequestClose={closePlaylistModal}
             >
-                <View style={styles.modalOverlay}>
-                    <View
-                        style={[
-                            styles.createModal,
-                            {
-                                backgroundColor: colors.darkbackround,
-                            },
-                        ]}
+                <KeyboardAvoidingView
+                    style={styles.modalOverlay}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+                >
+                    <ScrollView
+                        contentContainerStyle={styles.modalScrollContent}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
+                        bounces={false}
                     >
-                        {/* Header */}
-                        <View style={styles.modalHeader}>
+                        <View
+                            style={[
+                                styles.createModal,
+                                {
+                                    backgroundColor: colors.darkbackround,
+                                },
+                            ]}
+                        >
+                            {/* Header */}
+                            <View style={styles.modalHeader}>
+                                <AppText
+                                    color={colors.darkthemetext}
+                                    fontSize={17}
+                                    fontWeight="600"
+                                    fontFamily={Inter.medium}
+                                >
+                                    {isEditing ? 'Edit Playlist' : 'Create Playlist'}
+                                </AppText>
+
+                                <TouchableOpacity onPress={closePlaylistModal}>
+                                    <AppText color="#8F8986" fontSize={25}>
+                                        ×
+                                    </AppText>
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Name */}
                             <AppText
                                 color={colors.darkthemetext}
-                                fontSize={17}
-                                fontWeight="600"
+                                fontSize={11}
                                 fontFamily={Inter.medium}
+                                marginTop={10}
                             >
-                                {isEditing ? 'Edit Playlist' : 'Create Playlist'}
+                                Playlist Name
                             </AppText>
 
-                            <TouchableOpacity onPress={closePlaylistModal}>
-                                <AppText color="#8F8986" fontSize={25}>
-                                    ×
-                                </AppText>
+                            <TextInput
+                                value={playlistName}
+                                onChangeText={setPlaylistName}
+                                placeholder="Enter playlist name"
+                                placeholderTextColor="#716B69"
+                                style={[
+                                    styles.modalInput,
+                                    {
+                                        color: colors.darkthemetext,
+                                    },
+                                ]}
+                            />
+
+                            {/* Description */}
+                            <AppText
+                                color={colors.darkthemetext}
+                                fontSize={11}
+                                fontFamily={Inter.medium}
+                                marginTop={15}
+                            >
+                                Description
+                            </AppText>
+
+                            <TextInput
+                                value={playlistDescription}
+                                onChangeText={setPlaylistDescription}
+                                placeholder="Add a description"
+                                placeholderTextColor="#716B69"
+                                multiline
+                                style={[
+                                    styles.descriptionInput,
+                                    {
+                                        color: colors.darkthemetext,
+                                    },
+                                ]}
+                            />
+
+                            {/* Submit Button */}
+                            <TouchableOpacity
+                                activeOpacity={0.85}
+                                style={styles.modalCreateButton}
+                                onPress={handleSavePlaylist}
+                                disabled={savingPlaylist}
+                            >
+                                <LinearGradient
+                                    colors={['#FF4B4C', '#AB2C5D']}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 1 }}
+                                    style={styles.modalGradient}
+                                >
+                                    {savingPlaylist ? (
+                                        <ActivityIndicator
+                                            size="small"
+                                            color="#FFFFFF"
+                                        />
+                                    ) : (
+                                        <AppText
+                                            color="#FFFFFF"
+                                            fontSize={12}
+                                            fontWeight="600"
+                                            fontFamily={Inter.medium}
+                                        >
+                                            {isEditing
+                                                ? 'Save Changes'
+                                                : 'Create Playlist'}
+                                        </AppText>
+                                    )}
+                                </LinearGradient>
                             </TouchableOpacity>
                         </View>
 
-                        {/* Name */}
-                        <AppText
-                            color={colors.darkthemetext}
-                            fontSize={11}
-                            fontFamily={Inter.medium}
-                            marginTop={10}
-                        >
-                            Playlist Name
-                        </AppText>
-
-                        <TextInput
-                            value={playlistName}
-                            onChangeText={setPlaylistName}
-                            placeholder="Enter playlist name"
-                            placeholderTextColor="#716B69"
-                            style={[
-                                styles.modalInput,
-                                {
-                                    color: colors.darkthemetext,
-                                },
-                            ]}
-                        />
-
-                        {/* Description */}
-                        <AppText
-                            color={colors.darkthemetext}
-                            fontSize={11}
-                            fontFamily={Inter.medium}
-                            marginTop={15}
-                        >
-                            Description
-                        </AppText>
-
-                        <TextInput
-                            value={playlistDescription}
-                            onChangeText={setPlaylistDescription}
-                            placeholder="Add a description"
-                            placeholderTextColor="#716B69"
-                            multiline
-                            style={[
-                                styles.descriptionInput,
-                                {
-                                    color: colors.darkthemetext,
-                                },
-                            ]}
-                        />
-
-                        {/* Submit Button */}
-                        <TouchableOpacity
-                            activeOpacity={0.85}
-                            style={styles.modalCreateButton}
-                            onPress={handleSavePlaylist}
-                            disabled={savingPlaylist}
-                        >
-                            <LinearGradient
-                                colors={['#FF4B4C', '#AB2C5D']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                                style={styles.modalGradient}
-                            >
-                                {savingPlaylist ? (
-                                    <ActivityIndicator
-                                        size="small"
-                                        color="#FFFFFF"
-                                    />
-                                ) : (
-                                    <AppText
-                                        color="#FFFFFF"
-                                        fontSize={12}
-                                        fontWeight="600"
-                                        fontFamily={Inter.medium}
-                                    >
-                                        {isEditing
-                                            ? 'Save Changes'
-                                            : 'Create Playlist'}
-                                    </AppText>
-                                )}
-                            </LinearGradient>
-                        </TouchableOpacity>
-                    </View>
-                </View>
+                    </ScrollView>
+                </KeyboardAvoidingView>
             </Modal>
 
             {/* ========================================= */}
@@ -1436,7 +1452,7 @@ const CreatePlaylist = () => {
                     </TouchableOpacity>
                 </TouchableOpacity>
             </Modal>
-        </SafeAreaView>
+        </SafeAreaView >
     );
 };
 
@@ -1819,6 +1835,10 @@ const styles = StyleSheet.create({
         borderRadius: 19,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    modalScrollContent: {
+        flexGrow: 1,
+        justifyContent: 'flex-end',
     },
 });
 

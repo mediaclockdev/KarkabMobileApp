@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
+    Modal,
     StyleSheet,
     TouchableOpacity,
     View,
@@ -8,14 +9,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-
 import AppText from '../../share/components/AppText';
 import AppImage from '../../share/components/AppImage';
 import ApiService from '../../services/api';
 import color from '../../share/constants/color';
 import { Inter } from '../../share/constants/fonts';
 import { Logo } from '../../share/constants/media';
-
 import { changeLanguage } from '../../localization/changeLanguage';
 import {
     LANGUAGE_LIST,
@@ -24,6 +23,9 @@ import {
 import { showToast } from '../../auth/redux/authSlice';
 import apiUrls from '../../services/apiUrls';
 import { useAppDispatch } from '../../share/hooks/useAppSelector';
+import LinearGradient from 'react-native-linear-gradient';
+
+
 
 const LanguageScreen = () => {
     const navigation = useNavigation();
@@ -31,18 +33,29 @@ const LanguageScreen = () => {
     const dispatch = useAppDispatch();
     const activeCode = i18n.language.split('-')[0] as AppLanguage;
 
-    const handleLanguageSelect = async (code: AppLanguage) => {
-        if (code === activeCode) {
+    const [selectedLanguage, setSelectedLanguage] =
+        useState<AppLanguage | null>(null);
+    const [changingLanguage, setChangingLanguage] = useState(false);
+
+
+
+    const confirmLanguageChange = async () => {
+        if (!selectedLanguage || changingLanguage) return;
+
+        setChangingLanguage(true);
+
+        try {
+            await handleSave(selectedLanguage);
+        } finally {
+            setChangingLanguage(false);
+        }
+    };
+    const handleLanguageSelect = (code: AppLanguage) => {
+        if (code === activeCode || changingLanguage) {
             return;
         }
 
-        try {
-            handleSave(code);
-
-
-        } catch (error) {
-            console.log('Language change error:', error);
-        }
+        setSelectedLanguage(code);
     };
 
 
@@ -53,16 +66,16 @@ const LanguageScreen = () => {
         try {
             const response = await ApiService.put(
                 `${apiUrls.profileApi}?language=${code}`,
-                {
-                    language: code
-                },
+                { language: code },
             );
 
             const data = (response as any)?.data;
 
-            console.log(code, data, 'llll');
-
             if (data?.success) {
+                await changeLanguage(codes);
+
+                setSelectedLanguage(null);
+
                 dispatch(
                     showToast({
                         visible: true,
@@ -70,14 +83,11 @@ const LanguageScreen = () => {
                         type: 'success',
                     }),
                 );
-
-                await changeLanguage(codes);
             } else {
                 dispatch(
                     showToast({
                         visible: true,
-                        message:
-                            data?.message || 'Language failed to update.',
+                        message: data?.message || 'Language failed to update.',
                         type: 'error',
                     }),
                 );
@@ -110,7 +120,7 @@ const LanguageScreen = () => {
                 <View style={styles.header}>
                     <TouchableOpacity
                         activeOpacity={0.7}
-                        onPress={() => navigation.goBack()}
+                        onPress={() => (navigation as any).navigate('SettingScreen')}
                         style={styles.backButton}
                     >
                         <AppImage
@@ -224,6 +234,90 @@ const LanguageScreen = () => {
                 </View>
 
             </View>
+            <Modal
+                visible={selectedLanguage !== null}
+                transparent
+                animationType="fade"
+                statusBarTranslucent
+                onRequestClose={() => {
+                    if (!changingLanguage) setSelectedLanguage(null);
+                }}
+            >
+                <View style={styles.modalOverlay}>
+                    <View
+                        style={[
+                            styles.modalContainer,
+                            { backgroundColor: color.darkbackround },
+                        ]}
+                    >
+                        <View style={styles.modalIcon}>
+                            <AppImage
+                                source={Logo.language}
+                                width={26}
+                                height={26}
+                                tintColor="#FFB300"
+                            />
+                        </View>
+
+                        <AppText
+                            color={color.darkthemetext}
+                            fontSize={19}
+                            fontFamily={Inter.medium}
+                            style={styles.modalTitle}
+                        >
+                            Change Language?
+                        </AppText>
+
+                        <AppText
+                            color="#A5A5A5"
+                            fontSize={13}
+                            style={styles.modalDescription}
+                        >
+                            Are you sure you want to change the app language?
+                            The application will reload to apply the changes properly.
+                        </AppText>
+
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                disabled={changingLanguage}
+                                onPress={() => setSelectedLanguage(null)}
+                                style={styles.cancelButton}
+                            >
+                                <AppText
+                                    color={color.darkthemetext}
+                                    fontSize={13}
+                                    fontFamily={Inter.medium}
+                                >
+                                    Cancel
+                                </AppText>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                disabled={changingLanguage}
+                                onPress={confirmLanguageChange}
+                                style={styles.confirmButton}
+                            >
+                                <LinearGradient
+                                    colors={['#FFB300', '#F3870C', '#CF7D00']}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 1 }}
+                                    style={styles.confirmGradient}
+                                >
+                                    <AppText
+                                        color="#FFFFFF"
+                                        fontSize={13}
+                                        fontFamily={Inter.medium}
+                                    >
+                                        {changingLanguage ? 'Please wait...' : 'Confirm'}
+                                    </AppText>
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 };
@@ -437,4 +531,86 @@ const styles = StyleSheet.create({
         marginTop: 4,
         fontFamily: Inter.regular,
     },
+
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+    },
+
+    modalContainer: {
+        width: '100%',
+        maxWidth: 360,
+        borderRadius: 22,
+        paddingHorizontal: 22,
+        paddingTop: 28,
+        paddingBottom: 22,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#383838',
+        elevation: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.35,
+        shadowRadius: 15,
+    },
+
+    modalIcon: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: 'rgba(255, 179, 0, 0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 179, 0, 0.35)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 18,
+    },
+
+    modalTitle: {
+        textAlign: 'center',
+        marginBottom: 12,
+    },
+
+    modalDescription: {
+        textAlign: 'center',
+        lineHeight: 21,
+        marginBottom: 26,
+        paddingHorizontal: 4,
+    },
+
+    modalButtons: {
+        flexDirection: 'row',
+        width: '100%',
+        gap: 12,
+        marginTop: 2,
+    },
+
+    cancelButton: {
+        flex: 1,
+        height: 48,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: '#454545',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#1C1C1C',
+    },
+
+    confirmButton: {
+        flex: 1,
+        height: 48,
+        borderRadius: 14,
+        overflow: 'hidden',
+    },
+
+    confirmGradient: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 14,
+    },
+
 });

@@ -3,7 +3,7 @@ import {
     View,
     Text,
     StyleSheet,
-    SafeAreaView,
+
     StatusBar,
     TouchableOpacity,
     ScrollView,
@@ -24,6 +24,7 @@ import apiUrls from '../services/apiUrls';
 import ApiService from '../services/api';
 import AppText from '../share/components/AppText';
 import Librarylist from '../share/components/Librarylist';
+import { SafeAreaView } from 'react-native-safe-area-context';
 const { width } = Dimensions.get('window');
 
 const COLORS = {

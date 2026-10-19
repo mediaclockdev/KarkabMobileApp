@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
+    ActivityIndicator,
     FlatList,
     ScrollView,
     StyleSheet,
@@ -110,6 +111,7 @@ const GenreScreen = () => {
     const [selected, setSelected] = useState('All');
     const [searchText, setSearchText] = useState('');
     const [searchText1, setSearchText1] = useState('');
+    const [loader, setLoader] = useState(false);
     useFocusEffect(
         useCallback(() => {
             setSearchText('');
@@ -141,7 +143,7 @@ const GenreScreen = () => {
     const categorydata = async () => {
         console.log("category api called", apiUrls.categories)
         try {
-            dispatch(loaderstate(true));
+            setLoader(true)
 
             const response = await ApiService.get(apiUrls
                 .categories);
@@ -155,7 +157,7 @@ const GenreScreen = () => {
         } catch (error) {
             console.log('Categorydata ERROR:', error);
         } finally {
-            dispatch(loaderstate(false));
+            setLoader(false)
         }
     };
     const categoryList = [
@@ -204,100 +206,107 @@ const GenreScreen = () => {
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.container}
-            >
-                {/* Header */}
-                <View style={styles.header}>
-                    <View style={styles.headerContent}>
-                        <TouchableOpacity
-                            onPress={() => {
+            {/* Header */}
+            <View style={styles.header}>
+                <View style={styles.headerContent}>
+                    <TouchableOpacity
+                        onPress={() => {
 
-                                (navigation as any).navigate('Search')
-                            }}
-                        >
+                            (navigation as any).navigate('Search')
+                        }}
+                    >
 
-                            {/* <Text style={styles.back}>←</Text> */}
-                            <AppImage
-                                source={Logo.arrowline}
-                                height={25}
-                                width={19}
-                                resizeMode='cover'
-                                tintColor={"#FFFF"}
-                            />
-                        </TouchableOpacity>
-                        <View>
-
-
-                            <AppText
-                                style={[
-                                    styles.title,
-                                    {
-                                        color: color.darkthemetext,
-                                    },
-                                ]}
-                            >
-                                Genre
-                            </AppText>
-
-                            <AppText style={styles.subtitle}>
-                                Explore music by genre
-                            </AppText>
-                        </View>
-                    </View>
-
-                    <TouchableOpacity style={styles.micContainer}>
+                        {/* <Text style={styles.back}>←</Text> */}
                         <AppImage
-                            source={Images.mics}
-                            height={15}
-                            width={18}
-                            resizeMode="contain"
+                            source={Logo.arrowline}
+                            height={25}
+                            width={19}
+                            resizeMode='cover'
+                            tintColor={"#FFFF"}
                         />
                     </TouchableOpacity>
-                </View>
+                    <View>
 
-                {/* Search */}
-                <SearchBar
-                    onPress={() => {
-                        ; (navigation as any).navigate('SearchSongSecreen', { previousScreen: 'GenreScreen' })
-                    }}
-                />
 
-                {/* Categories */}
-                <FlatList
-                    horizontal
-                    data={categoryList}
-                    showsHorizontalScrollIndicator={false}
-                    keyExtractor={(item) => item}
-                    contentContainerStyle={styles.categoryList}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity
-                            activeOpacity={0.8}
-                            onPress={() =>
-                                setSelected(item.title)
-                            }
+                        <AppText
                             style={[
-                                styles.categoryChip,
-                                selected === item.title &&
-                                styles.selectedCategory,
+                                styles.title,
+                                {
+                                    color: color.darkthemetext,
+                                },
                             ]}
                         >
-                            <AppText
+                            Genre
+                        </AppText>
+
+                        <AppText style={styles.subtitle}>
+                            Explore music by genre
+                        </AppText>
+                    </View>
+                </View>
+
+                <TouchableOpacity style={styles.micContainer}>
+                    <AppImage
+                        source={Images.mics}
+                        height={15}
+                        width={18}
+                        resizeMode="contain"
+                    />
+                </TouchableOpacity>
+            </View>
+
+            {/* Search */}
+            <SearchBar
+                onPress={() => {
+                    ; (navigation as any).navigate('SearchSongSecreen', { previousScreen: 'GenreScreen' })
+                }}
+            />
+
+            {loader ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color="#EFCB61" />
+                </View>
+            ) : (
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.container}
+                >
+
+
+                    {/* Categories */}
+                    <FlatList
+                        horizontal
+                        data={categoryList}
+                        showsHorizontalScrollIndicator={false}
+                        keyExtractor={(item) => item}
+                        contentContainerStyle={styles.categoryList}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                onPress={() =>
+                                    setSelected(item.title)
+                                }
                                 style={[
-                                    styles.categoryText,
+                                    styles.categoryChip,
                                     selected === item.title &&
-                                    styles.selectedCategoryText,
+                                    styles.selectedCategory,
                                 ]}
                             >
-                                {item.title}
-                            </AppText>
-                        </TouchableOpacity>
-                    )}
-                />
+                                <AppText
+                                    style={[
+                                        styles.categoryText,
+                                        selected === item.title &&
+                                        styles.selectedCategoryText,
+                                    ]}
+                                >
+                                    {item.title}
+                                </AppText>
+                            </TouchableOpacity>
+                        )}
+                    />
 
-                {/* Featured section */}
-                {/* <View style={styles.sectionHeader}>
+                    {/* Featured section */}
+                    {/* <View style={styles.sectionHeader}>
                     <AppText style={styles.sectionTitle}>
                         Explore Genres
                     </AppText>
@@ -307,17 +316,18 @@ const GenreScreen = () => {
                     </AppText>
                 </View> */}
 
-                {/* Genre Grid */}
-                <FlatList
-                    data={filteredCategories}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderGenre}
-                    numColumns={2}
-                    scrollEnabled={false}
-                    columnWrapperStyle={styles.row}
-                    contentContainerStyle={styles.genreList}
-                />
-            </ScrollView>
+                    {/* Genre Grid */}
+                    <FlatList
+                        data={filteredCategories}
+                        keyExtractor={(item) => item.id}
+                        renderItem={renderGenre}
+                        numColumns={2}
+                        scrollEnabled={false}
+                        columnWrapperStyle={styles.row}
+                        contentContainerStyle={styles.genreList}
+                    />
+                </ScrollView>
+            )}
         </SafeAreaView>
     );
 };

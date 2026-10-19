@@ -13,6 +13,7 @@ import {
     Dimensions,
     ImageBackground,
     GestureResponderEvent,
+    ActivityIndicator,
 } from 'react-native';
 import AppImage from '../../share/components/AppImage';
 import { Banner, BottomIcons, Images, Logo } from '../../share/constants/media';
@@ -219,7 +220,8 @@ export default function SongsScreen() {
     const [populardatas, setPopulardatas] = useState<any[]>([])
     const [newReleasesdata, setNewreleasesdata] = useState<any[]>([])
     const [moods, setCategories] = useState<any[]>([])
-    const [songdata, setSongdata] = useState(null)
+    const [songdata, setSongdata] = useState(null);
+    const [loader, setLoader] = useState(false);
     const dispatch = useAppDispatch();
 
     const trandingdata = async () => {
@@ -325,325 +327,253 @@ export default function SongsScreen() {
                 backgroundColor={v.bg}
                 barStyle="light-content"
             /> */}
+            {/* HEADER */}
 
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 120 }}>
+            <View style={styles.header}>
 
-                {/* HEADER */}
+                <TouchableOpacity
+                    onPress={() => {
 
-                <View style={styles.header}>
+                        (navigation as any).navigate('Search')
+                    }}
+                >
 
-                    <TouchableOpacity
-                        onPress={() => {
+                    {/* <Text style={styles.back}>←</Text> */}
+                    <AppImage
+                        source={Logo.arrowline}
+                        height={25}
+                        width={19}
+                        resizeMode='cover'
+                        tintColor={"#FFFF"}
+                    />
+                </TouchableOpacity>
 
-                            (navigation as any).navigate('Search')
-                        }}
-                    >
+                <View style={{ flex: 1, marginLeft: 15 }}>
 
-                        {/* <Text style={styles.back}>←</Text> */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+
                         <AppImage
-                            source={Logo.arrowline}
-                            height={25}
-                            width={19}
-                            resizeMode='cover'
-                            tintColor={"#FFFF"}
+                            source={Logo.ymusic}
+                            height={28}
+                            width={28}
+                            tintColor={"#E52450"}
                         />
-                    </TouchableOpacity>
-
-                    <View style={{ flex: 1, marginLeft: 15 }}>
-
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-
-                            <AppImage
-                                source={Logo.ymusic}
-                                height={28}
-                                width={28}
-                                tintColor={"#E52450"}
-                            />
 
 
-                            <View>
-                                <Text style={styles.title}>
-                                    {" "}{t('Home.Songs')}
+                        <View>
+                            <Text style={styles.title}>
+                                {" "}{t('Home.Songs')}
+                            </Text>
+
+                            <Text style={styles.subtitle}>
+                                {" "}{t('Home.Discoverthousandsof')}
+                                <Text style={{ color: '#D4AF37' }}>
+
+                                    {' '}{t('Home.Sudanesesongs')}
                                 </Text>
-
-                                <Text style={styles.subtitle}>
-                                    {" "}{t('Home.Discoverthousandsof')}
-                                    <Text style={{ color: '#D4AF37' }}>
-
-                                        {' '}{t('Home.Sudanesesongs')}
-                                    </Text>
-                                </Text>
-                            </View>
-
+                            </Text>
                         </View>
 
                     </View>
 
-                    <TouchableOpacity style={styles.settingBtn}>
-                        <AppImage
-                            source={Images.playlist}
-                            height={16}
-                            width={16}
-                        />
-                    </TouchableOpacity>
-
                 </View>
 
-                {/* SEARCH */}
-
-                <TouchableOpacity
-                    onPress={() => {
-                        (navigation as any).navigate('SearchSongSecreen', { previousScreen: 'SongsScreen' })
-                    }}
-                    style={styles.searchBox}>
+                <TouchableOpacity style={styles.settingBtn}>
                     <AppImage
-                        source={BottomIcons.search}
+                        source={Images.playlist}
                         height={16}
                         width={16}
                     />
-                    {/* <Text style={styles.searchIcon}>🔍</Text> */}
-
-                    <TextInput
-                        placeholder={t('Home.Searchbarplaceholder')}
-                        placeholderTextColor="#777"
-                        style={styles.input}
-                        editable={false}
-                    />
-
-                    <TouchableOpacity>
-                        <AppImage
-                            source={Images.playlist}
-                            height={16}
-                            width={16}
-                        />
-                    </TouchableOpacity>
-
                 </TouchableOpacity>
 
-                {/* CATEGORY */}
+            </View>
+
+            {/* SEARCH */}
+
+            <TouchableOpacity
+                onPress={() => {
+                    (navigation as any).navigate('SearchSongSecreen', { previousScreen: 'SongsScreen' })
+                }}
+                style={styles.searchBox}>
+                <AppImage
+                    source={BottomIcons.search}
+                    height={16}
+                    width={16}
+                />
+                {/* <Text style={styles.searchIcon}>🔍</Text> */}
+
+                <TextInput
+                    placeholder={t('Home.Searchbarplaceholder')}
+                    placeholderTextColor="#777"
+                    style={styles.input}
+                    editable={false}
+                />
+
+                <TouchableOpacity>
+                    <AppImage
+                        source={Images.playlist}
+                        height={16}
+                        width={16}
+                    />
+                </TouchableOpacity>
+
+            </TouchableOpacity>
+            {loader ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color="#EFCB61" />
+                </View>
+            ) : (
 
                 <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: 15, gap: 10, marginBottom: 15 }}>
-                    {categoryList.map(item => {
-                        const active = selected === item.title;
-
-                        return (
-                            <TouchableOpacity
-                                key={item.id}
-                                onPress={() => {
-                                    setSelected(item.title);
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingBottom: 120 }}>
 
 
-                                    (navigation as any).navigate('SongsListScreen', {
-                                        songs: item,
-                                        previousScreen: 'SongsScreen',
-                                        filter: true
-                                    });
 
-                                }}
-                                activeOpacity={0.8}>
-                                {active ? (
-                                    <LinearGradient
-                                        colors={['#FF8A00', '#FF3D5A']}
-                                        style={styles.category}>
-                                        <Text style={[styles.categoryText, { color: '#FFF' }]}>
-                                            {item.title}
-                                        </Text>
-                                    </LinearGradient>
-                                ) : (
-                                    <View style={[styles.category, styles.categoryInactive]}>
-                                        <Text style={[styles.categoryText, { color: '#DDD' }]}>
-                                            {item.title}
-                                        </Text>
-                                    </View>
-                                )}
-                            </TouchableOpacity>
-                        );
-                    })}
+                    {/* CATEGORY */}
 
-                </ScrollView>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={{ paddingHorizontal: 15, gap: 10, marginBottom: 15 }}>
+                        {categoryList.map(item => {
+                            const active = selected === item.title;
 
-                {/* BANNER */}
+                            return (
+                                <TouchableOpacity
+                                    key={item.id}
+                                    onPress={() => {
+                                        setSelected(item.title);
 
-                <FlatList
-                    horizontal
-                    pagingEnabled
-                    showsHorizontalScrollIndicator={false}
-                    data={banners}
-                    keyExtractor={item => item.id}
-                    onMomentumScrollEnd={e => {
-                        const index = Math.round(
-                            e.nativeEvent.contentOffset.x / (width - 30),
-                        );
-                        setActiveBanner(index);
-                    }}
-                    renderItem={({ item }) => (
-                        <View style={styles.banner}>
 
-                            <ImageBackground
-                                source={item.image}
-                                style={styles.bannerImage}
+                                        (navigation as any).navigate('SongsListScreen', {
+                                            songs: item,
+                                            previousScreen: 'SongsScreen',
+                                            filter: true
+                                        });
 
-                            >
+                                    }}
+                                    activeOpacity={0.8}>
+                                    {active ? (
+                                        <LinearGradient
+                                            colors={['#FF8A00', '#FF3D5A']}
+                                            style={styles.category}>
+                                            <Text style={[styles.categoryText, { color: '#FFF' }]}>
+                                                {item.title}
+                                            </Text>
+                                        </LinearGradient>
+                                    ) : (
+                                        <View style={[styles.category, styles.categoryInactive]}>
+                                            <Text style={[styles.categoryText, { color: '#DDD' }]}>
+                                                {item.title}
+                                            </Text>
+                                        </View>
+                                    )}
+                                </TouchableOpacity>
+                            );
+                        })}
 
-                                <View style={styles.overlay} />
+                    </ScrollView>
 
-                                <View style={styles.bannerContent}>
-
-                                    <Text style={styles.bannerSmall}>
-                                        TODAY'S TOP HITS
-                                    </Text>
-
-                                    <Text style={styles.bannerTitle}>
-                                        {item.title}
-                                    </Text>
-
-                                    <TouchableOpacity style={styles.playBtn}>
-                                        <Text style={{ color: '#ffff', fontSize: 12 }}>
-                                            ▶ Play All
-                                        </Text>
-                                    </TouchableOpacity>
-
-                                </View>
-                            </ImageBackground>
-                        </View>
-                    )}
-                />
-
-                {/* DOTS */}
-
-                <View style={styles.dots}>
-
-                    {banners.map((_, index) => (
-
-                        <View
-                            key={index}
-                            style={[
-                                styles.dot,
-                                activeBanner === index && styles.activeDot,
-                            ]}
-                        />
-
-                    ))}
-
-                </View>
-                {/* Trending */}
-
-                <View style={styles.sectionHeader}>
-
-                    <Text style={styles.sectionTitle}>
-                        🔥 {t('Search.TrendingNow')}
-                    </Text>
-
-                    <TouchableOpacity
-
-                        onPress={() => {
-                            (navigation as any).navigate('SongsListScreen', {
-                                songs: populardatas,
-                                previousScreen: 'SongsScreen',
-                            });
-                        }}
-                        activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
-                        <AppText color={'#FFB300'} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
-
-                            {t('Library.Viewall')}
-                        </AppText>
-                        <AppImage
-                            source={Images.arrow}
-                            width={5}
-                            height={8}
-                            tintColor={'#FFB300'}
-
-                        />
-                    </TouchableOpacity>
-
-                </View>
-
-                <FlatList
-                    horizontal
-                    data={populardatas}
-                    keyExtractor={item => item.id}
-                    showsHorizontalScrollIndicator={false}
-                    ListEmptyComponent={() => (
-                        <View style={styles.emptyContainer}>
-                            <AppImage
-                                source={Images.music}
-                                width={20}
-                                height={20}
-                                resizeMode="contain"
-                            />
-
-                            <AppText style={styles.emptyTitle}>
-                                {t('Search.NoTrendingSongs')}
-
-                            </AppText>
-
-                            <AppText style={styles.emptySubtitle}>
-
-                                {t('Search.Trendingwilappeasoon')}
-
-                            </AppText>
-                        </View>
-                    )}
-                    contentContainerStyle={{
-                        paddingHorizontal: 15,
-                    }}
-                    renderItem={({ item }) => (
-                        <SongCard item={item}
-                            width={(width - 45) / 3}
-                            onpress={() => (navigation as any).navigate('.', {
-                                id: item.id,
-                            })}
-
-                        />
-
-                    )}
-                />
-
-                {/* New Releases */}
-
-                <View style={styles.sectionHeader}>
-
-                    <Text style={styles.sectionTitle}>
-                        ✨   {t('Home.newreleases')}
-                    </Text>
-                    <TouchableOpacity
-                        onPress={() => {
-                            (navigation as any).navigate('SongsListScreen', {
-                                songs: newReleasesdata,
-                                previousScreen: 'SongsScreen',
-                            });
-                        }}
-                        activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
-                        <AppText color={'#FFB300'} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
-                            {t('Library.Viewall')}
-                        </AppText>
-                        <AppImage
-                            source={Images.arrow}
-                            width={5}
-                            height={8}
-                            tintColor={'#FFB300'}
-
-                        />
-                    </TouchableOpacity>
-                    {/* <TouchableOpacity>
-                        <Text style={styles.viewAll}>
-                            View all >
-                        </Text>
-                    </TouchableOpacity> */}
-
-                </View>
-
-                <View style={styles.grid}>
-
+                    {/* BANNER */}
 
                     <FlatList
                         horizontal
-                        data={newReleasesdata}
+                        pagingEnabled
+                        showsHorizontalScrollIndicator={false}
+                        data={banners}
+                        keyExtractor={item => item.id}
+                        onMomentumScrollEnd={e => {
+                            const index = Math.round(
+                                e.nativeEvent.contentOffset.x / (width - 30),
+                            );
+                            setActiveBanner(index);
+                        }}
+                        renderItem={({ item }) => (
+                            <View style={styles.banner}>
+
+                                <ImageBackground
+                                    source={item.image}
+                                    style={styles.bannerImage}
+
+                                >
+
+                                    <View style={styles.overlay} />
+
+                                    <View style={styles.bannerContent}>
+
+                                        <Text style={styles.bannerSmall}>
+                                            TODAY'S TOP HITS
+                                        </Text>
+
+                                        <Text style={styles.bannerTitle}>
+                                            {item.title}
+                                        </Text>
+
+                                        <TouchableOpacity style={styles.playBtn}>
+                                            <Text style={{ color: '#ffff', fontSize: 12 }}>
+                                                ▶ Play All
+                                            </Text>
+                                        </TouchableOpacity>
+
+                                    </View>
+                                </ImageBackground>
+                            </View>
+                        )}
+                    />
+
+                    {/* DOTS */}
+
+                    <View style={styles.dots}>
+
+                        {banners.map((_, index) => (
+
+                            <View
+                                key={index}
+                                style={[
+                                    styles.dot,
+                                    activeBanner === index && styles.activeDot,
+                                ]}
+                            />
+
+                        ))}
+
+                    </View>
+                    {/* Trending */}
+
+                    <View style={styles.sectionHeader}>
+
+                        <Text style={styles.sectionTitle}>
+                            🔥 {t('Search.TrendingNow')}
+                        </Text>
+
+                        <TouchableOpacity
+
+                            onPress={() => {
+                                (navigation as any).navigate('SongsListScreen', {
+                                    songs: populardatas,
+                                    previousScreen: 'SongsScreen',
+                                });
+                            }}
+                            activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                            <AppText color={'#FFB300'} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
+
+                                {t('Library.Viewall')}
+                            </AppText>
+                            <AppImage
+                                source={Images.arrow}
+                                width={5}
+                                height={8}
+                                tintColor={'#FFB300'}
+
+                            />
+                        </TouchableOpacity>
+
+                    </View>
+
+                    <FlatList
+                        horizontal
+                        data={populardatas}
                         keyExtractor={item => item.id}
                         showsHorizontalScrollIndicator={false}
                         ListEmptyComponent={() => (
@@ -655,26 +585,23 @@ export default function SongsScreen() {
                                     resizeMode="contain"
                                 />
 
-                                <AppText
-                                    style={styles.emptyTitle}>
-                                            {t('Library.Viewall')}
-                                    No New Releases
+                                <AppText style={styles.emptyTitle}>
+                                    {t('Search.NoTrendingSongs')}
+
                                 </AppText>
 
                                 <AppText style={styles.emptySubtitle}>
-                                    New songs will appear here soon.
+
+                                    {t('Search.Trendingwilappeasoon')}
+
                                 </AppText>
                             </View>
                         )}
-
                         contentContainerStyle={{
-                            paddingHorizontal: 5,
+                            paddingHorizontal: 15,
                         }}
                         renderItem={({ item }) => (
-                            <SongCard
-                                key={item.id}
-                                showNewTag={true}
-                                item={item}
+                            <SongCard item={item}
                                 width={(width - 45) / 3}
                                 onpress={() => (navigation as any).navigate('.', {
                                     id: item.id,
@@ -685,7 +612,88 @@ export default function SongsScreen() {
                         )}
                     />
 
-                    {/* {newReleases.map(item => (
+                    {/* New Releases */}
+
+                    <View style={styles.sectionHeader}>
+
+                        <Text style={styles.sectionTitle}>
+                            ✨   {t('Home.newreleases')}
+                        </Text>
+                        <TouchableOpacity
+                            onPress={() => {
+                                (navigation as any).navigate('SongsListScreen', {
+                                    songs: newReleasesdata,
+                                    previousScreen: 'SongsScreen',
+                                });
+                            }}
+                            activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                            <AppText color={'#FFB300'} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
+                                {t('Library.Viewall')}
+                            </AppText>
+                            <AppImage
+                                source={Images.arrow}
+                                width={5}
+                                height={8}
+                                tintColor={'#FFB300'}
+
+                            />
+                        </TouchableOpacity>
+                        {/* <TouchableOpacity>
+                        <Text style={styles.viewAll}>
+                            View all >
+                        </Text>
+                    </TouchableOpacity> */}
+
+                    </View>
+
+                    <View style={styles.grid}>
+
+
+                        <FlatList
+                            horizontal
+                            data={newReleasesdata}
+                            keyExtractor={item => item.id}
+                            showsHorizontalScrollIndicator={false}
+                            ListEmptyComponent={() => (
+                                <View style={styles.emptyContainer}>
+                                    <AppImage
+                                        source={Images.music}
+                                        width={20}
+                                        height={20}
+                                        resizeMode="contain"
+                                    />
+
+                                    <AppText
+                                        style={styles.emptyTitle}>
+                                        {t('Library.Viewall')}
+                                        No New Releases
+                                    </AppText>
+
+                                    <AppText style={styles.emptySubtitle}>
+                                        New songs will appear here soon.
+                                    </AppText>
+                                </View>
+                            )}
+
+                            contentContainerStyle={{
+                                paddingHorizontal: 5,
+                            }}
+                            renderItem={({ item }) => (
+                                <SongCard
+                                    key={item.id}
+                                    showNewTag={true}
+                                    item={item}
+                                    width={(width - 45) / 3}
+                                    onpress={() => (navigation as any).navigate('.', {
+                                        id: item.id,
+                                    })}
+
+                                />
+
+                            )}
+                        />
+
+                        {/* {newReleases.map(item => (
                         <SongCard
                             key={item.id}
                             item={item}
@@ -693,30 +701,30 @@ export default function SongsScreen() {
                         />
                     ))} */}
 
-                </View>
-                <View style={styles.sectionHeader}>
+                    </View>
+                    <View style={styles.sectionHeader}>
 
-                    <Text style={styles.sectionTitle}>
-                        Browse mood
-                    </Text>
-                    <TouchableOpacity
-                        onPress={() => {
-                            (navigation as any).navigate('Browsemood')
-                        }}
-                        activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
-                        <AppText color={'#FFB300'} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
-                            View all
-                        </AppText>
-                        <AppImage
-                            source={Images.arrow}
-                            width={5}
-                            height={8}
-                            tintColor={'#FFB300'}
+                        <Text style={styles.sectionTitle}>
+                            Browse mood
+                        </Text>
+                        <TouchableOpacity
+                            onPress={() => {
+                                (navigation as any).navigate('Browsemood')
+                            }}
+                            activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                            <AppText color={'#FFB300'} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
+                                View all
+                            </AppText>
+                            <AppImage
+                                source={Images.arrow}
+                                width={5}
+                                height={8}
+                                tintColor={'#FFB300'}
 
-                        />
-                    </TouchableOpacity>
+                            />
+                        </TouchableOpacity>
 
-                    {/* <TouchableOpacity
+                        {/* <TouchableOpacity
                         onPress={() => {
                             navigation.navigate('Browsemood')
                         }}
@@ -726,76 +734,76 @@ export default function SongsScreen() {
                         </Text>
                     </TouchableOpacity> */}
 
-                </View>
-                {/* Mood Categories */}
+                    </View>
+                    {/* Mood Categories */}
 
-                <View style={[styles.moodGrid, {
-                    flexDirection: 'row',
-                    flexWrap: 'wrap',
-                    justifyContent: 'flex-start',
-                    gap: 12,
-                }]}>
-                    {moods.slice(0, 6).map(item => (
-                        <MoodCard
-                            key={item.id}
-                            item={item}
-                            onpress={() => {
+                    <View style={[styles.moodGrid, {
+                        flexDirection: 'row',
+                        flexWrap: 'wrap',
+                        justifyContent: 'flex-start',
+                        gap: 12,
+                    }]}>
+                        {moods.slice(0, 6).map(item => (
+                            <MoodCard
+                                key={item.id}
+                                item={item}
+                                onpress={() => {
 
 
+                                    (navigation as any).navigate('SongsListScreen', {
+                                        songs: item,
+                                        previousScreen: 'SongsScreen',
+                                        filter: true
+                                    })
+                                }
+                                }
+                            />
+                        ))}
+                    </View>
+
+                    {/* Karaoke */}
+
+                    <View style={styles.sectionHeader}>
+
+                        <Text style={styles.sectionTitle}>
+                            🎤 Karaoke Favorites
+                        </Text>
+
+                        <TouchableOpacity
+                            onPress={() => {
                                 (navigation as any).navigate('SongsListScreen', {
-                                    songs: item,
+                                    songs: songdata,
                                     previousScreen: 'SongsScreen',
-                                    filter: true
-                                })
-                            }
-                            }
-                        />
-                    ))}
-                </View>
+                                });
+                            }}
+                            activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                            <AppText color={'#FFB300'} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
+                                View all
+                            </AppText>
+                            <AppImage
+                                source={Images.arrow}
+                                width={5}
+                                height={8}
+                                tintColor={'#FFB300'}
 
-                {/* Karaoke */}
+                            />
+                        </TouchableOpacity>
 
-                <View style={styles.sectionHeader}>
-
-                    <Text style={styles.sectionTitle}>
-                        🎤 Karaoke Favorites
-                    </Text>
-
-                    <TouchableOpacity
-                        onPress={() => {
-                            (navigation as any).navigate('SongsListScreen', {
-                                songs: songdata,
-                                previousScreen: 'SongsScreen',
-                            });
-                        }}
-                        activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
-                        <AppText color={'#FFB300'} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
-                            View all
-                        </AppText>
-                        <AppImage
-                            source={Images.arrow}
-                            width={5}
-                            height={8}
-                            tintColor={'#FFB300'}
-
-                        />
-                    </TouchableOpacity>
-
-                </View>
-                <View style={styles.moodGrid}>
-                    {songdata?.slice(0, 4).map(item => (
-                        <KaraokeCard
-                            key={item.id}
-                            item={item}
-                            onpress={() => (navigation as any).navigate('.', {
-                                id: item.id,
-                            })}
-                        />
-                    ))}
-                </View>
+                    </View>
+                    <View style={styles.moodGrid}>
+                        {songdata?.slice(0, 4).map(item => (
+                            <KaraokeCard
+                                key={item.id}
+                                item={item}
+                                onpress={() => (navigation as any).navigate('.', {
+                                    id: item.id,
+                                })}
+                            />
+                        ))}
+                    </View>
 
 
-            </ScrollView>
+                </ScrollView>)}
             {/* <MiniPlayer /> */}
 
         </SafeAreaView>

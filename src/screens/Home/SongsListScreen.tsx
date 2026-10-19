@@ -43,11 +43,13 @@ export default function SongsListScreen() {
         previousScreen,
         filter = false,
         artist,
+        type,
     } = route.params as {
         songs?: any;
         previousScreen?: string;
         filter?: boolean;
         artist?: any;
+        type?: string;
     };
 
     const [songdata, setSongdata] = useState<any[]>([]);
@@ -593,6 +595,7 @@ export default function SongsListScreen() {
                         loading={
                             isLoading
                         }
+                        type={type}
                     />
                 </View>
             </ScrollView>

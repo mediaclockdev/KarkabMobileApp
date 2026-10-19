@@ -86,36 +86,36 @@ const Search = () => {
   };
 
 
-  useFocusEffect(
-    useCallback(() => {
-      let isMounted = true;
 
-      const loadSearchData = async () => {
-        try {
-          setLoader(true);
+  useEffect(() => {
+    let isMounted = true;
 
-          await Promise.all([
-            trandingdata(),
-            topmostdata(),
-            categorydata(),
-            tagsdata(),
-          ]);
-        } catch (error) {
-          console.log('LOAD SEARCH DATA ERROR:', error);
-        } finally {
-          if (isMounted) {
-            setLoader(false);
-          }
+    const loadSearchData = async () => {
+      try {
+        setLoader(true);
+
+        await Promise.all([
+          trandingdata(),
+          topmostdata(),
+          categorydata(),
+          tagsdata(),
+        ]);
+      } catch (error) {
+        console.log('LOAD SEARCH DATA ERROR:', error);
+      } finally {
+        if (isMounted) {
+          setLoader(false);
         }
-      };
+      }
+    };
 
-      loadSearchData();
+    loadSearchData();
 
-      return () => {
-        isMounted = false;
-      };
-    }, [])
-  );
+    return () => {
+      isMounted = false;
+    };
+  }, [])
+
 
   const handlenavigation = async ({ item }: { item: { title: string } }) => {
     console.log(item)
@@ -416,6 +416,70 @@ const Search = () => {
               </View> :
               <ScrollView showsVerticalScrollIndicator={false} style={{ gap: 20, marginVertical: 10 }}>
 
+                <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
+                  {t('Search.browsebycategory')}
+
+                </AppText>
+
+
+                <View style={styles.container1}>
+                  {browesdata.map((item, index) => (
+                    <TouchableOpacity
+                      onPress={() => {
+                        handlenavigation({ item })
+                      }}
+                      key={index} style={{
+                        width: '31%',
+                        marginBottom: 12,
+                        borderWidth: 1,
+                        borderColor: index === 3 || index === 1 ? "#806141" : "#9F4A65",
+                        borderRadius: 12
+                      }}>
+                      <ImageBackground
+                        source={item.image}
+                        resizeMode="cover"
+                        style={{
+                          width: '100%',
+                          height: 98,
+                          borderRadius: 12
+                        }}
+                        imageStyle={styles.image}
+                      >
+                        <View style={[styles.overlay, { justifyContent: 'space-between', height: 98, }]}>
+
+                          <AppImage
+                            source={item.icon}
+                            width={28}
+                            height={28}
+                            resizeMode="contain"
+                          />
+
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <AppText
+                              color={"#FFF"}
+                              fontSize={12}
+                              fontWeight="600"
+                              fontFamily={Inter.medium}
+                            >
+                              {item.title}
+                            </AppText>
+
+
+                            <AppImage
+                              source={Images.arrow}
+                              width={5}
+                              height={8}
+                              tintColor={"#FFF"}
+
+                            />
+
+                          </View>
+
+                        </View>
+                      </ImageBackground>
+                    </TouchableOpacity>
+                  ))}
+                </View>
 
                 {/* <View style={styles.titles}>
                   <AppText
@@ -674,70 +738,6 @@ const Search = () => {
                 })}
 
 
-                <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-                  {t('Search.browsebycategory')}
-
-                </AppText>
-
-
-                <View style={styles.container1}>
-                  {browesdata.map((item, index) => (
-                    <TouchableOpacity
-                      onPress={() => {
-                        handlenavigation({ item })
-                      }}
-                      key={index} style={{
-                        width: '31%',
-                        marginBottom: 12,
-                        borderWidth: 1,
-                        borderColor: index === 3 || index === 1 ? "#806141" : "#9F4A65",
-                        borderRadius: 12
-                      }}>
-                      <ImageBackground
-                        source={item.image}
-                        resizeMode="cover"
-                        style={{
-                          width: '100%',
-                          height: 98,
-                          borderRadius: 12
-                        }}
-                        imageStyle={styles.image}
-                      >
-                        <View style={[styles.overlay, { justifyContent: 'space-between', height: 98, }]}>
-
-                          <AppImage
-                            source={item.icon}
-                            width={28}
-                            height={28}
-                            resizeMode="contain"
-                          />
-
-                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <AppText
-                              color={"#FFF"}
-                              fontSize={12}
-                              fontWeight="600"
-                              fontFamily={Inter.medium}
-                            >
-                              {item.title}
-                            </AppText>
-
-
-                            <AppImage
-                              source={Images.arrow}
-                              width={5}
-                              height={8}
-                              tintColor={"#FFF"}
-
-                            />
-
-                          </View>
-
-                        </View>
-                      </ImageBackground>
-                    </TouchableOpacity>
-                  ))}
-                </View>
                 <View style={{ height: 80 }} />
               </ScrollView>}
         </View>

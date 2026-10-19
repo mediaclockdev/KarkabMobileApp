@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -88,7 +88,7 @@ export default function RecordingList() {
                 const list = Array.isArray(data?.recordings)
                     ? data.recordings
                     : [];
-
+                console.log(list, "lkjjbbhb")
                 const recordingList = list.map(
                     (item: any) => ({
                         ...item,
@@ -117,112 +117,12 @@ export default function RecordingList() {
 
 
 
-    const fetchArtistSongs = async (
-        artistId: number | string
-    ) => {
-        setIsLoading(true);
-
-        try {
-            console.log(
-                'ARTIST SONGS API:',
-                apiUrls.artistSongs(artistId)
-            );
-
-            const response = await ApiService.get(
-                apiUrls.artistSongs(artistId)
-            );
-
-            const data = (response as any)?.data;
-
-            console.log(
-                'ARTIST SONGS RESPONSE:',
-                data
-            );
-
-            if (data?.success) {
-                const songsList = Array.isArray(data?.songs)
-                    ? data.songs
-                    : [];
-
-                setSongdata(songsList);
-
-                setNumberofsong(
-                    data?.total_songs ?? songsList.length
-                );
-            } else {
-                setSongdata([]);
-                setNumberofsong(0);
-            }
-        } catch (error) {
-            console.log(
-                'ARTIST SONGS API ERROR:',
-                error
-            );
-
-            setSongdata([]);
-            setNumberofsong(0);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     /**
      * -----------------------------------------
      * FETCH CATEGORY SONGS
      * -----------------------------------------
      */
-    const songlist = async () => {
-        setIsLoading(true);
 
-        try {
-            console.log(
-                'getsongcategorieslist API called'
-            );
-
-            if (!songs?.id) {
-                setSongdata([]);
-                setNumberofsong(0);
-                setIsLoading(false);
-                return;
-            }
-
-            const response = await ApiService.get(
-                apiUrls.getsongcategorieslist(songs.id)
-            );
-
-            const data = (response as any)?.data;
-
-            console.log(
-                'getsongcategorieslist RESPONSE:',
-                data
-            );
-
-            if (data?.success) {
-                const songsList = Array.isArray(data?.songs)
-                    ? data.songs
-                    : [];
-
-                setSongdata(songsList);
-
-                setNumberofsong(
-                    data?.total_songs ?? songsList.length
-                );
-            } else {
-                setSongdata([]);
-                setNumberofsong(0);
-            }
-        } catch (error) {
-            console.log(
-                'songlist ERROR:',
-                error
-            );
-
-            setSongdata([]);
-            setNumberofsong(0);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     /**
      * -----------------------------------------
@@ -251,36 +151,9 @@ export default function RecordingList() {
                     return;
                 }
 
-                // -----------------------------------------
-                // ARTIST SONGS
-                // -----------------------------------------
-                if (artist?.id) {
-                    await fetchArtistSongs(artist.id);
-                    return;
-                }
 
-                // -----------------------------------------
-                // BROWSE MOOD
-                // -----------------------------------------
-                if (previousScreen === 'Browsemood') {
-                    await songlist();
-                    return;
-                }
+                await fetchRecordings();
 
-                // -----------------------------------------
-                // SONGS SCREEN + FILTER
-                // -----------------------------------------
-                if (
-                    filter &&
-                    previousScreen === 'SongsScreen'
-                ) {
-                    await songlist();
-                    return;
-                }
-
-                // -----------------------------------------
-                // NORMAL SONGS
-                // -----------------------------------------
                 const songsList = Array.isArray(songs)
                     ? songs
                     : [];
@@ -328,13 +201,13 @@ export default function RecordingList() {
                 );
 
             const artistName =
-                typeof song?.artist === 'object'
+                typeof song?.user === 'object'
                     ? String(
-                        song?.artist?.name || ''
+                        song?.user?.name || ''
                     )
                     : String(
-                        song?.artist ||
-                        song?.song?.artist?.name ||
+                        song?.user ||
+                        song?.song?.user?.name ||
                         ''
                     );
 
@@ -391,6 +264,11 @@ export default function RecordingList() {
                     : -comparison;
             }
         );
+
+
+    useEffect(() => {
+        console.log(filteredSongs, "jbjjbj")
+    }, [filteredSongs])
 
     return (
         <SafeAreaView

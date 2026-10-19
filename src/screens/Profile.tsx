@@ -131,16 +131,16 @@ const Profile = () => {
             title: t('Library.History'),
             color: '#B95EE2'
         },
-        {
-            image: Images.achiv,
-            title: t('Library.Achievments'),
-            color: '#D4AF37'
-        },
-        {
-            image: Images.reward,
-            title: t('Library.Rewards'),
-            color: '#E52450'
-        },
+        // {
+        //     image: Images.achiv,
+        //     title: t('Library.Achievments'),
+        //     color: '#D4AF37'
+        // },
+        // {
+        //     image: Images.reward,
+        //     title: t('Library.Rewards'),
+        //     color: '#E52450'
+        // },
         {
             image: Images.import,
             title: t('Library.Logout'),
@@ -157,12 +157,12 @@ const Profile = () => {
             title1: 'Recorded your\nfirst performance',
             tintcolor: '#FE2A47'
         },
-        {
-            image: Images.ylit,
-            title: '7 day streak',
-            title1: 'Sang everyday\nfor 7 day',
-            tintcolor: '#FE2A47'
-        },
+        // {
+        //     image: Images.ylit,
+        //     title: '7 day streak',
+        //     title1: 'Sang everyday\nfor 7 day',
+        //     tintcolor: '#FE2A47'
+        // },
         {
             image: Logo.lstar,
             title: 'Top performer',
@@ -197,7 +197,7 @@ const Profile = () => {
 
     const handlefeaturefun = (item: any, index: number) => {
         console.log(item, index);
-        if (index == 7) {
+        if (index == 5) {
             LogOutAlertOccurred(
                 'User Logout',
                 'Are you sure you want to logout?',
@@ -219,6 +219,13 @@ const Profile = () => {
         if (index == 3) {
             (navigation as any).navigate('DownloadsScreen');
         }
+        if (index == 2) {
+            (navigation as any).navigate('RecordingList', {
+                recordings: recdata,
+                previousScreen: 'Profile',
+                isRecordings: true,
+            });
+        }
     };
 
 
@@ -228,7 +235,13 @@ const Profile = () => {
         if (index == 0) {
             (navigation as any).navigate('Recording', { prevScreen: 'Profile' })
         }
-
+        if (index == 1) {
+            (navigation as any).navigate('RecordingList', {
+                recordings: recdata,
+                previousScreen: 'Profile',
+                isRecordings: true,
+            });
+        }
     };
 
 
@@ -778,24 +791,25 @@ const Profile = () => {
                                         // onPress={() => navigation.navigate('Recording', { prevScreen: '.', data: songdetail })}
                                         key={index}
                                         style={{
-                                            width: '31.3%',
+                                            width: '45.3%',
                                             borderWidth: 1,
                                             borderColor: '#121212',
                                             flexDirection: 'row',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            gap: 5, padding: 11,
+                                            justifyContent: 'space-between',
+
+                                            gap: 5,
+                                            padding: 11,
                                             borderRadius: 9,
-                                            paddingHorizontal: 12,
+                                            paddingHorizontal: 15,
 
                                         }}
                                     >
                                         <ImageBackground
                                             source={Images.hexagon}
-                                            height={42}
-                                            width={32}
+                                            height={45}
+                                            width={22}
                                             resizeMode="conatin"
-                                            style={{ justifyContent: 'center', alignItems: 'center', padding: 8 }}
+                                            style={{ justifyContent: 'center', alignItems: 'center', padding: 11 }}
                                             imageStyle={{
                                                 tintColor: item.tintcolor,
                                             }}
@@ -809,12 +823,12 @@ const Profile = () => {
 
                                         </ImageBackground>
                                         <View>
-                                            <AppText color={color.darkthemetext} fontSize={8}
+                                            <AppText color={color.darkthemetext} fontSize={10}
                                                 fontWeight="500"
                                                 fontFamily={Inter.regular}>
                                                 {item.title}
                                             </AppText>
-                                            <AppText color={color.darkthemetext} fontSize={7}
+                                            <AppText color={color.darkthemetext} fontSize={9}
                                                 fontWeight="500"
                                                 marginTop={5}
                                                 fontFamily={Inter.regular}>
@@ -840,6 +854,7 @@ const Profile = () => {
                                     (navigation as any).navigate('RecordingList', {
                                         recordings: recdata,
                                         previousScreen: 'Profile',
+                                        isRecordings: true,
                                     });
                                 }}
                                 style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
@@ -1166,7 +1181,7 @@ const Profile = () => {
                             </View>
                         </TouchableOpacity>
 
-                        <LinearGradient
+                        {/* <LinearGradient
                             colors={['#620D33', '#3B1230', '#220A20', '#3A120F', '#5B1B01']}
                             locations={[0, 0.3, 0.5, 0.75, 1]}
                             start={{ x: 0, y: 0 }}
@@ -1175,18 +1190,7 @@ const Profile = () => {
                         >
                             <View style={{ width: '99%', flexDirection: 'row', height: '99%', paddingHorizontal: 10, justifyContent: 'space-between', alignSelf: 'center', alignItems: 'center' }}>
                                 <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'center', alignItems: 'center' }}>
-                                    {/* <LinearGradient
-                        colors={['#DC513F', '#490429']}
-                        start={{ x: 0.2, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.vipiconview}
-                    >
-                        <LinearGradient
-                            colors={['#500820', '#270918']}
-                            start={{ x: 0.2, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={{ justifyContent: 'center', alignItems: 'center', height: 52, width: 52, borderRadius: 70, }}
-                        > */}
+                                  
                                     <ImageBackground
                                         source={Images.lvipview}
                                         resizeMode="cover"
@@ -1203,9 +1207,7 @@ const Profile = () => {
 
 
 
-                                    {/* </LinearGradient>
-
-                    </LinearGradient> */}
+                                    
                                     <View>
                                         <AppText color={"#FFFF"}
                                             fontSize={15}
@@ -1233,18 +1235,6 @@ const Profile = () => {
                                 </View>
 
 
-                                {/* <View style={{
-                    borderWidth: 1,
-                    borderColor: '#902C27',
-                    backgroundColor: '#571815',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                   // padding: 8,
-                    borderRadius: 29,
-                   // height:36,
-
-
-                }}> */}
                                 <TouchableOpacity style={{
                                     borderWidth: 1,
                                     borderColor: '#902C27',
@@ -1270,12 +1260,12 @@ const Profile = () => {
                                     />
                                 </TouchableOpacity>
 
-                                {/* </View> */}
+                               
                             </View>
 
 
 
-                        </LinearGradient>
+                        </LinearGradient> */}
 
 
                         <View

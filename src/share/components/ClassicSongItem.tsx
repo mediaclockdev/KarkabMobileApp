@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     StyleSheet,
@@ -72,7 +72,7 @@ const ClassicSongItem = ({ item, onPress, songList, index }: Props) => {
         try {
             await Sound.stopPlayer();
             Sound.removePlayBackListener();
-        } catch (e) {}
+        } catch (e) { }
 
         setPlayingId(item.id?.toString());
         await dispatch(isPausesd(false));
@@ -84,8 +84,8 @@ const ClassicSongItem = ({ item, onPress, songList, index }: Props) => {
                     typeof index === 'number' && index >= 0
                         ? index
                         : songList.findIndex(
-                              (s: any) => s.id?.toString() === item.id?.toString(),
-                          );
+                            (s: any) => s.id?.toString() === item.id?.toString(),
+                        );
                 await playSongList(songList, targetIdx >= 0 ? targetIdx : 0, true);
             } else {
                 await playTrackSong(item, true);
@@ -105,7 +105,7 @@ const ClassicSongItem = ({ item, onPress, songList, index }: Props) => {
             await TrackPlayer.pause();
             try {
                 await Sound.pausePlayer();
-            } catch (e) {}
+            } catch (e) { }
         } catch (error) {
             console.log('Stop Error:', error);
         }

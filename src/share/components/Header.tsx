@@ -136,6 +136,7 @@ const Header: React.FC<HeaderProps> = ({
             color={headername == 'Search' ? '#FFF195' : '#FFF195'}
             marginTop={1}
             fontFamily={Inter.regular}
+            style={{ alignItems: 'flex-start', alignSelf: 'flex-start' }}
           >
             {headertitle}
           </AppText>
