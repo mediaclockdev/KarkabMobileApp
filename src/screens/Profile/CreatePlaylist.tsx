@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import ApiService from '../../services/api';
 import Header from '../../share/components/Header';
 import AppImage from '../../share/components/AppImage';
@@ -303,7 +303,7 @@ const SwipeablePlaylistCard: React.FC<SwipeableCardProps> = ({
                                 fontWeight="400"
                                 fontFamily={Inter.regular}
                             >
-                                {item.duration}
+                                {item?.duration}
                             </AppText>
                         </View>
                     </View>
@@ -475,9 +475,15 @@ const CreatePlaylist = () => {
         setPlaylistDescription('');
     };
 
-    useEffect(() => {
-        getPlaylists();
-    }, []);
+    // useEffect(() => {
+    //     getPlaylists();
+    // }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            getPlaylists();
+        }, [])
+    )
 
     /**
      * Fetch playlists from API
@@ -1712,8 +1718,8 @@ const styles = StyleSheet.create({
 
     createGradient: {
         height: 40,
-        minWidth: 130,
-        paddingHorizontal: 20,
+        width: 130,
+        // paddingHorizontal: 20,
         justifyContent: 'center',
         alignItems: 'center',
     },

@@ -702,22 +702,22 @@ const SongActionSheet = ({
             icon: Logo.share,
             onPress: handleShare,
         },
-        {
-            id: 'download',
-            title: 'Download',
-            icon: Images.import,
-            onPress: () => {
-                if (song?.id) {
-                    handledownload(song.id);
-                } else {
-                    closeSheet();
-                }
-            },
-        },
+        // {
+        //     id: 'download',
+        //     title: 'Download',
+        //     icon: Images.import,
+        //     onPress: () => {
+        //         if (song?.id) {
+        //             handledownload(song.id);
+        //         } else {
+        //             closeSheet();
+        //         }
+        //     },
+        // },
         {
             id: 'copy-link',
             title: 'Copy Song Link',
-            icon: Logo.Bluetick,
+            icon: Logo.copy,
             onPress: async () => {
                 try {
                     const songId = song?.id;

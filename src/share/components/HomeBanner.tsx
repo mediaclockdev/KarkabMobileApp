@@ -18,6 +18,7 @@ import { Inter } from '../constants/fonts'
 import LinearGradient from 'react-native-linear-gradient'
 import AppImage from './AppImage'
 import { useNavigation } from '@react-navigation/native'
+import { GlobalImage } from '../utils/GlobalImage'
 
 const { width } = Dimensions.get('window')
 
@@ -39,28 +40,27 @@ const banners = [
   },
 ]
 
-const HomeBanner = () => {
+const HomeBanner = ({ data }: { data: any[] }) => {
   const flatListRef = useRef<FlatList>(null)
   const navigation = useNavigation();
-  const [activeIndex, setActiveIndex] = useState(0)
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const nextIndex =
-        activeIndex === banners.length - 1
-          ? 0
-          : activeIndex + 1
+      setActiveIndex(prevIndex => {
+        const nextIndex = (prevIndex + 1) % (data?.length || 1);
 
-      flatListRef.current?.scrollToIndex({
-        index: nextIndex,
-        animated: true,
-      })
+        flatListRef.current?.scrollToIndex({
+          index: nextIndex,
+          animated: true,
+        });
 
-      setActiveIndex(nextIndex)
-    }, 3000)
+        return nextIndex;
+      });
+    }, 3000);
 
-    return () => clearInterval(interval)
-  }, [activeIndex])
+    return () => clearInterval(interval);
+  }, [data?.length]);
 
   const onScroll = (
     event: NativeSyntheticEvent<NativeScrollEvent>,
@@ -78,17 +78,21 @@ const HomeBanner = () => {
     }}>
       <FlatList
         ref={flatListRef}
-        data={banners}
+        data={data || []}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => String(item.id ?? index)}
         onMomentumScrollEnd={onScroll}
         renderItem={({ item }) => (
           <TouchableOpacity activeOpacity={0.9}>
             <ImageBackground
-              source={item.image}
-              resizeMode="contain"
+              source={
+                item.image_url
+                  ? GlobalImage(item.image_url)
+                  : item.image || Images.banner1
+              }
+              resizeMode="cover"
               style={styles.banner}
               imageStyle={styles.image}
             >
@@ -103,9 +107,9 @@ const HomeBanner = () => {
           </AppText> */}
                 <AppText
                   fontSize={24}
-                  fontWeight="400"
-                  color={item.id == 2 ? 'black' : color.darkthemetext}
-                  fontFamily={Inter.regular}
+
+                  color={color.darkthemetext}
+                  fontFamily={Inter.extrabold}
                 >
                   {item.title}
                 </AppText>
@@ -113,21 +117,21 @@ const HomeBanner = () => {
                   {item.title}
                 </Text> */}
               </View>
-              <AppText
+              {/* <AppText
                 fontSize={12}
                 fontWeight="400"
                 color={color.lgyellow}
                 fontFamily={Inter.regular}
               >
                 {"Your stage is waiting."}
-              </AppText>
+              </AppText> */}
               <AppText
                 fontSize={16}
                 fontWeight="400"
                 color={color.lgyellow}
                 fontFamily={Inter.regular}
               >
-                {" الصوت ليك.. والمسرح بانتظارك"}
+                {item.description}
               </AppText>
               {/* onRightPress={() => {
                 navigation.navigate('Recording');
@@ -172,7 +176,7 @@ const HomeBanner = () => {
 
               {/* Dots Inside Banner */}
               <View style={styles.dotContainer}>
-                {banners.map((_, index) => (
+                {data.map((_, index) => (
                   <View
                     key={index}
                     style={[
@@ -201,7 +205,10 @@ const styles = StyleSheet.create({
     // justifyContent: 'flex-end',
     overflow: 'hidden',
     // borderRadius: 20,
-    padding: 20
+    padding: 20,
+    alignSelf: 'center',
+    borderRadius: 20,
+
   },
 
   image: {

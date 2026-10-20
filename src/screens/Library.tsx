@@ -101,6 +101,25 @@ const Library = () => {
     getRecording();
   }, [recordingRefresh]);
 
+
+  const normalizeText = (text: any) => {
+    return String(text ?? '')
+      .toLowerCase()
+      .trim()
+      // Normalize Arabic letters
+      .replace(/[إأآ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/ة/g, 'ه')
+      .replace(/ؤ/g, 'و')
+      .replace(/ئ/g, 'ي')
+      // Remove Arabic diacritics
+      .replace(/[\u064B-\u065F\u0670]/g, '')
+      // Remove Arabic tatweel
+      .replace(/ـ/g, '')
+      // Normalize extra spaces
+      .replace(/\s+/g, ' ');
+  };
+
   // Fetch songs with pagination
   const songlist = async (pageNumber = 1, isRefresh = false) => {
     try {
@@ -245,19 +264,32 @@ const Library = () => {
   const filteredSongs = (songdata || [])
     .filter(item => {
       if (!searchText.trim()) return true;
-      const search = searchText.toLowerCase();
+
+      const search = normalizeText(searchText);
+
+      const title = normalizeText(item?.title);
+
+      const artist = normalizeText(
+        typeof item?.artist === 'object'
+          ? item?.artist?.name
+          : item?.artist
+      );
+
+      const badge = normalizeText(item?.badge);
+
       return (
-        item.title?.toLowerCase().includes(search) ||
-        item.artist?.toLowerCase().includes(search) ||
-        item.badge?.toLowerCase().includes(search)
+        title.includes(search) ||
+        artist.includes(search) ||
+        badge.includes(search)
       );
     })
     .sort((a, b) => {
-      const comparison = (a.title || '').localeCompare(
-        b.title || '',
+      const comparison = normalizeText(a?.title).localeCompare(
+        normalizeText(b?.title),
         ['ar', 'en'],
         { sensitivity: 'base' }
       );
+
       return sortOrder === 'asc' ? comparison : -comparison;
     });
 
@@ -309,105 +341,6 @@ const Library = () => {
 
       {visible && (
         <>
-          {/* Continue Singing Section */}
-          <View style={[styles.titles, { width: '100%' }]}>
-            <View style={{ flexDirection: 'row', gap: 5, justifyContent: "center", alignItems: 'center' }}>
-              <AppText color={'#FB6B01'} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-                {t('Library.continuesinging')}
-              </AppText>
-              <AppImage source={Banner.brightstar} height={12} width={12} />
-            </View>
-
-            <TouchableOpacity
-              onPress={() => {
-                (navigation as any).navigate('RecordingList', {
-                  recordings: recdata,
-                  previousScreen: 'Library',
-                  isRecordings: true,
-                });
-              }}
-              style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}
-            >
-              <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-                {t('Library.Viewall')}
-              </AppText>
-              <AppImage source={Images.arrow} width={5} height={8} tintColor={color.darkthemetext} />
-            </TouchableOpacity>
-          </View>
-
-          {recdata?.length ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {recdata.slice(0, 4).map((item, index) => (
-                <View
-                  key={index}
-                  style={{
-                    borderWidth: 1,
-                    borderColor: 'brown',
-                    borderRadius: 8,
-                    width: '23%',
-                    height: 116,
-                    overflow: 'hidden',
-                  }}
-                >
-                  <ImageBackground
-                    source={GlobalImage(item?.album_picture_url)}
-                    resizeMode="cover"
-                    style={{ flex: 1, padding: 8, justifyContent: 'space-between' }}
-                  >
-                    <TouchableOpacity
-                      onPress={() => (navigation as any).navigate('.', { id: item.id, type: 'recordings' })}
-                      style={{
-                        height: 27,
-                        width: 27,
-                        borderRadius: 20,
-                        borderWidth: 1,
-                        borderColor: '#40413E',
-                        backgroundColor: '#050808',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        alignSelf: 'flex-end',
-                      }}
-                    >
-                      {playingId === item.id ? (
-                        <AppImage source={Images.playicon} height={10} width={10} />
-                      ) : (
-                        <View style={styles.pauseContainer}>
-                          <View style={styles.pauseLine} />
-                          <View style={styles.pauseLine} />
-                        </View>
-                      )}
-                    </TouchableOpacity>
-
-                    <View>
-                      <AppText fontSize={11} fontFamily={Inter.regular} color="#FFFFFF" numberOfLines={1}>
-                        {item.album_name}
-                      </AppText>
-                      <AppText fontSize={10} fontFamily={Inter.regular} color="#C0C2C1" numberOfLines={1}>
-                        {item.status}
-                      </AppText>
-                      <View style={{ height: 4, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 4, marginTop: 6 }}>
-                        <View
-                          style={{
-                            width: `${progressMap[item.id] || 0}%`,
-                            height: '100%',
-                            backgroundColor: '#F3870C',
-                            borderRadius: 4,
-                          }}
-                        />
-                      </View>
-                    </View>
-                  </ImageBackground>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.centerContainer}>
-              <AppImage source={Logo.ymusic} width={20} height={20} />
-              <AppText color={color.darkthemetext} fontSize={14} marginTop={10}>
-                {t('Library.norecordingfound')}
-              </AppText>
-            </View>
-          )}
 
           {/* Karaoke Banner */}
           <View
@@ -442,7 +375,7 @@ const Library = () => {
                     start={{ x: 0.2, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={{
-                      width: 105,
+                      width: 135,
                       height: 29,
                       borderRadius: 10,
                       overflow: 'hidden',
@@ -453,10 +386,10 @@ const Library = () => {
                       marginTop: 8,
                     }}
                   >
-                    <View style={{ paddingHorizontal: 8, justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center', width: 105 }}>
+                    <View style={{ paddingHorizontal: 8, justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center', width: 135 }}>
                       <AppImage source={Images.hmic} height={14.58} width={14.58} />
                       <AppText color="#FFFFFF" fontSize={11} fontFamily={Inter.bold}>
-                        {t('Library.singnow')}
+                        {t('Library.SingItYourOwn')}
                       </AppText>
                       <AppImage source={Images.arrow} height={8} width={9} tintColor={"#FFFFFF"} />
                     </View>
@@ -465,6 +398,117 @@ const Library = () => {
               </View>
             </ImageBackground>
           </View>
+
+          {recdata?.length ? (
+            <>
+
+              {/* Continue Singing Section */}
+              <View style={[styles.titles, { width: '100%' }]}>
+                <View style={{ flexDirection: 'row', gap: 5, justifyContent: "center", alignItems: 'center' }}>
+                  <AppText color={'#FB6B01'} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
+                    {t('Library.continuesinging')}
+                  </AppText>
+                  <AppImage source={Banner.brightstar} height={12} width={12} />
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    (navigation as any).navigate('RecordingList', {
+                      recordings: recdata,
+                      previousScreen: 'Library',
+                      isRecordings: true,
+                    });
+                  }}
+                  style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}
+                >
+                  <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
+                    {t('Library.Viewall')}
+                  </AppText>
+                  <AppImage source={Images.arrow} width={5} height={8} tintColor={color.darkthemetext} />
+                </TouchableOpacity>
+              </View>
+
+
+
+
+
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {recdata.slice(0, 4).map((item, index) => (
+                  <View
+                    key={index}
+                    style={{
+                      borderWidth: 1,
+                      borderColor: 'brown',
+                      borderRadius: 8,
+                      width: '23%',
+                      height: 116,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <ImageBackground
+                      source={GlobalImage(item?.album_picture_url)}
+                      resizeMode="cover"
+                      style={{ flex: 1, padding: 8, justifyContent: 'space-between' }}
+                    >
+                      <TouchableOpacity
+                        onPress={() => (navigation as any).navigate('.', { id: item.id, type: 'recordings' })}
+                        style={{
+                          height: 27,
+                          width: 27,
+                          borderRadius: 20,
+                          borderWidth: 1,
+                          borderColor: '#40413E',
+                          backgroundColor: '#050808',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          alignSelf: 'flex-end',
+                        }}
+                      >
+                        {playingId === item.id ? (
+                          <AppImage source={Images.playicon} height={10} width={10} />
+                        ) : (
+                          <View style={styles.pauseContainer}>
+                            <View style={styles.pauseLine} />
+                            <View style={styles.pauseLine} />
+                          </View>
+                        )}
+                      </TouchableOpacity>
+
+                      <View>
+                        <AppText fontSize={11} fontFamily={Inter.regular} color="#FFFFFF" numberOfLines={1}>
+                          {item.album_name}
+                        </AppText>
+                        <AppText fontSize={10} fontFamily={Inter.regular} color="#C0C2C1" numberOfLines={1}>
+                          {item.status}
+                        </AppText>
+                        <View style={{ height: 4, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 4, marginTop: 6 }}>
+                          <View
+                            style={{
+                              width: `${progressMap[item.id] || 0}%`,
+                              height: '100%',
+                              backgroundColor: '#F3870C',
+                              borderRadius: 4,
+                            }}
+                          />
+                        </View>
+                      </View>
+                    </ImageBackground>
+                  </View>
+                ))}
+              </View>
+            </>
+
+          ) : (
+            // <View style={styles.centerContainer}>
+            //   <AppImage source={Logo.ymusic} width={20} height={20} />
+            //   <AppText color={color.darkthemetext} fontSize={14} marginTop={10}>
+            //     {t('Library.norecordingfound')}
+            //   </AppText>
+            // </View>
+            null
+          )}
+
+
 
           {/* All Songs Count & Search Bar */}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

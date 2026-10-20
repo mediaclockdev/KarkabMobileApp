@@ -24,7 +24,7 @@ import apiUrls from '../services/apiUrls';
 import ApiService from '../services/api';
 import { useCallback, useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../share/hooks/useAppSelector';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import SelectedArtistScreen from './Home/SelectedArtistScreen';
 import SelectedArtistMix from '../share/components/SelectedArtistMix';
 import RecommendedSongs from '../share/components/RecommendedSongs';
@@ -64,8 +64,28 @@ const Home = () => {
   const [loader, setLoader] = useState(false);
   const [newReleasesdata, setNewreleasesdata] = useState<any[]>([])
   const loginState = useAppSelector((state: any) => state.auth.loginState);
+  const [bannerdata, setBannerdata] = useState([])
+
+  useFocusEffect(
 
 
+    useCallback(() => {
+      fetchProfileData();
+      categorydata();
+      Dashboarddata();
+      topmostdata();
+      artistmixedsongfun();
+      recommendedsongfun();
+      getartistfun();
+      getRecording();
+      getpublicRecording();
+      newreleasesdata();
+      dashbaordfun()
+      bannerfun()
+    }, [])
+
+
+  )
 
 
 
@@ -84,6 +104,7 @@ const Home = () => {
         getpublicRecording(),
         newreleasesdata(),
         fetchArtistsByFilter(selectedFilter),
+
       ]);
     } catch (error) {
       console.log('Home refresh error:', error);
@@ -97,6 +118,51 @@ const Home = () => {
     getpublicRecording();
     fetchArtistsByFilter(selectedFilter);
   }, [recordingRefresh]);
+
+
+
+
+  const dashbaordfun = async () => {
+    console.log("popular api called")
+    try {
+      //dispatch(loaderstate(true));
+
+      const response = await ApiService.get(apiUrls.homeApi);
+
+      const data = (response as any)?.data;
+      console.log(data, 'dashbaordfun API RESPONSEdddd');
+
+      if (data?.success) {
+
+      }
+    } catch (error) {
+      console.log('trandingdata ERROR:', error);
+    } finally {
+      // dispatch(loaderstate(false));
+    }
+  };
+
+
+  const bannerfun = async () => {
+    console.log("popular api called")
+    try {
+      //dispatch(loaderstate(true));
+
+      const response = await ApiService.get(apiUrls.homebanner);
+
+      const data = (response as any)?.data;
+      console.log(data.banners, 'bannerfun API RESPONSEdddd');
+
+      if (data?.success) {
+        setBannerdata(data.banners
+        )
+      }
+    } catch (error) {
+      console.log('trandingdata ERROR:', error);
+    } finally {
+      // dispatch(loaderstate(false));
+    }
+  };
 
   const newreleasesdata = async () => {
     console.log("popular api called")
@@ -273,21 +339,6 @@ const Home = () => {
   };
 
   useEffect(() => {
-    fetchProfileData();
-    categorydata();
-    Dashboarddata();
-    topmostdata();
-    artistmixedsongfun();
-    recommendedsongfun();
-    getartistfun();
-    getRecording();
-    getpublicRecording();
-    newreleasesdata();
-  }, []);
-
-
-
-  useEffect(() => {
     fetchArtistsByFilter(selectedFilter);
   }, [selectedFilter]);
 
@@ -337,7 +388,7 @@ const Home = () => {
           contentContainerStyle={{ paddingVertical: 20 }}
           style={styles.innercontainer}
         >
-          <HomeBanner />
+          <HomeBanner data={bannerdata} />
 
           {/* Selected Artists - Mix Song */}
           <View style={styles.titles}>
@@ -347,7 +398,7 @@ const Home = () => {
               fontWeight="500"
               fontFamily={Inter.medium}
             >
-              {t('Home.SelectedArtistsMixSong')}
+              {t('Home.ArtistsMixSong')}
 
             </AppText>
 
@@ -574,7 +625,7 @@ const Home = () => {
 
             <FlatList
               horizontal
-              data={newReleasesdata.slice(0, 10)}
+              data={newReleasesdata?.slice(0, 10)}
               keyExtractor={item => item.id}
               showsHorizontalScrollIndicator={false}
               ListEmptyComponent={() => (

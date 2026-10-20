@@ -8,7 +8,8 @@ const getLanguage = () => {
   return activeCode === 'en' ? 'english' : 'arabic';
 };
 const apiUrls = {
-  homeApi: 'https://randomuser.me/api/?results=10',
+  homeApi: '/api/homescreen',
+  homebanner: '/api/banners',
   profileApi: '/api/profile',
   signup: 'api/auth/signup',
   login: '/api/auth/login',

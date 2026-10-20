@@ -156,6 +156,8 @@ const Recording = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lyricsCardRef = useRef<View>(null);
+  const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordStartTimeRef = useRef<number>(0);
 
   useEffect(() => {
     return () => {
@@ -294,7 +296,7 @@ const Recording = () => {
       setActiveLyricIndex(index);
       if (showFullLyrics) {
         requestAnimationFrame(() => {
-          lyricsListRef.current?.scrollToIndex({
+          lyricsListRef?.current?.scrollToIndex({
             index,
             animated: true,
             viewPosition: 0.35,
@@ -356,55 +358,176 @@ const Recording = () => {
     }
   };
 
-  const startRecording = async () => {
-    const hasPermission = await requestMicPermission();
-    if (!hasPermission) {
-      dispatch(
-        showToast({
-          visible: true,
-          message: t('Microphone permission denied') || 'تم رفض إذن الميكروفون',
-          type: 'error',
-        }),
-      );
-      return;
-    }
 
+
+  useEffect(() => {
+    return () => {
+      Sound.removeRecordBackListener();
+      Sound.stopRecorder().catch(() => { });
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+      }
+      if (recordTimerRef.current) {
+        clearInterval(recordTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Start recording and launch real-time 1s smooth clock
+  const startRecording = async () => {
     try {
+      // 1. Stop any lingering previous session
+      try {
+        await Sound.stopRecorder();
+        Sound.removeRecordBackListener();
+      } catch (_) { }
+
+      try {
+        await Sound.stopPlayer();
+      } catch (_) { }
+
+      if (recordTimerRef.current) {
+        clearInterval(recordTimerRef.current);
+        recordTimerRef.current = null;
+      }
+
+      // 2. Reset states back to 00:00
       setSaved(false);
       setPath('');
       setRecPercentage('0');
       setRecordTime('00:00');
+      setPlaybackPositionMs(0);
+      setActiveLyricIndex(0);
 
-      Sound.addRecordBackListener((e: RecordBackType) => {
-        setRecordTime(Sound.mmssss(Math.floor(e.currentPosition)));
-      });
+      isPlayingRef.current = false;
+      hasStartedRef.current = false;
+      isStartingRef.current = false;
+      setInstrumentalPlaying(false);
 
+      // 3. Start native recorder
       const result = await Sound.startRecorder();
       setRecording(true);
-      console.log('Recording started:', result);
+      isRecordingRef.current = true;
+
+      // 4. Start instant, continuous clock (ticks smoothly every second: 00:00 -> 00:01 -> 00:02)
+      recordStartTimeRef.current = Date.now();
+      recordTimerRef.current = setInterval(() => {
+        const elapsedSec = Math.floor((Date.now() - recordStartTimeRef.current) / 1000);
+        const mins = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+        const secs = String(elapsedSec % 60).padStart(2, '0');
+        setRecordTime(`${mins}:${secs}`);
+
+        // Smooth real-time completion percentage
+        if (instrumentalDurationMs > 0) {
+          const pct = Math.min(100, Math.floor(((elapsedSec * 1000) / instrumentalDurationMs) * 100));
+          setRecPercentage(String(pct));
+        }
+      }, 500);
+
+      // 5. Start instrumental audio
+      if (instrumentalUrl) {
+        await Sound.startPlayer(instrumentalUrl);
+        isPlayingRef.current = true;
+        hasStartedRef.current = true;
+        setInstrumentalPlaying(true);
+      }
     } catch (e) {
       console.log('Error starting recording:', e);
+      if (recordTimerRef.current) {
+        clearInterval(recordTimerRef.current);
+        recordTimerRef.current = null;
+      }
+      setRecording(false);
+      isRecordingRef.current = false;
     }
   };
 
+  // Stop recording and stop timer
   const stopRecording = async () => {
     try {
+      if (recordTimerRef.current) {
+        clearInterval(recordTimerRef.current);
+        recordTimerRef.current = null;
+      }
+
       const result = await Sound.stopRecorder();
       Sound.removeRecordBackListener();
 
       setPath(result);
       setRecording(false);
+      isRecordingRef.current = false;
       setRecPercentage('100');
-      console.log('Recording stopped at path:', result);
+
+      try {
+        await Sound.stopPlayer();
+        isPlayingRef.current = false;
+        hasStartedRef.current = false;
+        setInstrumentalPlaying(false);
+      } catch (err) {
+        console.log('Error stopping player:', err);
+      }
 
       setTimeout(() => {
         scrollToSaveRecording();
       }, 150);
     } catch (e) {
       console.log('Error stopping recording:', e);
+      if (recordTimerRef.current) {
+        clearInterval(recordTimerRef.current);
+        recordTimerRef.current = null;
+      }
       setRecording(false);
+      isRecordingRef.current = false;
     }
   };
+
+  const cancelCountdown = async () => {
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+    setCountdown(null);
+
+    try {
+      await Sound.stopPlayer();
+      isPlayingRef.current = false;
+      hasStartedRef.current = false;
+      setInstrumentalPlaying(false);
+      setPlaybackPositionMs(0);
+      setActiveLyricIndex(0);
+    } catch (_) { }
+  };
+
+  const handleMicPress = async () => {
+    if (recording) {
+      await stopRecording();
+    } else if (countdown !== null) {
+      await cancelCountdown();
+    } else {
+      // Start 3-second countdown.
+      // Do NOT start instrumental here; startRecording() will launch both together at 00:00.
+      startCountdown();
+    }
+  };
+
+  // const stopRecording = async () => {
+  //   try {
+  //     const result = await Sound.stopRecorder();
+  //     Sound.removeRecordBackListener();
+
+  //     setPath(result);
+  //     setRecording(false);
+  //     setRecPercentage('100');
+  //     console.log('Recording stopped at path:', result);
+
+  //     setTimeout(() => {
+  //       scrollToSaveRecording();
+  //     }, 150);
+  //   } catch (e) {
+  //     console.log('Error stopping recording:', e);
+  //     setRecording(false);
+  //   }
+  // };
 
   useEffect(() => {
     if (!isRecorded) return;
@@ -414,58 +537,60 @@ const Recording = () => {
     return () => clearTimeout(timer);
   }, [isRecorded]);
 
-  const startCountdown = async () => {
-    const hasPermission = await requestMicPermission();
-    if (!hasPermission) {
-      dispatch(
-        showToast({
-          visible: true,
-          message: t('Microphone permission denied') || 'تم رفض إذن الميكروفون',
-          type: 'error',
-        }),
-      );
-      return;
-    }
+  // const startCountdown = async () => {
+  //   const hasPermission = await requestMicPermission();
+  //   if (!hasPermission) {
+  //     dispatch(
+  //       showToast({
+  //         visible: true,
+  //         message: t('Microphone permission denied') || 'تم رفض إذن الميكروفون',
+  //         type: 'error',
+  //       }),
+  //     );
+  //     return;
+  //   }
 
-    setCountdown(3);
-    let count = 3;
+  //   setCountdown(3);
+  //   let count = 3;
 
-    countdownTimerRef.current = setInterval(() => {
-      count -= 1;
-      if (count > 0) {
-        setCountdown(count);
-      } else {
-        if (countdownTimerRef.current) {
-          clearInterval(countdownTimerRef.current);
-          countdownTimerRef.current = null;
-        }
-        setCountdown(null);
-        startRecording();
-      }
-    }, 1000);
-  };
+  //   countdownTimerRef.current = setInterval(() => {
+  //     count -= 1;
+  //     if (count > 0) {
+  //       setCountdown(count);
+  //     } else {
+  //       if (countdownTimerRef.current) {
+  //         clearInterval(countdownTimerRef.current);
+  //         countdownTimerRef.current = null;
+  //       }
+  //       setCountdown(null);
+  //       startRecording();
+  //     }
+  //   }, 1000);
+  // };
 
-  const cancelCountdown = () => {
-    if (countdownTimerRef.current) {
-      clearInterval(countdownTimerRef.current);
-      countdownTimerRef.current = null;
-    }
-    setCountdown(null);
-  };
+  // const cancelCountdown = () => {
+  //   if (countdownTimerRef.current) {
+  //     clearInterval(countdownTimerRef.current);
+  //     countdownTimerRef.current = null;
+  //   }
+  //   setCountdown(null);
+  // };
 
-  const handleMicPress = async () => {
-    if (recording) {
-      stopRecording();
-      await Sound.pausePlayer();
-      isPlayingRef.current = false;
-      setInstrumentalPlaying(false);
-      return;
-    } else if (countdown !== null) {
-      cancelCountdown();
-    } else {
-      startCountdown();
-    }
-  };
+  // const handleMicPress = async () => {
+  //   if (recording) {
+  //     stopRecording();
+  //     await Sound.pausePlayer();
+  //     isPlayingRef.current = false;
+  //     setInstrumentalPlaying(false);
+
+  //     return;
+  //   } else if (countdown !== null) {
+  //     cancelCountdown();
+  //   } else {
+  //     startCountdown();
+  //     toggleInstrumentalPlayback()
+  //   }
+  // };
 
   const generateSongId = () => {
     return `${Date.now()}-${Math.floor(Math.random() * 1000)}-SONG`;
@@ -815,6 +940,91 @@ const Recording = () => {
     });
   };
 
+  const RecordingTimer = React.memo(
+    ({
+      isRecording,
+      onTimeUpdate,
+    }: {
+      isRecording: boolean;
+      onTimeUpdate?: (time: string) => void;
+    }) => {
+      const [seconds, setSeconds] = useState(0);
+      const onTimeUpdateRef = useRef(onTimeUpdate);
+      onTimeUpdateRef.current = onTimeUpdate;
+
+      useEffect(() => {
+        if (!isRecording) {
+          setSeconds(0);
+          return;
+        }
+
+        setSeconds(0);
+        const start = Date.now();
+
+        // Check 4 times a second so it never skips any second (0, 1, 2, 3, 4, 5...)
+        const timer = setInterval(() => {
+          const elapsed = Math.floor((Date.now() - start) / 1000);
+          setSeconds(elapsed);
+
+          const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+          const secs = String(elapsed % 60).padStart(2, '0');
+          const formatted = `${mins}:${secs}`;
+          onTimeUpdateRef.current?.(formatted);
+        }, 250);
+
+        return () => clearInterval(timer);
+      }, [isRecording]);
+
+      const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const secs = String(seconds % 60).padStart(2, '0');
+
+      return (
+        <AppText
+          fontSize={15}
+          color="#FEC749"
+          fontFamily={Inter.bold}
+          style={styles.recordTimeText}
+        >
+          {`${mins}:${secs}`}
+        </AppText>
+      );
+    },
+  );
+
+  const startCountdown = useCallback(() => {
+    // Clear any existing timer to prevent double-speed ticking
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+
+    setCountdown(3);
+    let currentCount = 3;
+
+    countdownTimerRef.current = setInterval(() => {
+      currentCount -= 1;
+      if (currentCount > 0) {
+        setCountdown(currentCount);
+      } else {
+        if (countdownTimerRef.current) {
+          clearInterval(countdownTimerRef.current);
+          countdownTimerRef.current = null;
+        }
+        setCountdown(null);
+        startRecording();
+      }
+    }, 1000);
+  }, [startRecording]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+      }
+    };
+  }, []);
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: color.darkbackround }]}
@@ -1000,7 +1210,7 @@ const Recording = () => {
                     </View>
                   </View>
 
-                  <TouchableOpacity
+                  {/* <TouchableOpacity
                     activeOpacity={0.8}
                     style={[
                       eStyles.playBtn,
@@ -1022,7 +1232,7 @@ const Recording = () => {
                         {instrumentalPlaying ? '❚❚' : '▶'}
                       </Text>
                     )}
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                 </View>
 
                 <View style={eStyles.progressWrap}>
@@ -1090,7 +1300,7 @@ const Recording = () => {
 
             {countdown !== null ? (
               <View style={styles.countdownContainer}>
-                <Text style={styles.countdownNumber}>{countdown}</Text>
+                <SmoothCountdown count={countdown} />
                 <AppText
                   fontSize={14}
                   color="#FFFFFF"
@@ -1130,18 +1340,24 @@ const Recording = () => {
                 </AppText>
 
                 {recording && (
-                  <AppText
-                    fontSize={16}
-                    color="#FEC749"
-                    fontFamily={Inter.bold}
-                    style={{ marginTop: 4 }}
-                  >
-                    {recordTime}
-                  </AppText>
+                  <View style={styles.recordTimeBadge}>
+                    {/* <View style={styles.recordingRedDot} /> */}
+                    <AppText
+                      fontSize={15}
+                      color="#FEC749"
+                      fontFamily={Inter.bold}
+                      style={{ letterSpacing: 1 }}
+                    >
+                      {recordTime ? recordTime.slice(0, 5) : '00:00'}
+                    </AppText>
+                  </View>
                 )}
               </>
             )}
           </ImageBackground>
+
+          {/* Lyrics Section */}
+          {/* Lyrics Section */}
 
           {/* Lyrics Section */}
           {data && (
@@ -1196,6 +1412,7 @@ const Recording = () => {
                 />
               </View>
 
+              {/* 🎤 Word-by-Word Karaoke Lyrics */}
               {!showFullLyrics ? (
                 <View style={lStyles.compactBody}>
                   {lyricsLines.length > 0 ? (
@@ -1205,11 +1422,57 @@ const Recording = () => {
                           Math.max(0, activeLyricIndex - 1),
                           activeLyricIndex + 3,
                         )
-                        .map((line, index) => {
+                        .map((line: any, index) => {
                           const actualIndex =
                             Math.max(0, activeLyricIndex - 1) + index;
                           const active = actualIndex === activeLyricIndex;
                           const distance = Math.abs(actualIndex - activeLyricIndex);
+
+                          // Intelligent Character-Weighted Pacing with caching
+                          if (!line._cachedWords) {
+                            const raw = line.rawText || line.text || '';
+                            const tagRegex = /<(\d{1,2}):(\d{2}(?:\.\d+)?)>([^<]*)/g;
+                            const tagged: { text: string; start: number }[] = [];
+                            let m: RegExpExecArray | null;
+
+                            while ((m = tagRegex.exec(raw)) !== null) {
+                              const min = Number(m[1]);
+                              const sec = Number(m[2]);
+                              const wStart = (min * 60 + sec) * 1000;
+                              const wText = m[3].trim();
+                              if (wText) tagged.push({ text: wText, start: wStart });
+                            }
+
+                            if (tagged.length > 0) {
+                              line._cachedWords = tagged.map((t, idx) => {
+                                const next = tagged[idx + 1];
+                                return {
+                                  text: t.text,
+                                  start: t.start,
+                                  end: next ? next.start : Math.max(line.end || line.start + 3500, t.start + 600),
+                                };
+                              });
+                            } else {
+                              const clean = raw.replace(/<[^>]+>/g, '').trim();
+                              const words = clean.split(/\s+/).filter(Boolean);
+                              const lineDur = Math.max((line.end || line.start + 3500) - line.start, words.length * 400);
+                              const maxSing = Math.min(lineDur, Math.max(words.length * 650, 2800));
+                              const totalWeight = words.reduce((acc: number, w: string) => acc + Math.max(w.length, 2), 0);
+                              let curStart = line.start;
+
+                              line._cachedWords = words.map((w: string, idx: number) => {
+                                const weight = Math.max(w.length, 2);
+                                const dur = Math.max(Math.round((weight / (totalWeight || 1)) * maxSing), 200);
+                                const isLast = idx === words.length - 1;
+                                const end = isLast ? line.start + maxSing : curStart + dur;
+                                const item = { text: w, start: curStart, end };
+                                curStart = end;
+                                return item;
+                              });
+                            }
+                          }
+
+                          const lineWords = line._cachedWords || [];
 
                           return (
                             <View
@@ -1223,13 +1486,62 @@ const Recording = () => {
                               <Text
                                 style={[
                                   lStyles.line,
-                                  active && lStyles.lineActive,
                                   !active && {
                                     opacity: distance === 1 ? 0.45 : 0.25,
                                   },
                                 ]}
                               >
-                                {line.text}
+                                {active && lineWords.length > 0 ? (
+                                  lineWords.map((word: any, wIdx: number) => {
+                                    const isCurrent =
+                                      playbackPositionMs >= word.start &&
+                                      playbackPositionMs < word.end;
+                                    const isPast =
+                                      playbackPositionMs >= word.end;
+
+                                    const wordColor = isCurrent
+                                      ? '#F5BD55'
+                                      : isPast
+                                        ? '#FFFFFF'
+                                        : 'rgba(255, 255, 255, 0.35)';
+
+                                    return (
+                                      <Text
+                                        key={wIdx}
+                                        style={[
+                                          {
+                                            color: wordColor,
+                                            fontSize: isCurrent ? 20 : 18,
+                                            fontWeight: isCurrent
+                                              ? '900'
+                                              : isPast
+                                                ? '800'
+                                                : '600',
+                                            letterSpacing: 0.2,
+                                          },
+                                          isCurrent && {
+                                            textShadowColor:
+                                              'rgba(245, 189, 85, 0.95)',
+                                            textShadowOffset: { width: 0, height: 0 },
+                                            textShadowRadius: 12,
+                                          },
+                                        ]}
+                                      >
+                                        {word.text}
+                                        {wIdx < lineWords.length - 1 ? ' ' : ''}
+                                      </Text>
+                                    );
+                                  })
+                                ) : (
+                                  <Text
+                                    style={[
+                                      lStyles.line,
+                                      active && lStyles.lineActive,
+                                    ]}
+                                  >
+                                    {line.text}
+                                  </Text>
+                                )}
                               </Text>
                             </View>
                           );
@@ -1262,12 +1574,67 @@ const Recording = () => {
                 <FlatList
                   ref={lyricsListRef}
                   data={lyricsLines}
+                  extraData={playbackPositionMs}
                   keyExtractor={(item, index) => `${item.start}-${index}`}
                   scrollEnabled={false}
                   contentContainerStyle={lStyles.fullList}
-                  renderItem={({ item, index }) => {
+                  onScrollToIndexFailed={(info) => {
+                    setTimeout(() => {
+                      lyricsListRef?.current?.scrollToIndex({
+                        index: info.index,
+                        animated: true,
+                        viewPosition: 0.35,
+                      });
+                    }, 200);
+                  }}
+                  renderItem={({ item, index }: { item: any; index: number }) => {
                     const active = index === activeLyricIndex;
                     const distance = Math.abs(index - activeLyricIndex);
+
+                    if (!item._cachedWords) {
+                      const raw = item.rawText || item.text || '';
+                      const tagRegex = /<(\d{1,2}):(\d{2}(?:\.\d+)?)>([^<]*)/g;
+                      const tagged: { text: string; start: number }[] = [];
+                      let m: RegExpExecArray | null;
+
+                      while ((m = tagRegex.exec(raw)) !== null) {
+                        const min = Number(m[1]);
+                        const sec = Number(m[2]);
+                        const wStart = (min * 60 + sec) * 1000;
+                        const wText = m[3].trim();
+                        if (wText) tagged.push({ text: wText, start: wStart });
+                      }
+
+                      if (tagged.length > 0) {
+                        item._cachedWords = tagged.map((t, idx) => {
+                          const next = tagged[idx + 1];
+                          return {
+                            text: t.text,
+                            start: t.start,
+                            end: next ? next.start : Math.max(item.end || item.start + 3500, t.start + 600),
+                          };
+                        });
+                      } else {
+                        const clean = raw.replace(/<[^>]+>/g, '').trim();
+                        const words = clean.split(/\s+/).filter(Boolean);
+                        const lineDur = Math.max((item.end || item.start + 3500) - item.start, words.length * 400);
+                        const maxSing = Math.min(lineDur, Math.max(words.length * 650, 2800));
+                        const totalWeight = words.reduce((acc: number, w: string) => acc + Math.max(w.length, 2), 0);
+                        let curStart = item.start;
+
+                        item._cachedWords = words.map((w: string, idx: number) => {
+                          const weight = Math.max(w.length, 2);
+                          const dur = Math.max(Math.round((weight / (totalWeight || 1)) * maxSing), 200);
+                          const isLast = idx === words.length - 1;
+                          const end = isLast ? item.start + maxSing : curStart + dur;
+                          const wordObj = { text: w, start: curStart, end };
+                          curStart = end;
+                          return wordObj;
+                        });
+                      }
+                    }
+
+                    const lineWords = item._cachedWords || [];
 
                     return (
                       <View
@@ -1295,13 +1662,61 @@ const Recording = () => {
                         <Text
                           style={[
                             lStyles.fullLine,
-                            active && lStyles.fullLineActive,
                             !active && {
                               opacity: distance <= 1 ? 0.5 : 0.3,
                             },
                           ]}
                         >
-                          {item.text}
+                          {active && lineWords.length > 0 ? (
+                            lineWords.map((word: any, wIdx: number) => {
+                              const isCurrent =
+                                playbackPositionMs >= word.start &&
+                                playbackPositionMs < word.end;
+                              const isPast = playbackPositionMs >= word.end;
+
+                              const wordColor = isCurrent
+                                ? '#F5BD55'
+                                : isPast
+                                  ? '#FFFFFF'
+                                  : 'rgba(255, 255, 255, 0.35)';
+
+                              return (
+                                <Text
+                                  key={wIdx}
+                                  style={[
+                                    {
+                                      color: wordColor,
+                                      fontSize: isCurrent ? 20 : 18,
+                                      fontWeight: isCurrent
+                                        ? '900'
+                                        : isPast
+                                          ? '800'
+                                          : '600',
+                                      letterSpacing: 0.2,
+                                    },
+                                    isCurrent && {
+                                      textShadowColor:
+                                        'rgba(245, 189, 85, 0.95)',
+                                      textShadowOffset: { width: 0, height: 0 },
+                                      textShadowRadius: 12,
+                                    },
+                                  ]}
+                                >
+                                  {word.text}
+                                  {wIdx < lineWords.length - 1 ? ' ' : ''}
+                                </Text>
+                              );
+                            })
+                          ) : (
+                            <Text
+                              style={[
+                                lStyles.fullLine,
+                                active && lStyles.fullLineActive,
+                              ]}
+                            >
+                              {item.text}
+                            </Text>
+                          )}
                         </Text>
                       </View>
                     );
@@ -1310,6 +1725,7 @@ const Recording = () => {
               )}
             </View>
           )}
+
 
           {/* Saved Notification Banner */}
           {saved && (
@@ -1438,11 +1854,11 @@ const Recording = () => {
               <AppImage source={Images.music} height={30} width={30} />
               <View style={{ alignItems: 'center' }}>
                 <AppText color="#fff" fontSize={14} fontFamily={Inter.regular}>
-                  {t('Next Song') || 'Next Song'}
+                  {'Another One'}
                 </AppText>
-                <AppText color="#FFFF00" fontSize={16} fontFamily={Inter.bold}>
+                {/* <AppText color="#FFFF00" fontSize={16} fontFamily={Inter.bold}>
                   {'يا ليالي الخرطوم'}
-                </AppText>
+                </AppText> */}
               </View>
               <AppImage
                 source={Images.arrow}
@@ -1891,18 +2307,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,45,85,0.15)',
     borderColor: '#FF2D55',
   },
-  countdownContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  countdownNumber: {
-    fontSize: 72,
-    fontWeight: '900',
-    color: '#FEC749',
-    textShadowColor: 'rgba(254, 199, 73, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 20,
-  },
+
   stopIconContainer: {
     width: 64,
     height: 64,
@@ -1916,6 +2321,54 @@ const styles = StyleSheet.create({
     height: 26,
     borderRadius: 6,
     backgroundColor: '#E80360',
+  },
+  countdownContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+  },
+  countdownNumber: {
+    fontSize: 78,
+    fontWeight: '900',
+    color: '#FEC749',
+    textAlign: 'center',
+    minHeight: 90,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    // Neon glow effect
+    textShadowColor: 'rgba(254, 199, 73, 0.75)',
+    textShadowOffset: { width: 0, height: 4 },
+    textShadowRadius: 18,
+  },
+  recordTimeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    paddingHorizontal: 12,
+    height: 30, // Fixed height prevents vertical jumping
+    borderRadius: 15,
+    marginTop: 6,
+    // borderWidth: 1,
+    // borderColor: 'rgba(254, 199, 73, 0.35)',
+    gap: 6,
+  },
+  recordingRedDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#FF2D55',
+    shadowColor: '#FF2D55',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  recordTimeText: {
+    letterSpacing: 1,
+    fontVariant: ['tabular-nums'], // Fixed-width digits prevent horizontal twitching
+    minWidth: 46,
+    textAlign: 'center',
   },
 });
 
@@ -2599,3 +3052,43 @@ const lStyles = StyleSheet.create({
 });
 
 export default Recording;
+const SmoothCountdown = React.memo(({ count }: { count: number | string }) => {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    anim.setValue(0);
+    Animated.parallel([
+      Animated.spring(anim, {
+        toValue: 1,
+        friction: 6,
+        tension: 85,
+        useNativeDriver: true,
+      }),
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 180,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [count]);
+  const scale = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1.6, 1.0],
+  });
+  const opacity = anim.interpolate({
+    inputRange: [0, 0.4, 1],
+    outputRange: [0, 0.8, 1],
+  });
+  return (
+    <Animated.View
+      style={{
+        transform: [{ scale }],
+        opacity,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Text style={styles.countdownNumber}>{count}</Text>
+    </Animated.View>
+  );
+});

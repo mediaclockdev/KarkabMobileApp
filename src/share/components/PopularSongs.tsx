@@ -1,13 +1,15 @@
 import React from 'react';
 import {
+    Dimensions,
     FlatList,
     StyleSheet,
     Text,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from 'react-native';
 import AppImage from './AppImage';
-
+const { width } = Dimensions.get('window')
 interface Song {
     id: string;
     title: string;
@@ -34,6 +36,7 @@ const PopularSongs: React.FC<PopularSongsProps> = ({
         item: Song;
         index: number;
     }) => {
+
         return (
             <TouchableOpacity
                 activeOpacity={0.8}
@@ -125,7 +128,7 @@ const styles = StyleSheet.create({
     },
 
     emptyContainer: {
-        // width: 250,
+        width: width,
         height: 62,
         // backgroundColor: '#090909',
         // borderWidth: 1,
@@ -133,7 +136,8 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 15,
+        // paddingHorizontal: 15,
+
     },
 
     emptyText: {

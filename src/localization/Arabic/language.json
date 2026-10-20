@@ -128,7 +128,7 @@
   },
   "Home": {
     "Searchbarplaceholder": "ابحث عن الأغاني أو الفنانين أو كلمات الأغاني...",
-    "SelectedArtistsMixSong": "مزيج أغاني الفنانين المختارين",
+    "ArtistsMixSong": "أغاني مزيج الفنانين",
     "Seeall": "عرض الكل",
     "recommendedsongs": "الأغاني الموصى بها",
     "Browsemoods": "تصفّح حسب الحالة المزاجية",
@@ -151,7 +151,8 @@
     "browsebycategory": "تصفّح حسب الفئة",
     "Recordings": "التسجيلات",
     "TrendingNow": "الرائج الآن",
-    "Trendingwilappeasoon": "ستظهر الأغاني الرائجة هنا قريبًا."
+    "Trendingwilappeasoon": "ستظهر الأغاني الرائجة هنا قريبًا.",
+    "Songcategory": "فئة الأغاني"
   },
   "Library": {
     "Rooms": "الغرف",
@@ -180,6 +181,7 @@
     "Rewards": "المكافآت",
     "Logout": "تسجيل الخروج",
     "Yourjourneyyourvoice": "رحلتك، صوتك",
-    "Yourmusiccollection": "مجموعتك الموسيقية"
+    "Yourmusiccollection": "مجموعتك الموسيقية",
+    "SingItYourOwn": "غَنِّها بأسلوبك الخاص"
   }
 }

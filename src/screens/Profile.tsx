@@ -98,7 +98,7 @@ const Profile = () => {
         },
         {
             image: Images.star,
-            number: 128,
+            number: profiledetail?.ratingScore || 0,
             title: 'Rating',
             tintColor: '#F43257'
         },
@@ -121,11 +121,11 @@ const Profile = () => {
             title: t('Library.Performances'),
             color: '#D4AF37'
         },
-        {
-            image: Images.import,
-            title: t('Library.Downloads'),
-            color: '#E52450'
-        },
+        // {
+        //     image: Images.import,
+        //     title: t('Library.Downloads'),
+        //     color: '#E52450'
+        // },
         {
             image: Images.history,
             title: t('Library.History'),
@@ -141,11 +141,11 @@ const Profile = () => {
         //     title: t('Library.Rewards'),
         //     color: '#E52450'
         // },
-        {
-            image: Images.import,
-            title: t('Library.Logout'),
-            color: '#BBD3E9'
-        },
+        // {
+        //     image: Images.import,
+        //     title: t('Library.Logout'),
+        //     color: '#BBD3E9'
+        // },
 
     ]
 
@@ -216,9 +216,9 @@ const Profile = () => {
                 previousScreen: 'Profile',
             });
         }
-        if (index == 3) {
-            (navigation as any).navigate('DownloadsScreen');
-        }
+        // if (index == 3) {
+        //     (navigation as any).navigate('DownloadsScreen');
+        // }
         if (index == 2) {
             (navigation as any).navigate('RecordingList', {
                 recordings: recdata,
@@ -1301,12 +1301,12 @@ const Profile = () => {
                                         <View style={{
                                             flexDirection: 'row',
                                             alignItems: 'center',
-                                            gap: 15,
+                                            gap: 10,
                                         }}>
                                             <AppImage
                                                 source={item.image}
-                                                width={19}
-                                                height={19}
+                                                width={25}
+                                                height={25}
                                                 resizeMode="contain"
                                                 tintColor={item.color}
                                                 style={{
@@ -1320,7 +1320,7 @@ const Profile = () => {
 
                                             <AppText
                                                 color={color.darkthemetext}
-                                                fontSize={12}
+                                                fontSize={15}
                                                 fontWeight="400"
                                             >
                                                 {item.title}

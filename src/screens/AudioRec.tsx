@@ -104,6 +104,11 @@ const AudioRec = () => {
   const dragProgressRef = useRef<number | null>(null);
   const effectiveDurationRef = useRef(0);
 
+  const [audioMode, setAudioMode] = useState<'vocal' | 'instrumental'>(
+    'vocal',
+  );
+  const [isSwitchingAudio, setIsSwitchingAudio] = useState(false);
+
   // 📝 Word-by-word synced lyrics data structures
   interface LyricWord {
     text: string;
@@ -127,6 +132,16 @@ const AudioRec = () => {
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const rotationValue = useRef(0);
   const isSpinning = useRef(false);
+
+
+
+  useFocusEffect(
+    useCallback(() => {
+      setShowFullLyrics(false)
+    }, [])
+  )
+
+
 
   const startSpinning = () => {
     isSpinning.current = true;
@@ -333,7 +348,7 @@ const AudioRec = () => {
     if (index !== -1 && index !== activeLyricIndex) {
       setActiveLyricIndex(index);
       if (showFullLyrics) {
-        lyricsListRef.current?.scrollToIndex({
+        lyricsListRef?.current?.scrollToIndex({
           index,
           animated: true,
           viewPosition: 0.35,
@@ -509,6 +524,76 @@ const AudioRec = () => {
       await playTrackSong(song, true);
     } catch (error) {
       console.log('PLAY ERROR:', error);
+    }
+  };
+
+  const toggleAudioMode = async () => {
+    if (!songdetail || isSwitchingAudio || type === 'recordings') {
+      return;
+    }
+
+    const nextMode = audioMode === 'vocal' ? 'instrumental' : 'vocal';
+
+    const audioUrl =
+      nextMode === 'instrumental'
+        ? songdetail?.instrumental_song || songdetail?.instrumental_wav
+        : songdetail?.original_song;
+
+    if (!audioUrl) {
+      dispatch(
+        showToast({
+          visible: true,
+          message:
+            nextMode === 'instrumental'
+              ? 'Instrumental audio is not available.'
+              : 'Vocal audio is not available.',
+          type: 'error',
+        }),
+      );
+      return;
+    }
+    console.log('Audio mode:', nextMode);
+    console.log('Original song:', songdetail?.original_song);
+    console.log('Instrumental song:', songdetail?.instrumental_song);
+    console.log('Instrumental WAV:', songdetail?.instrumental_wav);
+    console.log('Selected audio URL:', audioUrl);
+    try {
+      setIsSwitchingAudio(true);
+
+      const progress = await TrackPlayer.getProgress();
+      const position = Number(progress?.position) || 0;
+      const wasPlaying = isPlayingActive;
+
+      // Pass the selected audio URL to your existing player service.
+      await playTrackSong(
+        {
+          ...songdetail,
+          original_song: audioUrl,
+          file_path: audioUrl,
+        },
+        true,
+      );
+
+      setAudioMode(nextMode);
+
+      if (position > 0) {
+        await TrackPlayer.seekTo(position);
+      }
+
+      if (!wasPlaying) {
+        await TrackPlayer.pause();
+      }
+    } catch (error) {
+      console.log('Audio mode switch error:', error);
+      dispatch(
+        showToast({
+          visible: true,
+          message: 'Unable to switch audio mode.',
+          type: 'error',
+        }),
+      );
+    } finally {
+      setIsSwitchingAudio(false);
     }
   };
 
@@ -976,6 +1061,57 @@ const AudioRec = () => {
                         FULL LYRICS ↗
                       </AppText>
                     </View>
+
+                    {/* {type !== 'recordings' && (
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          backgroundColor: '#252025',
+                          borderRadius: 20,
+                          padding: 3,
+                          marginLeft: 6,
+                          marginTop: 15
+                        }}
+                      >
+                        {(['vocal', 'instrumental'] as const).map(mode => {
+                          const isActive = audioMode === mode;
+
+                          return (
+                            <TouchableOpacity
+                              key={mode}
+                              disabled={isSwitchingAudio}
+                              activeOpacity={0.8}
+                              onPress={() => {
+                                if (mode !== audioMode) {
+                                  toggleAudioMode();
+                                }
+                              }}
+                              style={{
+
+                                paddingHorizontal: 9,
+                                paddingVertical: 7,
+                                borderRadius: 17,
+                                backgroundColor: isActive ? '#FF2D55' : 'transparent',
+                              }}
+                            >
+                              <AppText
+                                color="#FFFFFF"
+                                fontSize={10}
+                                fontWeight="700"
+                                numberOfLines={1}
+                              >
+                                {isSwitchingAudio && isActive
+                                  ? '...'
+                                  : mode === 'vocal'
+                                    ? 'Vocal'
+                                    : 'Instrumental'}
+                              </AppText>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    )} */}
+
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1021,7 +1157,7 @@ const AudioRec = () => {
                     contentContainerStyle={styles.fullLyricsScroll}
                     onScrollToIndexFailed={(info) => {
                       setTimeout(() => {
-                        lyricsListRef.current?.scrollToIndex({
+                        lyricsListRef?.current?.scrollToIndex({
                           index: info.index,
                           animated: true,
                           viewPosition: 0.35,
@@ -1122,7 +1258,7 @@ const AudioRec = () => {
             <View
               style={[
                 styles.playerDeck,
-                { paddingBottom: Math.max(insets.bottom, 14) },
+                { paddingBottom: insets.bottom + 18 },
               ]}
             >
               {/* Song Meta Header */}
@@ -1135,15 +1271,20 @@ const AudioRec = () => {
                   />
                 </View>
                 <View style={styles.metaText}>
-                  <AppText
-                    color="#FFFFFF"
-                    fontSize={17}
-                    fontWeight="700"
-                    fontFamily={Inter.bold}
-                    numberOfLines={1}
+                  <TouchableOpacity
+                    onPress={() => setShowFullLyrics(!showFullLyrics)}
                   >
-                    {songdetail?.title || 'Song Title'}
-                  </AppText>
+                    <AppText
+                      color="#FFFFFF"
+                      fontSize={17}
+                      fontWeight="700"
+                      fontFamily={Inter.bold}
+                      numberOfLines={1}
+                    >
+                      {songdetail?.title || 'Song Title'}
+                    </AppText>
+                  </TouchableOpacity>
+
                   <AppText
                     color="rgba(255, 255, 255, 0.55)"
                     fontSize={14}
@@ -1155,6 +1296,7 @@ const AudioRec = () => {
                     {songdetail?.artist || songdetail?.album_name}
                   </AppText>
                 </View>
+
 
                 {/* Lyrics Toggle Button in Meta Row */}
                 <TouchableOpacity
@@ -1174,6 +1316,11 @@ const AudioRec = () => {
                   </AppText>
                 </TouchableOpacity>
 
+
+
+
+
+
                 <TouchableOpacity
                   onPress={() => { dispatch(openSongAction(songdetail)); }}
                   style={styles.menu}>
@@ -1185,7 +1332,7 @@ const AudioRec = () => {
 
               {/* Scrubber Slider */}
 
-              <View style={styles.scrubberContainer}>
+              <View style={[styles.scrubberContainer, { marginTop: 14 }]}>
                 <View
                   ref={scrubberRef}
                   collapsable={false}
@@ -1655,7 +1802,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 45, 85, 0.2)',
   },
   scrubberContainer: {
-    marginTop: 14,
+    //    marginTop: 14,
+
   },
   scrubberHitArea: {
     height: 24,

@@ -115,6 +115,8 @@ export const Logo = {
     securty: require('../../../assets/Logoes/security.png'),
     Bluetick: require('../../../assets/Logoes/Bluetick.png'),
     dustbin: require('../../../assets/HomeScreen/dustbin.png'),
+    copy: require('../../../assets/Logoes/copy.png'),
+    download1: require('../../../assets/Logoes/dodownload.png'),
 
 }
 

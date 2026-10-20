@@ -125,7 +125,7 @@ const Search = () => {
     else if (item.title == 'Songs') {
       (navigation as any).navigate('SongsScreen')
     }
-    else if (item.title == 'Sudanese classics') {
+    else if (item.title == 'KarKab\nSelection') {
 
       (navigation as any).navigate('SudaneseClassicsScreen')
 
@@ -333,7 +333,7 @@ const Search = () => {
     },
     {
       image: Banner.br2banner,
-      title: 'Sudanese classics',
+      title: 'KarKab\nSelection',
       dtitle: 'Curated',
       dtitle1: 'playlist for you',
       icon: Images.bplay
@@ -417,7 +417,7 @@ const Search = () => {
               <ScrollView showsVerticalScrollIndicator={false} style={{ gap: 20, marginVertical: 10 }}>
 
                 <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-                  {t('Search.browsebycategory')}
+                  {t('Search.Songcategory')}
 
                 </AppText>
 

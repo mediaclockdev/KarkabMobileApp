@@ -223,12 +223,13 @@ export default function SearchSongSecreen() {
 
 
 
-                <View style={{ marginHorizontal: 15 }}>
+                <View style={{ marginHorizontal: 15, }}>
                     <View
                         style={{
                             flexDirection: 'row',
                             alignItems: 'center',
                             width: '100%',
+                            marginBottom: 20
                         }}>
                         <View
                             style={{

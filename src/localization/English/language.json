@@ -14,7 +14,7 @@
       "title": "Let's Make Memories",
       "headline": "Ready for your",
       "tagline": "Your stage is waiting",
-      "taglineAccent": "It's your turn to sing, and the stage awaits you,",
+      "taglineAccent": "It's your turn to sing, and the stage awaits you",
       "emailPlaceholder": "Enter Email",
       "emailOrUsername": "Email, username or mobile",
       "passwordPlaceholder": "Password",
@@ -128,7 +128,7 @@
   },
   "Home": {
     "Searchbarplaceholder": "Search songs, artists or lyrics...",
-    "SelectedArtistsMixSong": "Selected Artists - Mix Song",
+    "ArtistsMixSong": "Artists - Mix Song",
     "Seeall": "See all",
     "recommendedsongs": "Recommended Songs",
     "Browsemoods": "Browse moods",
@@ -152,7 +152,8 @@
     "Yourrecorded": "Your recorded",
     "TrendingNow": "Trending Now",
     "NoTrendingSongs": "No Trending Songs",
-    "Trendingwilappeasoon.": "Trending songs will appear here soon."
+    "Trendingwilappeasoon.": "Trending songs will appear here soon.",
+    "Songcategory": "Song Category"
   },
   "Library": {
     "Rooms": "Rooms",
@@ -183,6 +184,7 @@
     "Rewards": "Rewards",
     "Logout": "Logout",
     "Yourjourneyyourvoice": "Your journey , your voice",
-    "Yourmusiccollection": "Your music collection"
+    "Yourmusiccollection": "Your music collection",
+    "SingItYourOwn": "Sing It Your Own"
   }
 }

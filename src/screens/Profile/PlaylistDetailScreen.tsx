@@ -432,10 +432,13 @@ const PlaylistDetailScreen = () => {
                 </View>
                 <TouchableOpacity
                     style={styles.playButton}
+                    // onPress={() => {
+                    //     playingId?.toString() === item.id?.toString() && !isPaused
+                    //         ? stopRecording()
+                    //         : playRecording(item);
+                    // }}
                     onPress={() => {
-                        playingId?.toString() === item.id?.toString() && !isPaused
-                            ? stopRecording()
-                            : playRecording(item);
+                        navigation.navigate('.', { id: item.id, prevScreen: 'PlaylistDetailScreen' });
                     }}
                 >
                     {loadings && playingId?.toString() === item.id?.toString() ? (
@@ -686,20 +689,20 @@ const PlaylistDetailScreen = () => {
                 <>
                     {/* PLAYLIST HERO */}
                     <View style={styles.hero}>
-                        <LinearGradient
-                            colors={['#FF4B4C', '#AB2C5D']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
+                        <View
+                            // colors={['#FF4B4C', '#AB2C5D']}
+                            // start={{ x: 0, y: 0 }}
+                            // end={{ x: 1, y: 1 }}
                             style={styles.coverWrapper}
                         >
                             <AppImage
-                                source={Images.playlist}
-                                width={54}
-                                height={54}
-                                resizeMode="contain"
-                                tintColor="#FFFFFF"
+                                source={Images.profile}
+                                width={145}
+                                height={145}
+                                resizeMode="cover"
+                            //tintColor="#FFFFFF"
                             />
-                        </LinearGradient>
+                        </View>
 
                         <AppText
                             color={colors.darkthemetext}

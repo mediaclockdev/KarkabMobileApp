@@ -73,8 +73,10 @@ const SelectedArtistMix = ({
       renderItem={({ item }) => {
         return (
           <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => onPress?.(item)}
+            //  activeOpacity={0.8}
+            onPress={() => onPlay?.(item)}
+
+
             style={[
               styles.card,
               {
