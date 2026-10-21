@@ -96,11 +96,20 @@ const Library = () => {
     }, [])
   );
 
-  useEffect(() => {
-    songlist(1, false);
-    getRecording();
-  }, [recordingRefresh]);
 
+
+  useFocusEffect(
+    useCallback(() => {
+      songlist(1, false);
+
+    }, [])
+  )
+  useFocusEffect(
+    useCallback(() => {
+
+      getRecording();
+    }, [recordingRefresh])
+  )
 
   const normalizeText = (text: any) => {
     return String(text ?? '')
@@ -353,7 +362,7 @@ const Library = () => {
             }}
           >
             <ImageBackground source={Banner.addbanner} resizeMode="cover" style={{ flex: 1, width: '100%' }}>
-              <View style={{ paddingVertical: 10, marginHorizontal: 35 }}>
+              <View style={{ paddingVertical: 10, marginHorizontal: 15 }}>
                 <AppText color="#fff" fontSize={16} fontFamily={Inter.bold}>
                   {t('Library.featuredsudanese')}
                 </AppText>
@@ -467,10 +476,11 @@ const Library = () => {
                         {playingId === item.id ? (
                           <AppImage source={Images.playicon} height={10} width={10} />
                         ) : (
-                          <View style={styles.pauseContainer}>
-                            <View style={styles.pauseLine} />
-                            <View style={styles.pauseLine} />
-                          </View>
+                          // <View style={styles.pauseContainer}>
+                          //   <View style={styles.pauseLine} />
+                          //   <View style={styles.pauseLine} />
+                          // </View>
+                          <AppImage source={Images.playicon} height={10} width={10} />
                         )}
                       </TouchableOpacity>
 

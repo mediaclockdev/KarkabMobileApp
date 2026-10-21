@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 import { Inter } from '../../share/constants/fonts';
 import AppText from '../../share/components/AppText';
@@ -48,6 +48,12 @@ const AllArtistScreen = () => {
     const [selectedFilter, setSelectedFilter] =
         useState<FilterType>('Latest');
     const [loading, setLoading] = useState(false);
+
+    const route = useRoute();
+
+    const { previousScreen } = route.params as {
+        previousScreen?: string;
+    };
 
     /**
      * ---------------------------------------------------------
@@ -446,6 +452,14 @@ const AllArtistScreen = () => {
         );
     };
 
+    const handleBack = () => {
+        if (previousScreen) {
+            navigation.navigate(previousScreen);
+        } else {
+            navigation.goBack();
+        }
+    };
+
     return (
         <SafeAreaView
             style={[
@@ -460,7 +474,7 @@ const AllArtistScreen = () => {
             <View style={styles.header}>
                 <TouchableOpacity
                     activeOpacity={0.7}
-                    onPress={() => navigation.goBack()}
+                    onPress={handleBack}
                     style={styles.backButton}>
                     <AppImage
                         source={Logo.arrowline}

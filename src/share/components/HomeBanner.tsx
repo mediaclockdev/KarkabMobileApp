@@ -10,31 +10,39 @@ import {
   TouchableOpacity,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  useWindowDimensions,
 } from 'react-native'
 import AppText from './AppText'
 import color from '../constants/color'
 import { Images } from '../constants/media'
 import { Inter } from '../constants/fonts'
-import LinearGradient from 'react-native-linear-gradient'
-import AppImage from './AppImage'
+import LinearGradient from 'react-native-linear-gradient';
+import AppImage from './AppImage';
 import { useNavigation } from '@react-navigation/native'
-import { GlobalImage } from '../utils/GlobalImage'
-
-const { width } = Dimensions.get('window')
-
+import { GlobalImage } from '../utils/GlobalImage';
+import RenderHTML from 'react-native-render-html';
+const { width } = Dimensions.get('window');
 
 
 const HomeBanner = ({ data }: { data: any[] }) => {
   const flatListRef = useRef<FlatList>(null)
   const navigation = useNavigation();
   const [activeIndex, setActiveIndex] = useState(0);
+  const { width: screenWidth } = useWindowDimensions();
+
 
   useEffect(() => {
+
+    setActiveIndex(0);
+
+    if (!data || data.length <= 1) {
+      return;
+    }
     const interval = setInterval(() => {
       setActiveIndex(prevIndex => {
         const nextIndex = (prevIndex + 1) % (data?.length || 1);
 
-        flatListRef.current?.scrollToIndex({
+        flatListRef?.current?.scrollToIndex({
           index: nextIndex,
           animated: true,
         });
@@ -54,7 +62,26 @@ const HomeBanner = ({ data }: { data: any[] }) => {
     )
 
     setActiveIndex(slide)
+
   }
+  const getHtmlStyles = (html: string) => {
+    const normalizedHtml = String(html ?? '').replace(/\\+"/g, '"');
+
+    const colorMatch = normalizedHtml.match(
+      /color\s*:\s*(#[0-9a-fA-F]{3,8})/i,
+    );
+
+    const weightMatch = normalizedHtml.match(
+      /font-weight\s*:\s*(bold|[1-9]00)/i,
+    );
+
+    return {
+      html: normalizedHtml,
+      color: colorMatch?.[1] ?? '#1e293b',
+      fontWeight: weightMatch?.[1] ?? '400',
+    };
+  };
+
 
   return (
     <View style={{
@@ -69,6 +96,7 @@ const HomeBanner = ({ data }: { data: any[] }) => {
         keyExtractor={(item, index) => String(item.id ?? index)}
         onMomentumScrollEnd={onScroll}
         renderItem={({ item }) => (
+
           <TouchableOpacity activeOpacity={0.9}>
             <ImageBackground
               source={
@@ -80,6 +108,7 @@ const HomeBanner = ({ data }: { data: any[] }) => {
               style={styles.banner}
               imageStyle={styles.image}
             >
+
               {/* Overlay */}
               <View style={styles.overlay}>
                 {/* <AppText
@@ -89,19 +118,40 @@ const HomeBanner = ({ data }: { data: any[] }) => {
           >
             {item.title}
           </AppText> */}
-                <AppText
+                {/* <AppText
                   fontSize={24}
 
                   color={color.darkthemetext}
                   fontFamily={Inter.extrabold}
                 >
                   {item.title}
-                </AppText>
+                </AppText> */}
+                {item.title ? (() => {
+                  const { html, color: titleColor, fontWeight } =
+                    getHtmlStyles(item.title);
+
+                  return (
+                    <RenderHTML
+                      contentWidth={screenWidth - 80}
+                      source={{ html }}
+                      baseStyle={{
+                        fontSize: 24,
+                        fontFamily: Inter.regular,
+                      }}
+                      tagsStyles={{
+                        span: {
+                          color: titleColor,
+                          fontWeight,
+                        },
+                      }}
+                    />
+                  );
+                })() : null}
                 {/* <Text style={styles.title}>
                   {item.title}
                 </Text> */}
-              </View>
-              {/* <AppText
+
+                {/* <AppText
                 fontSize={12}
                 fontWeight="400"
                 color={color.lgyellow}
@@ -109,67 +159,82 @@ const HomeBanner = ({ data }: { data: any[] }) => {
               >
                 {"Your stage is waiting."}
               </AppText> */}
-              <AppText
-                fontSize={16}
-                fontWeight="400"
-                color={color.lgyellow}
-                fontFamily={Inter.regular}
-              >
-                {item.description}
-              </AppText>
-              {/* onRightPress={() => {
+                {item.description ? (() => {
+                  const { html, color: titleColor, fontWeight } =
+                    getHtmlStyles(item.description);
+
+                  return (
+                    <RenderHTML
+                      contentWidth={screenWidth - 80}
+                      source={{ html }}
+                      baseStyle={{
+                        fontSize: 24,
+                        fontFamily: Inter.regular,
+                      }}
+                      tagsStyles={{
+                        span: {
+                          color: titleColor,
+                          fontWeight,
+                        },
+                      }}
+                    />
+                  );
+                })() : null}
+
+                {/* onRightPress={() => {
                 navigation.navigate('Recording');
               }} */}
-              <TouchableOpacity onPress={() => {
-                navigation.navigate('VocalRecordingScreen');
-              }}>
-                <LinearGradient
-                  colors={['#FF9A01', '#CF7D00', '#A96600']}
-                  start={{ x: 0.2, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{
-                    width: 143,
-                    height: 33,
-                    borderRadius: 22,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    flexDirection: 'row',
-                    gap: 8,
-                    marginTop: 8
-                  }}
-                >
-
-
-
-                  <AppText
-                    fontSize={12}
-                    fontWeight="400"
-                    color={"#FFFF"}
-                    fontFamily={Inter.regular}
+                <TouchableOpacity onPress={() => {
+                  (navigation as any).navigate('Recording', { prevScreen: 'Home' });
+                }}>
+                  <LinearGradient
+                    colors={['#FF9A01', '#CF7D00', '#A96600']}
+                    start={{ x: 0.2, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{
+                      width: 143,
+                      height: 33,
+                      borderRadius: 22,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      flexDirection: 'row',
+                      gap: 8,
+                      marginTop: 8
+                    }}
                   >
-                    {"Sing Now"}
-                  </AppText>
-                  <AppImage
-                    source={Images.bannerdots}
-                    width={12}
-                    height={13}
-                    tintColor={color.darkthemetext}
-                  />
-                </LinearGradient>
-              </TouchableOpacity>
 
-              {/* Dots Inside Banner */}
-              <View style={styles.dotContainer}>
-                {data.map((_, index) => (
-                  <View
-                    key={index}
-                    style={[
-                      styles.dot,
-                      activeIndex === index &&
-                      styles.activeDot,
-                    ]}
-                  />
-                ))}
+
+
+                    <AppText
+                      fontSize={12}
+                      fontWeight="400"
+                      color={"#FFFF"}
+                      fontFamily={Inter.regular}
+                    >
+                      {"Sing Now"}
+                    </AppText>
+                    <AppImage
+                      source={Images.bannerdots}
+                      width={12}
+                      height={13}
+                      tintColor={color.darkthemetext}
+                    />
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                {/* Dots Inside Banner */}
+                <View style={styles.dotContainer}>
+                  {data.map((_, index) => (
+                    <View
+                      key={index}
+                      style={[
+                        styles.dot,
+                        activeIndex === index &&
+                        styles.activeDot,
+                      ]}
+                    />
+                  ))}
+                </View>
               </View>
             </ImageBackground>
           </TouchableOpacity>
@@ -189,9 +254,10 @@ const styles = StyleSheet.create({
     // justifyContent: 'flex-end',
     overflow: 'hidden',
     // borderRadius: 20,
-    padding: 20,
+    // padding: 20,
     alignSelf: 'center',
     borderRadius: 20,
+    // backgroundColor: 'red',
 
   },
 
@@ -200,8 +266,9 @@ const styles = StyleSheet.create({
   },
 
   overlay: {
-    // backgroundColor: 'rgba(0,0,0,0.35)',
-    // padding: 20,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    padding: 20,
+    flex: 1
   },
 
   title: {
@@ -236,4 +303,5 @@ const styles = StyleSheet.create({
     opacity: 1,
     backgroundColor: '#EF323B',
   },
+
 })

@@ -103,8 +103,18 @@ export default async function playbackService() {
     });
 
     // 3. Track transition listener: automatically synchronizes Redux & storage when track changes
+    let lastTransitionMediaId: string | null = null;
     TrackPlayer.addEventListener(Event.MediaItemTransition, async (event) => {
         if (event && event.item) {
+            // Deduplicate: skip if this is the same media item as the last transition
+            // (prevents double-firing when addMediaItem triggers MediaItemTransition)
+            const incomingId = event.item.mediaId?.toString() ?? null;
+            if (incomingId && incomingId === lastTransitionMediaId) {
+                console.log('⚠️ [BackgroundService] Skipping duplicate MediaItemTransition for:', event.item.title);
+                return;
+            }
+            lastTransitionMediaId = incomingId;
+
             console.log('🎵 [BackgroundService] MediaItemTransition to:', event.item.title, 'index:', event.index);
             await syncTrackTransition(event.item, event.index);
         }

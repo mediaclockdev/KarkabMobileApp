@@ -235,7 +235,7 @@ const Librarylist = ({
             marginTop={4}
             numberOfLines={1}
           >
-            {item.artist}
+            {item?.artist || item?.album_name}
           </AppText>
         </TouchableOpacity>
 

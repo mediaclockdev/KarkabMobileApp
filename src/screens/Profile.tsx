@@ -18,11 +18,11 @@ import Sound, {
     RecordBackType,
     PlayBackType,
 } from 'react-native-nitro-sound';
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import apiUrls from "../services/apiUrls";
 import ApiService from '../services/api';
 import { GlobalImage } from "../share/utils/GlobalImage";
-import { useNavigation } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { launchImageLibrary } from 'react-native-image-picker';
 import { storage } from "../share/storage/mmkv";
 import { useTranslation } from "react-i18next";
@@ -68,12 +68,16 @@ const Profile = () => {
         }
     }
 
-    useEffect(() => {
-        fetchProfileData()
-        getRecording()
-        getFavorites()
-    }, [])
 
+
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchProfileData()
+            getRecording()
+            getFavorites()
+        }, [])
+    )
 
 
 
@@ -126,11 +130,11 @@ const Profile = () => {
         //     title: t('Library.Downloads'),
         //     color: '#E52450'
         // },
-        {
-            image: Images.history,
-            title: t('Library.History'),
-            color: '#B95EE2'
-        },
+        // {
+        //     image: Images.history,
+        //     title: t('Library.History'),
+        //     color: '#B95EE2'
+        // },
         // {
         //     image: Images.achiv,
         //     title: t('Library.Achievments'),
@@ -141,11 +145,11 @@ const Profile = () => {
         //     title: t('Library.Rewards'),
         //     color: '#E52450'
         // },
-        // {
-        //     image: Images.import,
-        //     title: t('Library.Logout'),
-        //     color: '#BBD3E9'
-        // },
+        {
+            image: Images.import,
+            title: t('Library.Logout'),
+            color: '#BBD3E9'
+        },
 
     ]
 
@@ -197,7 +201,7 @@ const Profile = () => {
 
     const handlefeaturefun = (item: any, index: number) => {
         console.log(item, index);
-        if (index == 5) {
+        if (index == 3) {
             LogOutAlertOccurred(
                 'User Logout',
                 'Are you sure you want to logout?',

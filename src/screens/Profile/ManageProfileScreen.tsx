@@ -44,6 +44,7 @@ const ManageProfileScreen = () => {
     const [avatarUrl, setAvatarUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [removeAvatar, setRemoveAvatar] = useState(false);
 
     // const handleSave = () => {
     //     Alert.alert(
@@ -54,6 +55,7 @@ const ManageProfileScreen = () => {
     useEffect(() => {
         fetchProfile();
     }, []);
+
 
     const handleSave = async () => {
         if (saving) return;
@@ -70,6 +72,11 @@ const ManageProfileScreen = () => {
                     'date_of_birth',
                     formatDateForApi(dateOfBirth),
                 );
+            }
+
+            // Send null when the user removes their profile photo.
+            if (removeAvatar) {
+                formData.append('avatar_url', 'null');
             }
 
             const response = await ApiService.put(
@@ -93,7 +100,7 @@ const ManageProfileScreen = () => {
                     }),
                 );
 
-                navigation.goBack();
+                (navigation as any).navigate('SettingScreen');
             } else {
                 dispatch(
                     showToast({
@@ -122,6 +129,32 @@ const ManageProfileScreen = () => {
             setSaving(false);
         }
     };
+
+
+
+    const handleRemoveAvatar = () => {
+        if (!avatarUrl) return;
+
+        Alert.alert(
+            'Remove Profile Photo',
+            'Are you sure you want to remove your profile photo?',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Remove',
+                    style: 'destructive',
+                    onPress: () => {
+                        setAvatarUrl('');
+                        setRemoveAvatar(true);
+                    },
+                },
+            ],
+        );
+    };
+
 
     const fetchProfile = async () => {
         try {
@@ -453,6 +486,24 @@ const ManageProfileScreen = () => {
                                 Change Profile Photo
                             </AppText>
                         </TouchableOpacity>
+
+                        {avatarUrl ? (
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                onPress={handleRemoveAvatar}
+                                style={{ marginTop: 8 }}
+                            >
+                                <AppText
+                                    style={{
+                                        color: '#FF4B4B',
+                                        fontSize: 12,
+                                        fontFamily: Inter.medium,
+                                    }}
+                                >
+                                    Remove Profile Photo
+                                </AppText>
+                            </TouchableOpacity>
+                        ) : null}
 
                         <AppText style={styles.photoHint}>
                             JPG, PNG or JPEG • Max 5MB

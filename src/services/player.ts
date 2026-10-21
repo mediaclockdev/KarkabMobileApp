@@ -17,6 +17,7 @@ import { store } from '../app/store';
 
 let initialized = false;
 let isSwitchingSong = false;
+let isSyncingTransition = false; // Guard against re-entrant MediaItemTransition calls
 
 /**
  * Normalizes an audio URL to an absolute URI that TrackPlayer can stream.
@@ -621,6 +622,13 @@ export const syncTrackTransition = async (
 ) => {
     if (!item) return;
 
+    // Guard against re-entrant calls triggered by addMediaItem inside prefetchNextSongForQueue
+    if (isSyncingTransition) {
+        console.log('⚠️ syncTrackTransition: skipping re-entrant call for', item.title);
+        return;
+    }
+
+    isSyncingTransition = true;
     try {
         console.log(`🔄 Syncing track transition at index ${index}:`, item.title);
 
@@ -640,13 +648,17 @@ export const syncTrackTransition = async (
             store.dispatch(addsong(song));
             saveLastPlayed(song);
 
-            // Continuously preload the next track so Next button on tracker is always available
-            if (song.id) {
-                prefetchNextSongForQueue(song.id);
-            }
+            // NOTE: Do NOT call prefetchNextSongForQueue here.
+            // addMediaItem() triggers another MediaItemTransition event, causing an infinite loop.
+            // Prefetching is handled separately after playSongList / playTrackSong completes.
         }
     } catch (e) {
         console.log('❌ syncTrackTransition error:', e);
+    } finally {
+        // Release guard after a short delay to allow the current event cycle to complete
+        setTimeout(() => {
+            isSyncingTransition = false;
+        }, 500);
     }
 };
 

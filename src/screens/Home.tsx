@@ -52,6 +52,7 @@ const Home = () => {
   const [populardatas, setPopulardatas] = useState<any[]>([]);
   const [artistmixsongdata, setArtistmixsongdata] = useState<any[]>([]);
   const [artistdata, setArtistdata] = useState<any[]>([]);
+  const [artistdatad, setArtistdatad] = useState<any[]>([]);
   const [songsartistdata, setSongsartistdata] = useState<any[]>([]);
   const [recommendedsongdata, setRecommendedsongdata] = useState<any[]>([]);
   const [songsArtistLoading, setSongsArtistLoading] = useState(false);
@@ -80,11 +81,17 @@ const Home = () => {
       getRecording();
       getpublicRecording();
       newreleasesdata();
-      dashbaordfun()
+
       bannerfun()
     }, [])
 
 
+  )
+
+  useFocusEffect(
+    useCallback(() => {
+      dashbaordfun()
+    }, [loginState])
   )
 
 
@@ -99,7 +106,7 @@ const Home = () => {
         topmostdata(),
         artistmixedsongfun(),
         recommendedsongfun(),
-        getartistfun(),
+        //getartistfun(),
         getRecording(),
         getpublicRecording(),
         newreleasesdata(),
@@ -130,10 +137,11 @@ const Home = () => {
       const response = await ApiService.get(apiUrls.homeApi);
 
       const data = (response as any)?.data;
-      console.log(data, 'dashbaordfun API RESPONSEdddd');
+      //  console.log(data, 'dashbaordfun API RESPONSEdddd');
 
       if (data?.success) {
-
+        console.log(data.data.user_artists, 'dashbaordfun API RESPONSEdddd');
+        setArtistdatad(data.data.user_artists)
       }
     } catch (error) {
       console.log('trandingdata ERROR:', error);
@@ -566,7 +574,7 @@ const Home = () => {
           </View>
 
           <ArtistRow
-            artists={artistdata?.slice(0, 10)}
+            artists={artistdatad?.slice(0, 10)}
             onPress={(artist) => {
               navigation.navigate('SongsListScreen', {
                 artist: artist,

@@ -158,6 +158,7 @@ const Recording = () => {
   const lyricsCardRef = useRef<View>(null);
   const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const recordStartTimeRef = useRef<number>(0);
+  const [errormessgae, setErrormessage] = useState(null);
 
   useEffect(() => {
     return () => {
@@ -358,8 +359,6 @@ const Recording = () => {
     }
   };
 
-
-
   useEffect(() => {
     return () => {
       Sound.removeRecordBackListener();
@@ -373,7 +372,7 @@ const Recording = () => {
     };
   }, []);
 
-  // Start recording and launch real-time 1s smooth clock
+  // 1. Load instrumental first, then start native recording & smooth clock
   const startRecording = async () => {
     try {
       // 1. Stop any lingering previous session
@@ -404,12 +403,42 @@ const Recording = () => {
       isStartingRef.current = false;
       setInstrumentalPlaying(false);
 
-      // 3. Start native recorder
+      // 3. LOAD INSTRUMENTAL SONG FIRST
+      if (instrumentalUrl) {
+        await setInstrumentalLoading(true);
+        // dispatch(
+        //   showToast({
+        //     visible: true,
+        //     message: t('Loading instrumental music...') || 'جاري تحميل الموسيقى...',
+        //     type: 'info',
+        //   }),
+        // );
+
+        try {
+          await Sound.startPlayer(instrumentalUrl);
+          isPlayingRef.current = true;
+          hasStartedRef.current = true;
+          setInstrumentalPlaying(true);
+        } catch (audioErr) {
+          console.log('Error starting instrumental:', audioErr);
+          dispatch(
+            showToast({
+              visible: true,
+              message: t('Failed to load instrumental music') || 'فشل تحميل الموسيقى',
+              type: 'error',
+            }),
+          );
+        } finally {
+          setInstrumentalLoading(false);
+        }
+      }
+
+      // 4. START NATIVE RECORDER (Starts only after instrumental is loaded & playing)
       const result = await Sound.startRecorder();
       setRecording(true);
       isRecordingRef.current = true;
 
-      // 4. Start instant, continuous clock (ticks smoothly every second: 00:00 -> 00:01 -> 00:02)
+      // 5. Start smooth clock at the exact time recording starts
       recordStartTimeRef.current = Date.now();
       recordTimerRef.current = setInterval(() => {
         const elapsedSec = Math.floor((Date.now() - recordStartTimeRef.current) / 1000);
@@ -424,13 +453,6 @@ const Recording = () => {
         }
       }, 500);
 
-      // 5. Start instrumental audio
-      if (instrumentalUrl) {
-        await Sound.startPlayer(instrumentalUrl);
-        isPlayingRef.current = true;
-        hasStartedRef.current = true;
-        setInstrumentalPlaying(true);
-      }
     } catch (e) {
       console.log('Error starting recording:', e);
       if (recordTimerRef.current) {
@@ -439,6 +461,7 @@ const Recording = () => {
       }
       setRecording(false);
       isRecordingRef.current = false;
+      setInstrumentalLoading(false);
     }
   };
 
@@ -487,6 +510,7 @@ const Recording = () => {
       countdownTimerRef.current = null;
     }
     setCountdown(null);
+    setInstrumentalLoading(false);
 
     try {
       await Sound.stopPlayer();
@@ -503,31 +527,12 @@ const Recording = () => {
       await stopRecording();
     } else if (countdown !== null) {
       await cancelCountdown();
+    } else if (instrumentalLoading) {
+      return;
     } else {
-      // Start 3-second countdown.
-      // Do NOT start instrumental here; startRecording() will launch both together at 00:00.
       startCountdown();
     }
   };
-
-  // const stopRecording = async () => {
-  //   try {
-  //     const result = await Sound.stopRecorder();
-  //     Sound.removeRecordBackListener();
-
-  //     setPath(result);
-  //     setRecording(false);
-  //     setRecPercentage('100');
-  //     console.log('Recording stopped at path:', result);
-
-  //     setTimeout(() => {
-  //       scrollToSaveRecording();
-  //     }, 150);
-  //   } catch (e) {
-  //     console.log('Error stopping recording:', e);
-  //     setRecording(false);
-  //   }
-  // };
 
   useEffect(() => {
     if (!isRecorded) return;
@@ -536,61 +541,6 @@ const Recording = () => {
     }, 200);
     return () => clearTimeout(timer);
   }, [isRecorded]);
-
-  // const startCountdown = async () => {
-  //   const hasPermission = await requestMicPermission();
-  //   if (!hasPermission) {
-  //     dispatch(
-  //       showToast({
-  //         visible: true,
-  //         message: t('Microphone permission denied') || 'تم رفض إذن الميكروفون',
-  //         type: 'error',
-  //       }),
-  //     );
-  //     return;
-  //   }
-
-  //   setCountdown(3);
-  //   let count = 3;
-
-  //   countdownTimerRef.current = setInterval(() => {
-  //     count -= 1;
-  //     if (count > 0) {
-  //       setCountdown(count);
-  //     } else {
-  //       if (countdownTimerRef.current) {
-  //         clearInterval(countdownTimerRef.current);
-  //         countdownTimerRef.current = null;
-  //       }
-  //       setCountdown(null);
-  //       startRecording();
-  //     }
-  //   }, 1000);
-  // };
-
-  // const cancelCountdown = () => {
-  //   if (countdownTimerRef.current) {
-  //     clearInterval(countdownTimerRef.current);
-  //     countdownTimerRef.current = null;
-  //   }
-  //   setCountdown(null);
-  // };
-
-  // const handleMicPress = async () => {
-  //   if (recording) {
-  //     stopRecording();
-  //     await Sound.pausePlayer();
-  //     isPlayingRef.current = false;
-  //     setInstrumentalPlaying(false);
-
-  //     return;
-  //   } else if (countdown !== null) {
-  //     cancelCountdown();
-  //   } else {
-  //     startCountdown();
-  //     toggleInstrumentalPlayback()
-  //   }
-  // };
 
   const generateSongId = () => {
     return `${Date.now()}-${Math.floor(Math.random() * 1000)}-SONG`;
@@ -680,39 +630,25 @@ const Recording = () => {
     if (!path || isUploading) return;
 
     if (!title.trim()) {
-      dispatch(
-        showToast({
-          visible: true,
-          message: t('Please enter a song title') || 'يرجى إدخال عنوان الأغنية',
-          type: 'error',
-        }),
-      );
+      setErrormessage('Please enter a song title');
       return;
     }
 
     if (!albumName.trim()) {
-      dispatch(
-        showToast({
-          visible: true,
-          message: t('Please enter an album name') || 'يرجى إدخال اسم الألبوم',
-          type: 'error',
-        }),
-      );
+      // dispatch(
+      //   showToast({
+      //     visible: true,
+      //     message: t('Please enter an album name') || 'يرجى إدخال اسم الألبوم',
+      //     type: 'error',
+      //   }),
+      // );
+      setErrormessage('Please enter an album name');
       return;
     }
-
     if (!albumPicture?.uri) {
-      dispatch(
-        showToast({
-          visible: true,
-          message:
-            t('Please select an album picture') || 'يرجى اختيار صورة الألبوم',
-          type: 'error',
-        }),
-      );
+      setErrormessage('Please select an album picture');
       return;
     }
-
     try {
       setIsUploading(true);
       const formData = new FormData();
@@ -775,6 +711,7 @@ const Recording = () => {
           }),
         );
       } else {
+        setErrormessage(response?.data?.message || 'Recording upload failed.');
         dispatch(
           showToast({
             visible: true,
@@ -785,6 +722,7 @@ const Recording = () => {
       }
     } catch (error: any) {
       console.log('UPLOAD ERROR:', error);
+      setErrormessage(error?.response?.data?.message || 'Recording upload failed.');
       dispatch(
         showToast({
           visible: true,
@@ -940,57 +878,6 @@ const Recording = () => {
     });
   };
 
-  const RecordingTimer = React.memo(
-    ({
-      isRecording,
-      onTimeUpdate,
-    }: {
-      isRecording: boolean;
-      onTimeUpdate?: (time: string) => void;
-    }) => {
-      const [seconds, setSeconds] = useState(0);
-      const onTimeUpdateRef = useRef(onTimeUpdate);
-      onTimeUpdateRef.current = onTimeUpdate;
-
-      useEffect(() => {
-        if (!isRecording) {
-          setSeconds(0);
-          return;
-        }
-
-        setSeconds(0);
-        const start = Date.now();
-
-        // Check 4 times a second so it never skips any second (0, 1, 2, 3, 4, 5...)
-        const timer = setInterval(() => {
-          const elapsed = Math.floor((Date.now() - start) / 1000);
-          setSeconds(elapsed);
-
-          const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-          const secs = String(elapsed % 60).padStart(2, '0');
-          const formatted = `${mins}:${secs}`;
-          onTimeUpdateRef.current?.(formatted);
-        }, 250);
-
-        return () => clearInterval(timer);
-      }, [isRecording]);
-
-      const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
-      const secs = String(seconds % 60).padStart(2, '0');
-
-      return (
-        <AppText
-          fontSize={15}
-          color="#FEC749"
-          fontFamily={Inter.bold}
-          style={styles.recordTimeText}
-        >
-          {`${mins}:${secs}`}
-        </AppText>
-      );
-    },
-  );
-
   const startCountdown = useCallback(() => {
     // Clear any existing timer to prevent double-speed ticking
     if (countdownTimerRef.current) {
@@ -1124,9 +1011,11 @@ const Recording = () => {
             >
               {countdown !== null
                 ? t('Get Ready!') || 'استعد!'
-                : recording
-                  ? t('Recording in Progress...') || 'جاري التسجيل...'
-                  : t('Ready to Sing?') || 'جاهز للغناء؟'}
+                : instrumentalLoading
+                  ? t('Loading Instrumental...') || 'جاري تحميل الموسيقى...'
+                  : recording
+                    ? t('Recording in Progress...') || 'جاري التسجيل...'
+                    : t('Ready to Sing?') || 'جاهز للغناء؟'}
             </AppText>
           )}
 
@@ -1205,34 +1094,12 @@ const Recording = () => {
                         )}
                       </View>
                       <Text style={eStyles.playerSubtitle}>
-                        Sing along with the music
+                        {instrumentalLoading
+                          ? t('Loading instrumental music...') || 'جاري تحميل الموسيقى...'
+                          : 'Sing along with the music'}
                       </Text>
                     </View>
                   </View>
-
-                  {/* <TouchableOpacity
-                    activeOpacity={0.8}
-                    style={[
-                      eStyles.playBtn,
-                      instrumentalPlaying && eStyles.playBtnActive,
-                      instrumentalLoading && { opacity: 0.6 },
-                    ]}
-                    onPress={toggleInstrumentalPlayback}
-                    disabled={instrumentalLoading || !instrumentalUrl}
-                  >
-                    {instrumentalLoading ? (
-                      <ActivityIndicator size="small" color="#17130B" />
-                    ) : (
-                      <Text
-                        style={[
-                          eStyles.playBtnText,
-                          instrumentalPlaying && eStyles.playBtnTextActive,
-                        ]}
-                      >
-                        {instrumentalPlaying ? '❚❚' : '▶'}
-                      </Text>
-                    )}
-                  </TouchableOpacity> */}
                 </View>
 
                 <View style={eStyles.progressWrap}>
@@ -1289,15 +1156,6 @@ const Recording = () => {
             resizeMode="contain"
             style={styles.circleContainer}
           >
-            {/* {saved && (
-              <View style={styles.savedBadge}>
-                <AppImage source={Logo.tick} width={18} height={18} />
-                <AppText fontSize={16} color="#FFFFFF" fontFamily={Inter.extrabold}>
-                  {'تم الحفظ'}
-                </AppText>
-              </View>
-            )} */}
-
             {countdown !== null ? (
               <View style={styles.countdownContainer}>
                 <SmoothCountdown count={countdown} />
@@ -1332,16 +1190,17 @@ const Recording = () => {
                   fontFamily={Inter.extrabold}
                   style={{ marginTop: -5 }}
                 >
-                  {recording
-                    ? t('Tap to Stop') || 'اضغط للإيقاف'
-                    : isRecorded
-                      ? t('Tap to Re-record') || 'اضغط لإعادة التسجيل'
-                      : t('Tap to Start') || 'اضغط للبدء'}
+                  {instrumentalLoading
+                    ? t('Loading Music...') || 'جاري التحميل...'
+                    : recording
+                      ? t('Tap to Stop') || 'اضغط للإيقاف'
+                      : isRecorded
+                        ? t('Tap to Re-record') || 'اضغط لإعادة التسجيل'
+                        : t('Tap to Start') || 'اضغط للبدء'}
                 </AppText>
 
                 {recording && (
                   <View style={styles.recordTimeBadge}>
-                    {/* <View style={styles.recordingRedDot} /> */}
                     <AppText
                       fontSize={15}
                       color="#FEC749"
@@ -1355,9 +1214,6 @@ const Recording = () => {
               </>
             )}
           </ImageBackground>
-
-          {/* Lyrics Section */}
-          {/* Lyrics Section */}
 
           {/* Lyrics Section */}
           {data && (
@@ -1428,7 +1284,6 @@ const Recording = () => {
                           const active = actualIndex === activeLyricIndex;
                           const distance = Math.abs(actualIndex - activeLyricIndex);
 
-                          // Intelligent Character-Weighted Pacing with caching
                           if (!line._cachedWords) {
                             const raw = line.rawText || line.text || '';
                             const tagRegex = /<(\d{1,2}):(\d{2}(?:\.\d+)?)>([^<]*)/g;
@@ -1726,7 +1581,6 @@ const Recording = () => {
             </View>
           )}
 
-
           {/* Saved Notification Banner */}
           {saved && (
             <View style={styles.savedSuccessRow}>
@@ -1856,9 +1710,6 @@ const Recording = () => {
                 <AppText color="#fff" fontSize={14} fontFamily={Inter.regular}>
                   {'Another One'}
                 </AppText>
-                {/* <AppText color="#FFFF00" fontSize={16} fontFamily={Inter.bold}>
-                  {'يا ليالي الخرطوم'}
-                </AppText> */}
               </View>
               <AppImage
                 source={Images.arrow}
@@ -2146,6 +1997,9 @@ const Recording = () => {
                   )}
                 </LinearGradient>
               </TouchableOpacity>
+              <AppText fontSize={14} fontFamily={Inter.regular} color={color.mgred} style={{ textAlign: 'center', marginTop: 10 }}>
+                {errormessgae}
+              </AppText>
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
@@ -2335,7 +2189,6 @@ const styles = StyleSheet.create({
     minHeight: 90,
     includeFontPadding: false,
     textAlignVertical: 'center',
-    // Neon glow effect
     textShadowColor: 'rgba(254, 199, 73, 0.75)',
     textShadowOffset: { width: 0, height: 4 },
     textShadowRadius: 18,
@@ -2346,11 +2199,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.55)',
     paddingHorizontal: 12,
-    height: 30, // Fixed height prevents vertical jumping
+    height: 30,
     borderRadius: 15,
     marginTop: 6,
-    // borderWidth: 1,
-    // borderColor: 'rgba(254, 199, 73, 0.35)',
     gap: 6,
   },
   recordingRedDot: {
@@ -2366,7 +2217,7 @@ const styles = StyleSheet.create({
   },
   recordTimeText: {
     letterSpacing: 1,
-    fontVariant: ['tabular-nums'], // Fixed-width digits prevent horizontal twitching
+    fontVariant: ['tabular-nums'],
     minWidth: 46,
     textAlign: 'center',
   },
@@ -3052,6 +2903,7 @@ const lStyles = StyleSheet.create({
 });
 
 export default Recording;
+
 const SmoothCountdown = React.memo(({ count }: { count: number | string }) => {
   const anim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
