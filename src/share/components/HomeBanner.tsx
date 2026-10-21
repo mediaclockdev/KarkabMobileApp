@@ -22,23 +22,7 @@ import { GlobalImage } from '../utils/GlobalImage'
 
 const { width } = Dimensions.get('window')
 
-const banners = [
-  {
-    id: '1',
-    title: 'Your voice\nYour spotlight.',
-    image: require('../../../assets/HomeScreen/image141.png'),
-  },
-  {
-    id: '2',
-    title: 'Feel The Beat',
-    image: Images.banner1,
-  },
-  {
-    id: '3',
-    title: 'Enjoy Your Playlist',
-    image: require('../../../assets/HomeScreen/image141.png'),
-  },
-]
+
 
 const HomeBanner = ({ data }: { data: any[] }) => {
   const flatListRef = useRef<FlatList>(null)
@@ -137,7 +121,7 @@ const HomeBanner = ({ data }: { data: any[] }) => {
                 navigation.navigate('Recording');
               }} */}
               <TouchableOpacity onPress={() => {
-                navigation.navigate('Recording');
+                navigation.navigate('VocalRecordingScreen');
               }}>
                 <LinearGradient
                   colors={['#FF9A01', '#CF7D00', '#A96600']}

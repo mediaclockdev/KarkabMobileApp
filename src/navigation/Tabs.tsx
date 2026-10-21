@@ -28,6 +28,7 @@ import SongActionSheet from '../screens/SongActionSheet';
 import { useAppDispatch, useAppSelector } from '../share/hooks/useAppSelector';
 import { closeSongAction, refreshRecordings } from '../auth/redux/authSlice';
 import DownloadsScreen from '../screens/Profile/DownloadsScreen';
+import VocalRecordingScreen from '../screens/VocalRecordingScreen';
 export const Tabs = () => {
     const songAction = useAppSelector(
         (state: any) => state.auth.songAction
@@ -59,6 +60,7 @@ export const Tabs = () => {
         { name: 'RecordingList', component: RecordingList },
         { name: 'LanguageScreen', component: LanguageScreen },
         { name: 'DownloadsScreen', component: DownloadsScreen },
+        { name: 'VocalRecordingScreen', component: VocalRecordingScreen },
 
     ];
 
