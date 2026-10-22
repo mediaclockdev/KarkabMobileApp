@@ -241,7 +241,7 @@ const Home = () => {
       const data = (response as any).data;
       if (data?.success) {
         setCategories(data.categories);
-        console.log(data, "kkkk")
+        // console.log(data, "kkkk")
       }
     } catch (error) {
       console.log('Categorydata ERROR:', error);

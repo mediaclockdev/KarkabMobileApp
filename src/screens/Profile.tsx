@@ -91,7 +91,7 @@ const Profile = () => {
         {
             image: Images.micros,
             number: profiledetail?.performance_count || 0,
-            title: 'Performances',
+            title: 'Recordings',
             tintColor: '#CC4FEE'
         },
         {
@@ -122,7 +122,7 @@ const Profile = () => {
         },
         {
             image: Images.mic,
-            title: t('Library.Performances'),
+            title: t('Search.Recordings'),
             color: '#D4AF37'
         },
         // {

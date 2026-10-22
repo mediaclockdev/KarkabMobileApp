@@ -12,6 +12,7 @@ import {
 import TrackPlayer, {
     useIsPlaying,
     usePlaybackState,
+    useActiveMediaItem,
     PlaybackState,
 } from '@rntp/player';
 
@@ -39,6 +40,7 @@ interface MiniPlayerProps {
 const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) => {
     const dispatch = useAppDispatch();
     const playing = useIsPlaying();
+    const activeMediaItem = useActiveMediaItem();
     const navigation = useNavigation<any>();
     const playbackState = usePlaybackState();
 
@@ -50,6 +52,40 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     const buffering =
         playbackState === PlaybackState.Buffering ||
         (playbackState as any) === 'loading';
+
+    // Derive current song from TrackPlayer active item with fallback to Redux playsong
+    const displaySong = React.useMemo(() => {
+        if (activeMediaItem) {
+            const original = (activeMediaItem.extras as any)?.originalSong;
+            if (original?.id) {
+                return original;
+            }
+            return {
+                ...playsong,
+                id: activeMediaItem.mediaId,
+                title: activeMediaItem.title || playsong?.title,
+                artist: activeMediaItem.artist || playsong?.artist,
+                cover_image_url: activeMediaItem.artworkUrl || playsong?.cover_image_url,
+                album_picture_url: activeMediaItem.artworkUrl || playsong?.album_picture_url,
+                duration: activeMediaItem.duration || playsong?.duration,
+            };
+        }
+        return playsong;
+    }, [activeMediaItem, playsong]);
+
+    // Keep Redux in sync whenever TrackPlayer transitions to another media item
+    useEffect(() => {
+        if (activeMediaItem?.mediaId) {
+            const activeId = activeMediaItem.mediaId.toString();
+            if (playsong?.id?.toString() !== activeId) {
+                const original = (activeMediaItem.extras as any)?.originalSong;
+                if (original) {
+                    lastLoadedIdRef.current = activeId;
+                    dispatch(addsong(original));
+                }
+            }
+        }
+    }, [activeMediaItem?.mediaId, playsong?.id, dispatch]);
 
     // Real-time progress state
     const [currentPosition, setCurrentPosition] = useState(0);
@@ -98,14 +134,15 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
      * 1. ACTIVE PROGRESS POLLING
      */
     useEffect(() => {
-        if (!playsong?.id || hideMiniPlayer) return;
+        const activeSongId = displaySong?.id || playsong?.id;
+        if (!activeSongId || hideMiniPlayer) return;
 
         const interval = setInterval(async () => {
             try {
                 const progress = await TrackPlayer.getProgress();
                 if (progress) {
                     const pos = progress.position > 10000 ? progress.position / 1000 : progress.position;
-                    const dur = progress.duration > 10000 ? progress.duration / 1000 : progress.duration;
+                    const dur = progress.duration > 1000 ? progress.duration / 1000 : progress.duration;
 
                     setCurrentPosition(pos || 0);
                     if (dur && dur > 0) {
@@ -116,13 +153,14 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
         }, 250);
 
         return () => clearInterval(interval);
-    }, [playsong?.id, hideMiniPlayer]);
+    }, [displaySong?.id, playsong?.id, hideMiniPlayer]);
 
     // Handle Playback State Ended (auto-advance)
     useEffect(() => {
         if (
             (playbackState === PlaybackState.Ended || (playbackState as any) === 'ended') &&
-            !isAutoNextingRef.current
+            !isAutoNextingRef.current &&
+            !isPlayerSwitching()
         ) {
             handleNext();
         }
@@ -150,6 +188,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
         // Skip if a track switch or load is already in progress
         if (isPlayerSwitching() || switchingTrack || isLoadingRef.current) {
             console.log('Track switch/load in progress, skipping playSongItem reload');
+            lastLoadedIdRef.current = songIdStr;
             return;
         }
 
@@ -161,7 +200,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
             // getActiveMediaItem can throw if player isn't ready — not an error
         }
 
-        if (activeSong?.mediaId === songIdStr) {
+        if (activeSong?.mediaId === songIdStr || activeMediaItem?.mediaId === songIdStr) {
             lastLoadedIdRef.current = songIdStr;
             const dur = Number(playsong.duration) || 0;
             if (dur > 0) {
@@ -180,7 +219,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
         playSongItem(playsong, autoPlay).finally(() => {
             isLoadingRef.current = false;
         });
-    }, [playsong?.id]);
+    }, [playsong?.id, activeMediaItem?.mediaId]);
 
     const pauseSongItem = async () => {
         try {
@@ -234,7 +273,8 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
      * 4. PREVIOUS SONG
      */
     const handlePrevious = async () => {
-        if (switchingTrack || !playsong?.id) return;
+        const currentId = displaySong?.id || playsong?.id;
+        if (switchingTrack || !currentId || isPlayerSwitching()) return;
 
         try {
             setSwitchingTrack(true);
@@ -265,7 +305,8 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
      * 6. NEXT SONG
      */
     const handleNext = async () => {
-        if (switchingTrack || isAutoNextingRef.current || !playsong?.id) return;
+        const currentId = displaySong?.id || playsong?.id;
+        if (switchingTrack || isAutoNextingRef.current || !currentId || isPlayerSwitching()) return;
 
         try {
             isAutoNextingRef.current = true;
@@ -285,24 +326,27 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
 
     // Open song action sheet / detail
     const openFullPlayer = () => {
-        if (playsong?.id) {
+        const targetSong = displaySong?.id ? displaySong : playsong;
+        if (targetSong?.id) {
             (navigation as any).navigate('.', {
-                id: playsong.id,
+                id: targetSong.id,
             });
 
             // dispatch(openSongAction(playsong));
         }
     };
 
-    if (!playsong?.id || hideMiniPlayer) return null;
+    const currentSong = displaySong?.id ? displaySong : playsong;
+
+    if (!currentSong?.id || hideMiniPlayer) return null;
 
     const effectiveDuration =
         trackDuration > 0
             ? trackDuration
-            : Number(playsong?.duration) > 0
-                ? Number(playsong.duration) > 1000
-                    ? Number(playsong.duration) / 1000
-                    : Number(playsong.duration)
+            : Number(currentSong?.duration) > 0
+                ? Number(currentSong.duration) > 1000
+                    ? Number(currentSong.duration) / 1000
+                    : Number(currentSong.duration)
                 : 1;
 
     const progressPercent =
@@ -319,16 +363,16 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                 style={styles.infoTouchArea}
             >
                 <Image
-                    source={GlobalImage(playsong.cover_image_url) || playsong.album_picture_url || Images.singericon}
+                    source={GlobalImage(currentSong.cover_image_url) || currentSong.album_picture_url || Images.singericon}
                     style={styles.image}
                 />
 
                 <View style={styles.info}>
                     <AppText numberOfLines={1} style={styles.title}>
-                        {playsong.title || 'Unknown Song'}
+                        {currentSong.title || 'Unknown Song'}
                     </AppText>
                     <AppText numberOfLines={1} style={styles.artist}>
-                        {playsong.artist || playsong.album_name || 'Unknown Artist'}
+                        {currentSong.artist || currentSong.album_name || 'Unknown Artist'}
                     </AppText>
                 </View>
             </TouchableOpacity>

@@ -281,7 +281,7 @@ const SettingScreen = () => {
 
                     <View style={styles.divider} />
 
-                    {renderSettingRow({
+                    {/* {renderSettingRow({
                         icon: '♫',
                         title: 'High Quality Audio',
                         subtitle: 'Use higher quality audio when available',
@@ -289,7 +289,7 @@ const SettingScreen = () => {
                             highQuality,
                             setHighQuality,
                         ),
-                    })}
+                    })} */}
                 </View>
 
                 {/* Playback & Download */}
@@ -306,17 +306,17 @@ const SettingScreen = () => {
                         subtitle: 'High quality',
                     })}
 
-                    <View style={styles.divider} />
+                    {/* <View style={styles.divider} /> */}
 
-                    {renderSettingRow({
+                    {/* {renderSettingRow({
                         icon: '⇩',
                         title: 'Download Settings',
                         subtitle: 'Manage downloaded songs',
-                    })}
+                    })} */}
 
-                    <View style={styles.divider} />
+                    {/* <View style={styles.divider} /> */}
 
-                    {renderSettingRow({
+                    {/* {renderSettingRow({
                         icon: '⌁',
                         title: 'Download over Wi-Fi',
                         subtitle: 'Save mobile data',
@@ -324,7 +324,7 @@ const SettingScreen = () => {
                             downloadWifi,
                             setDownloadWifi,
                         ),
-                    })}
+                    })} */}
 
                     <View style={styles.divider} />
 

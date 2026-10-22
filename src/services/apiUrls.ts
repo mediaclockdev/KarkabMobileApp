@@ -4,7 +4,7 @@ import { AppLanguage } from "../localization/supportLang";
 export const BASE_URL = 'https://karkab.mediaclocksoft.com.au';
 const getLanguage = () => {
   const activeCode = i18n.language.split('-')[0] as AppLanguage;
-  console.log(activeCode, "kkkk")
+  // console.log(activeCode, "kkkk")
   return activeCode === 'en' ? 'english' : 'arabic';
 };
 const apiUrls = {

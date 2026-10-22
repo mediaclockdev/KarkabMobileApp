@@ -207,15 +207,16 @@ const AudioRec = () => {
 
   useEffect(() => {
     console.log(id, type, "kkkkkkkkk");
-    if (!id) {
+    const activeSongId = id || playsong?.id;
+    if (!activeSongId) {
       getrendomsong();
       return;
     }
 
     if (type === 'recordings') {
-      getrecDetail(id);
+      getrecDetail(activeSongId);
     } else {
-      getSongDetail(id);
+      getSongDetail(activeSongId);
     }
   }, [id, type]);
 
@@ -605,7 +606,15 @@ const AudioRec = () => {
         const song = (response as any).data.song;
         setSongDetail(song);
         prepareLyrics(song);
-        await playSongItem(song);
+
+        let activeMediaId: string | null = null;
+        try {
+          activeMediaId = TrackPlayer.getActiveMediaItem()?.mediaId || null;
+        } catch (e) {}
+
+        if (activeMediaId !== song.id?.toString()) {
+          await playSongItem(song);
+        }
         getSongadjacent(song.id);
       }
     } catch (error: any) {
@@ -636,7 +645,14 @@ const AudioRec = () => {
         if (dur > 0) {
           setTrackDuration(dur);
         }
-        await playSongItem(song);
+        let activeMediaId: string | null = null;
+        try {
+          activeMediaId = TrackPlayer.getActiveMediaItem()?.mediaId || null;
+        } catch (e) {}
+
+        if (activeMediaId !== song.id?.toString()) {
+          await playSongItem(song);
+        }
         setAdjectprevdata(null);
         setAdjectnextvdata(null);
         adjectNextRef.current = null;
@@ -690,7 +706,7 @@ const AudioRec = () => {
         setAdjectnextvdata(data.nextSong);
         adjectNextRef.current = data.nextSong;
         if (data.nextSong?.id) {
-          prefetchNextSongForQueue(songid);
+          // prefetchNextSongForQueue(songid);
         }
       }
     } catch (e) { }

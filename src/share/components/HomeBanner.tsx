@@ -65,10 +65,66 @@ const HomeBanner = ({ data }: { data: any[] }) => {
 
   }
   const getHtmlStyles = (html: string) => {
-    const normalizedHtml = String(html ?? '').replace(/\\+"/g, '"');
+    const normalizedHtml = String(html ?? '').replace(/\\"/g, '"');
 
     const colorMatch = normalizedHtml.match(
-      /color\s*:\s*(#[0-9a-fA-F]{3,8})/i,
+      /color\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|[a-zA-Z]+)/i,
+    );
+
+    const weightMatch = normalizedHtml.match(
+      /font-weight\s*:\s*(bold|[1-9]00)/i,
+    );
+
+    const sizeMatch = normalizedHtml.match(
+      /font-size\s*:\s*(x-small|xx-small|small|medium|large|x-large|xx-large|[\d.]+(?:px|pt|em|rem|%)?)/i,
+    );
+
+    const sizeMap: Record<string, number> = {
+      'xx-small': 8,
+      'x-small': 10,
+      small: 12,
+      medium: 14,
+      large: 18,
+      'x-large': 24,
+      'xx-large': 30,
+    };
+
+    const rawSize = sizeMatch?.[1]?.toLowerCase();
+
+    let fontSize = 14;
+
+    if (rawSize) {
+      if (sizeMap[rawSize] !== undefined) {
+        fontSize = sizeMap[rawSize];
+      } else {
+        const numericSize = parseFloat(rawSize);
+
+        if (!Number.isNaN(numericSize)) {
+          fontSize = rawSize.endsWith('pt')
+            ? numericSize * (4 / 3)
+            : numericSize;
+        }
+      }
+    }
+
+    return {
+      html: normalizedHtml,
+      color: colorMatch?.[1] ?? '#1e293b',
+      fontWeight: weightMatch?.[1] ?? '400',
+      fontSize,
+    };
+  };
+  const getHtmlStyles1 = (html: string) => {
+    const normalizedHtml = String(html ?? '')
+      .replace(/\\"/g, '"')
+      .replace(/\\n/g, ' ');
+
+    const colorMatch = normalizedHtml.match(
+      /<font[^>]*\bcolor=["'](#[0-9a-fA-F]{3,8}|[a-zA-Z]+)["']/i,
+    );
+
+    const cssColorMatch = normalizedHtml.match(
+      /color\s*:\s*(#[0-9a-fA-F]{3,8}|[a-zA-Z]+)/i,
     );
 
     const weightMatch = normalizedHtml.match(
@@ -77,7 +133,7 @@ const HomeBanner = ({ data }: { data: any[] }) => {
 
     return {
       html: normalizedHtml,
-      color: colorMatch?.[1] ?? '#1e293b',
+      color: colorMatch?.[1] ?? cssColorMatch?.[1] ?? '#1e293b',
       fontWeight: weightMatch?.[1] ?? '400',
     };
   };
@@ -127,7 +183,7 @@ const HomeBanner = ({ data }: { data: any[] }) => {
                   {item.title}
                 </AppText> */}
                 {item.title ? (() => {
-                  const { html, color: titleColor, fontWeight } =
+                  const { html, color: titleColor, fontWeight, fontSize } =
                     getHtmlStyles(item.title);
 
                   return (
@@ -142,6 +198,7 @@ const HomeBanner = ({ data }: { data: any[] }) => {
                         span: {
                           color: titleColor,
                           fontWeight,
+                          fontSize
                         },
                       }}
                     />
@@ -159,8 +216,28 @@ const HomeBanner = ({ data }: { data: any[] }) => {
               >
                 {"Your stage is waiting."}
               </AppText> */}
+                {/* {item.description ? (
+                  <RenderHTML
+                    contentWidth={screenWidth - 80}
+                    source={{ html: item.description }}
+                    baseStyle={{
+                      fontSize: 12,
+                      fontFamily: Inter.regular,
+                      color: item.title_color || '#1e293b',
+                    }}
+                    tagsStyles={{
+                      p: {
+                        color: item.title_color || '#1e293b',
+                      },
+                      font: {
+                        color: item.title_color || '#1e293b',
+                      },
+                    }}
+                  />
+                ) : null} */}
+
                 {item.description ? (() => {
-                  const { html, color: titleColor, fontWeight } =
+                  const { html, color: titleColor, fontWeight, fontSize } =
                     getHtmlStyles(item.description);
 
                   return (
@@ -168,19 +245,37 @@ const HomeBanner = ({ data }: { data: any[] }) => {
                       contentWidth={screenWidth - 80}
                       source={{ html }}
                       baseStyle={{
-                        fontSize: 24,
+                        // fontSize: 14,
                         fontFamily: Inter.regular,
                       }}
                       tagsStyles={{
                         span: {
                           color: titleColor,
                           fontWeight,
+                          fontSize
                         },
                       }}
                     />
                   );
                 })() : null}
+                {/* {item.description ? (
+                  <RenderHTML
+                    contentWidth={screenWidth - 80}
+                    source={{
+                      html: item.description,
+                    }}
+                    baseStyle={{
+                      fontSize: 24,
+                      fontFamily: Inter.regular,
+                    }}
+                    tagsStyles={{
+                      span: {
+                        color: '#ffff',
 
+                      },
+                    }}
+                  />
+                ) : null} */}
                 {/* onRightPress={() => {
                 navigation.navigate('Recording');
               }} */}

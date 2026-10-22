@@ -95,8 +95,8 @@ export const formatSongToMediaItem = (
 ): MediaItem | null => {
     if (!song?.id) return null;
     const rawAudio =
-        song.recording_url ||
         song.original_song ||
+        song.recording_url ||
         song.file_path ||
         song.path ||
         song.url ||
@@ -267,77 +267,16 @@ export const restoreLastPlayedSong = async () => {
 };
 
 /**
- * Automatically prefetches and appends the adjacent next song to TrackPlayer's native queue.
- * This guarantees that native media controls (lock screen, notification tracker,
- * CarPlay & Bluetooth) always see hasNextMediaItem() === true, keeping the "Next" button
- * active, enabled, and visible on the tracker at all times.
+/**
+ * Prefetch helper.
+ * Note: Dynamic runtime queue appending via addMediaItem is disabled during active playback
+ * because adding items asynchronously triggers premature MediaItemTransition events in
+ * @rntp/player, which caused the player to immediately jump to the adjacent song on play.
  */
 export const prefetchNextSongForQueue = async (
-    currentSongId?: string | number | null,
+    _currentSongId?: string | number | null,
 ) => {
-    try {
-        if (!currentSongId) return;
-
-        const res = await ApiService.get(apiUrls.adjacentsong(currentSongId));
-        if (!(res as any).data?.success) return;
-
-        const nextRef = (res as any).data?.nextSong;
-        if (!nextRef?.id) return;
-
-        const queue = await TrackPlayer.getQueue();
-        const activeIdx = (await TrackPlayer.getActiveMediaItemIndex()) ?? 0;
-
-        // If TrackPlayer already has subsequent items in queue, no need to append
-        if (queue && queue.length > 0 && activeIdx < queue.length - 1) {
-            return;
-        }
-
-        const detailRes = await ApiService.get(apiUrls.singlesongdetail(nextRef.id));
-        if (!(detailRes as any).data?.success) return;
-
-        const nextSong =
-            (detailRes as any).data?.song || (detailRes as any).data?.recording;
-        if (!nextSong?.id) return;
-
-        // Ensure we don't duplicate
-        const currentQueue = await TrackPlayer.getQueue();
-        const isAlreadyQueued = currentQueue.some(
-            (item) => item.mediaId?.toString() === nextSong.id?.toString(),
-        );
-
-        if (!isAlreadyQueued) {
-            const nextMediaItem = formatSongToMediaItem(
-                nextSong,
-                currentQueue ? currentQueue.length : 1,
-            );
-            if (nextMediaItem) {
-                await TrackPlayer.addMediaItem(nextMediaItem);
-                console.log(
-                    '⏭️ [Tracker] Queued next song into TrackPlayer for active Next button:',
-                    nextSong.title,
-                );
-
-                // Keep Redux playlistQueue in sync
-                const authState = (store.getState() as any)?.auth;
-                const reduxQueue = authState?.playlistQueue || [];
-                if (Array.isArray(reduxQueue) && reduxQueue.length > 0) {
-                    const existsInRedux = reduxQueue.some(
-                        (s: any) => s.id?.toString() === nextSong.id?.toString(),
-                    );
-                    if (!existsInRedux) {
-                        store.dispatch(
-                            setPlaylistQueue({
-                                songs: [...reduxQueue, nextSong],
-                                initialIndex: authState?.playlistIndex ?? 0,
-                            }),
-                        );
-                    }
-                }
-            }
-        }
-    } catch (e) {
-        console.log('Notice: prefetchNextSongForQueue error:', e);
-    }
+    return;
 };
 
 /**
@@ -376,15 +315,23 @@ export const playSongList = async (
             return null;
         }
 
-        // Clamp initial index
-        let targetIndex = initialIndex;
-        if (targetIndex < 0 || targetIndex >= mediaItems.length) {
-            targetIndex = 0;
+        // Locate the target song by ID to avoid index shifting if any preceding item was filtered out
+        const requestedSong = songs[initialIndex] || songs[0];
+        let targetIndex = validSongs.findIndex(
+            (s) => s.id?.toString() === requestedSong?.id?.toString(),
+        );
+        if (targetIndex < 0) {
+            targetIndex =
+                initialIndex >= 0 && initialIndex < validSongs.length
+                    ? initialIndex
+                    : 0;
         }
 
         console.log(
             `🎶 Loading queue of ${mediaItems.length} songs into TrackPlayer at index ${targetIndex} (${validSongs[targetIndex]?.title})`
         );
+
+        isSwitchingSong = true;
 
         // Load the full album / playlist queue into TrackPlayer
         await TrackPlayer.setMediaItems(mediaItems, targetIndex);
@@ -406,15 +353,14 @@ export const playSongList = async (
         store.dispatch(addsong(currentSong));
         saveLastPlayed(currentSong);
 
-        // Preload next track if near or at the end of playlist so Next button stays active on tracker
-        if (targetIndex >= validSongs.length - 1 && currentSong?.id) {
-            prefetchNextSongForQueue(currentSong.id);
-        }
-
         return currentSong;
     } catch (error) {
         console.log('❌ playSongList error:', error);
         return null;
+    } finally {
+        setTimeout(() => {
+            isSwitchingSong = false;
+        }, 500);
     }
 };
 
@@ -447,6 +393,8 @@ export const playTrackSong = async (song: any, autoPlay: boolean = true) => {
             return null;
         }
 
+        isSwitchingSong = true;
+
         await TrackPlayer.setMediaItem(mediaItem);
 
         if (autoPlay) {
@@ -459,13 +407,14 @@ export const playTrackSong = async (song: any, autoPlay: boolean = true) => {
         store.dispatch(addsong(song));
         saveLastPlayed(song);
 
-        // Prefetch adjacent next song and queue it into TrackPlayer so Next button is active on notification tracker
-        prefetchNextSongForQueue(song.id);
-
         return song;
     } catch (error) {
         console.log('❌ playTrackSong error:', error);
         return null;
+    } finally {
+        setTimeout(() => {
+            isSwitchingSong = false;
+        }, 500);
     }
 };
 
@@ -629,6 +578,7 @@ export const syncTrackTransition = async (
     }
 
     isSyncingTransition = true;
+    isSwitchingSong = true;
     try {
         console.log(`🔄 Syncing track transition at index ${index}:`, item.title);
 
@@ -647,17 +597,13 @@ export const syncTrackTransition = async (
             store.dispatch(setPlaylistIndex(index));
             store.dispatch(addsong(song));
             saveLastPlayed(song);
-
-            // NOTE: Do NOT call prefetchNextSongForQueue here.
-            // addMediaItem() triggers another MediaItemTransition event, causing an infinite loop.
-            // Prefetching is handled separately after playSongList / playTrackSong completes.
         }
     } catch (e) {
         console.log('❌ syncTrackTransition error:', e);
     } finally {
-        // Release guard after a short delay to allow the current event cycle to complete
         setTimeout(() => {
             isSyncingTransition = false;
+            isSwitchingSong = false;
         }, 500);
     }
 };

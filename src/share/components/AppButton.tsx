@@ -22,7 +22,7 @@ interface AppButtonProps {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   style?: any;
-  ns?: string
+  ns?: string;
 }
 
 const AppButton: React.FC<AppButtonProps> = ({
