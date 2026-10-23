@@ -8,7 +8,7 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 import AppText from '../../share/components/AppText';
 import AppImage from '../../share/components/AppImage';
@@ -78,11 +78,19 @@ const defaultPlaylists: Playlist[] = [
 
 export default function PlayListScreen() {
     const navigation = useNavigation();
-
+    const route = useRoute();
     const [selected, setSelected] = useState('All');
     const [playlists, setPlaylists] =
         useState<Playlist[]>(defaultPlaylists);
+    const {
 
+        previousScreen,
+
+    } = route.params as {
+
+        previousScreen?: string;
+
+    };
     const [songs, setSongs] = useState<Song[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [loader, setLoader] = useState(false);
@@ -251,7 +259,17 @@ export default function PlayListScreen() {
 
             <View style={styles.header}>
                 <TouchableOpacity
-                    onPress={() => navigation.navigate('Search')}
+                    onPress={() => {
+                        if (previousScreen) {
+                            (
+                                navigation as any
+                            ).navigate(
+                                previousScreen
+                            );
+                        } else {
+                            navigation.goBack();
+                        }
+                    }}
                     style={styles.backButton}
                 >
                     <AppImage
@@ -422,7 +440,7 @@ export default function PlayListScreen() {
                                     </AppText>
                                 </View>
 
-                                <TouchableOpacity
+                                {/* <TouchableOpacity
                                     style={styles.mainPlayButton}
                                     activeOpacity={0.8}
                                     onPress={() => {
@@ -438,7 +456,7 @@ export default function PlayListScreen() {
                                         height={20}
                                         resizeMode="contain"
                                     />
-                                </TouchableOpacity>
+                                </TouchableOpacity> */}
                             </View>
 
                             {/* SONG HEADER */}

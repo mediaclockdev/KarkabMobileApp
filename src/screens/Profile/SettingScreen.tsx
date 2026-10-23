@@ -20,6 +20,7 @@ import { useNavigation } from '@react-navigation/native';
 import { storage } from '../../share/storage/mmkv';
 import { addsong, setAuthenticated } from '../../auth/redux/authSlice';
 import { useAppDispatch } from '../../share/hooks/useAppSelector';
+import Toast from 'react-native-toast-message';
 
 const SettingScreen = () => {
     const navigation = useNavigation();
@@ -214,7 +215,7 @@ const SettingScreen = () => {
 
                     <View style={styles.divider} />
 
-                    {renderSettingRow({
+                    {/* {renderSettingRow({
                         icon: '♛',
                         title: 'Subscription',
                         subtitle: 'VIP Premium',
@@ -225,7 +226,7 @@ const SettingScreen = () => {
                                 </AppText>
                             </View>
                         ),
-                    })}
+                    })} */}
 
                     <View style={styles.divider} />
 
@@ -233,7 +234,16 @@ const SettingScreen = () => {
                         icon: '▣',
                         title: 'Language',
                         subtitle: 'English',
-                        onPress: () => { (navigation as any).navigate('LanguageScreen') },
+                        onPress: () => {
+                            Toast.show({
+                                type: 'info',
+                                position: 'bottom',
+                                bottomOffset: 80,
+                                text1: 'Coming soon!',
+                                // text2: "coming soon",
+                            });
+                            (navigation as any).navigate('LanguageScreen')
+                        },
                     })}
                 </View>
 
@@ -263,13 +273,24 @@ const SettingScreen = () => {
                         subtitle: 'Automatically play the next song',
                         right: renderSwitch(
                             autoPlay,
-                            setAutoPlay,
+                            setAutoPlay
+
                         ),
+                        onPress: () => {
+                            Toast.show({
+                                type: 'info',
+                                position: 'bottom',
+                                bottomOffset: 80,
+                                text1: 'Coming soon!',
+                                // text2: "coming soon",
+                            });
+
+                        },
                     })}
 
                     <View style={styles.divider} />
 
-                    {renderSettingRow({
+                    {/* {renderSettingRow({
                         icon: '☾',
                         title: 'Dark Mode',
                         subtitle: 'Use dark appearance throughout the app',
@@ -277,7 +298,7 @@ const SettingScreen = () => {
                             darkMode,
                             setDarkMode,
                         ),
-                    })}
+                    })} */}
 
                     <View style={styles.divider} />
 
@@ -304,6 +325,16 @@ const SettingScreen = () => {
                         icon: '♬',
                         title: 'Audio Quality',
                         subtitle: 'High quality',
+                        onPress: () => {
+                            Toast.show({
+                                type: 'info',
+                                position: 'bottom',
+                                bottomOffset: 80,
+                                text1: 'Coming soon!',
+                                // text2: "coming soon",
+                            });
+
+                        },
                     })}
 
                     {/* <View style={styles.divider} /> */}
@@ -332,6 +363,16 @@ const SettingScreen = () => {
                         icon: '⌫',
                         title: 'Clear Cache',
                         subtitle: 'Remove temporary files',
+                        onPress: () => {
+                            Toast.show({
+                                type: 'info',
+                                position: 'bottom',
+                                bottomOffset: 80,
+                                text1: 'Coming soon!',
+                                // text2: "coming soon",
+                            });
+
+                        },
                     })}
                 </View>
 
@@ -347,6 +388,16 @@ const SettingScreen = () => {
                         icon: '♙',
                         title: 'Privacy Settings',
                         subtitle: 'Control your profile visibility',
+                        onPress: () => {
+                            Toast.show({
+                                type: 'info',
+                                position: 'bottom',
+                                bottomOffset: 80,
+                                text1: 'Coming soon!',
+                                // text2: "coming soon",
+                            });
+
+                        },
                     })}
 
                     <View style={styles.divider} />
@@ -355,6 +406,16 @@ const SettingScreen = () => {
                         icon: '▣',
                         title: 'Permissions',
                         subtitle: 'Microphone, storage & notifications',
+                        onPress: () => {
+                            Toast.show({
+                                type: 'info',
+                                position: 'bottom',
+                                bottomOffset: 80,
+                                text1: 'Coming soon!',
+                                // text2: "coming soon",
+                            });
+
+                        },
                     })}
 
                     <View style={styles.divider} />
@@ -363,6 +424,16 @@ const SettingScreen = () => {
                         icon: '⌾',
                         title: 'Security',
                         subtitle: 'Password and account security',
+                        onPress: () => {
+                            Toast.show({
+                                type: 'info',
+                                position: 'bottom',
+                                bottomOffset: 80,
+                                text1: 'Coming soon!',
+                                // text2: "coming soon",
+                            });
+
+                        },
                     })}
                 </View>
 
@@ -378,6 +449,16 @@ const SettingScreen = () => {
                         icon: '?',
                         title: 'Help Center',
                         subtitle: 'Get answers to common questions',
+                        onPress: () => {
+                            Toast.show({
+                                type: 'info',
+                                position: 'bottom',
+                                bottomOffset: 80,
+                                text1: 'Coming soon!',
+                                // text2: "coming soon",
+                            });
+
+                        },
                     })}
 
                     <View style={styles.divider} />
@@ -386,6 +467,16 @@ const SettingScreen = () => {
                         icon: '✉',
                         title: 'Contact Us',
                         subtitle: 'We are here to help',
+                        onPress: () => {
+                            Toast.show({
+                                type: 'info',
+                                position: 'bottom',
+                                bottomOffset: 80,
+                                text1: 'Coming soon!',
+                                // text2: "coming soon",
+                            });
+
+                        },
                     })}
 
                     <View style={styles.divider} />
@@ -394,6 +485,16 @@ const SettingScreen = () => {
                         icon: '★',
                         title: 'Rate the App',
                         subtitle: 'Tell us what you think',
+                        onPress: () => {
+                            Toast.show({
+                                type: 'info',
+                                position: 'bottom',
+                                bottomOffset: 80,
+                                text1: 'Coming soon!',
+                                // text2: "coming soon",
+                            });
+
+                        },
                     })}
                 </View>
 
@@ -409,6 +510,16 @@ const SettingScreen = () => {
                         icon: 'ⓘ',
                         title: 'About Karaoke',
                         subtitle: 'Learn more about the app',
+                        onPress: () => {
+                            Toast.show({
+                                type: 'info',
+                                position: 'bottom',
+                                bottomOffset: 80,
+                                text1: 'Coming soon!',
+                                // text2: "coming soon",
+                            });
+
+                        },
                     })}
 
                     <View style={styles.divider} />
@@ -416,6 +527,16 @@ const SettingScreen = () => {
                     {renderSettingRow({
                         icon: '▤',
                         title: 'Terms & Conditions',
+                        onPress: () => {
+                            Toast.show({
+                                type: 'info',
+                                position: 'bottom',
+                                bottomOffset: 80,
+                                text1: 'Coming soon!',
+                                // text2: "coming soon",
+                            });
+
+                        },
                     })}
 
                     <View style={styles.divider} />
@@ -423,6 +544,16 @@ const SettingScreen = () => {
                     {renderSettingRow({
                         icon: '♢',
                         title: 'Privacy Policy',
+                        onPress: () => {
+                            Toast.show({
+                                type: 'info',
+                                position: 'bottom',
+                                bottomOffset: 80,
+                                text1: 'Coming soon!',
+                                // text2: "coming soon",
+                            });
+
+                        },
                     })}
                 </View>
 

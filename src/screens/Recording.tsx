@@ -375,6 +375,7 @@ const Recording = () => {
   // 1. Load instrumental first, then start native recording & smooth clock
   const startRecording = async () => {
     try {
+      requestMicPermission()
       // 1. Stop any lingering previous session
       try {
         await Sound.stopRecorder();
@@ -464,6 +465,12 @@ const Recording = () => {
       setInstrumentalLoading(false);
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      stopRecording()
+    }, [])
+  )
 
   // Stop recording and stop timer
   const stopRecording = async () => {
@@ -1742,11 +1749,11 @@ const Recording = () => {
           </View>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate('Library')}
+            onPress={() => navigation.goBack()}
             style={{ marginTop: 8 }}
           >
             <AppText fontSize={16} fontFamily={Inter.regular} color="#D900D5">
-              {t('Back to Library') || 'Back to Library'}
+              {t('Back to Home') || 'Back to Home'}
             </AppText>
           </TouchableOpacity>
         </View>

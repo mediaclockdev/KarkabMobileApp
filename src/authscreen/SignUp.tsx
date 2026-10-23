@@ -640,9 +640,9 @@ export default function SignUp() {
         keyboardShouldPersistTaps="handled"
         extraScrollHeight={Platform.OS === 'ios' ? 20 : 100}
       >
-        <View style={styles.header}>
+        {/* <View style={styles.header}>
           <LanguageSelector />
-        </View>
+        </View> */}
 
         <AppImage
           source={Logo.loginlogo}

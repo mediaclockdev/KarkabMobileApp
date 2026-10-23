@@ -21,7 +21,7 @@ import AppImage from './AppImage';
 import { Images } from '../constants/media';
 import { useAppDispatch, useAppSelector } from '../hooks/useAppSelector';
 import { GlobalImage } from '../utils/GlobalImage';
-import { addsong, openSongAction } from '../../auth/redux/authSlice';
+import { addsong, openSongAction, setHideMiniPlayer } from '../../auth/redux/authSlice';
 import {
     skipToNextTrack,
     skipToPreviousTrack,
@@ -295,6 +295,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
         try {
             await TrackPlayer.stop();
             lastLoadedIdRef.current = null;
+            dispatch(setHideMiniPlayer(true))
             dispatch(addsong(''));
         } catch (error) {
             console.log('CLOSE MINI PLAYER ERROR:', error);
@@ -363,7 +364,7 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                 style={styles.infoTouchArea}
             >
                 <Image
-                    source={GlobalImage(currentSong.cover_image_url) || currentSong.album_picture_url || Images.singericon}
+                    source={GlobalImage(currentSong.cover_image_url) || currentSong?.album_picture_url || Images.singericon}
                     style={styles.image}
                 />
 

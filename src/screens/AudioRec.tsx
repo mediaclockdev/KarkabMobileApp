@@ -610,7 +610,7 @@ const AudioRec = () => {
         let activeMediaId: string | null = null;
         try {
           activeMediaId = TrackPlayer.getActiveMediaItem()?.mediaId || null;
-        } catch (e) {}
+        } catch (e) { }
 
         if (activeMediaId !== song.id?.toString()) {
           await playSongItem(song);
@@ -619,13 +619,13 @@ const AudioRec = () => {
       }
     } catch (error: any) {
       getrendomsong()
-      dispatch(
-        showToast({
-          visible: true,
-          message: error?.message || 'Failed to load track.',
-          type: 'error',
-        })
-      );
+      // dispatch(
+      //   showToast({
+      //     visible: true,
+      //     message: error?.message || 'Failed to load track.',
+      //     type: 'error',
+      //   })
+      // );
     } finally {
 
       setScreenLoading(false);
@@ -648,7 +648,7 @@ const AudioRec = () => {
         let activeMediaId: string | null = null;
         try {
           activeMediaId = TrackPlayer.getActiveMediaItem()?.mediaId || null;
-        } catch (e) {}
+        } catch (e) { }
 
         if (activeMediaId !== song.id?.toString()) {
           await playSongItem(song);
@@ -659,13 +659,13 @@ const AudioRec = () => {
       }
     } catch (error: any) {
       console.log('getrecDetail error:', error);
-      dispatch(
-        showToast({
-          visible: true,
-          message: error?.message || 'Failed to load recording.',
-          type: 'error',
-        })
-      );
+      // dispatch(
+      //   showToast({
+      //     visible: true,
+      //     message: error?.message || 'Failed to load recording.',
+      //     type: 'error',
+      //   })
+      // );
     } finally {
       setScreenLoading(false);
     }
@@ -685,13 +685,13 @@ const AudioRec = () => {
         getSongadjacent(song.id);
       }
     } catch (error: any) {
-      dispatch(
-        showToast({
-          visible: true,
-          message: error?.message || 'Failed to load track.',
-          type: 'error',
-        })
-      );
+      // dispatch(
+      //   showToast({
+      //     visible: true,
+      //     message: error?.message || 'Failed to load track.',
+      //     type: 'error',
+      //   })
+      // );
     } finally {
       setScreenLoading(false);
     }
@@ -950,7 +950,7 @@ const AudioRec = () => {
           >
 
           </TouchableOpacity>
-          {screenLoading ? (
+          {(screenLoading || type === 'recordings') ? (
             null
           ) : (
             <TouchableOpacity
@@ -1263,7 +1263,7 @@ const AudioRec = () => {
                 ) : (
                   <View style={styles.centerContainer}>
                     <AppText color="rgba(255,255,255,0.5)" fontSize={14}>
-                      Lyrics not available for this song.
+                      {type == 'recordings' ? "Lyrics are not available for the recorded song." : "Lyrics not available for this song."}
                     </AppText>
                   </View>
                 )}

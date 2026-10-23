@@ -653,9 +653,9 @@ export default function LoginScreen() {
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.header}>
+          {/* <View style={styles.header}>
             <LanguageSelector />
-          </View>
+          </View> */}
 
           <AppImage
             source={Logo.loginlogo}

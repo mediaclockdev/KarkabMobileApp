@@ -20,6 +20,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { Sound } from "react-native-nitro-sound";
 import TagLIst from "../share/components/TagLIst";
 import { useTranslation } from "react-i18next";
+import Toast from "react-native-toast-message";
 
 const Search = () => {
   //const [search, setSearch] = useState('')
@@ -122,7 +123,7 @@ const Search = () => {
     if (item.title == 'Artists') {
       (navigation as any).navigate('ArtistScreen')
     }
-    else if (item.title == 'Song\nCategory') {
+    else if (item.title == 'Songs') {
       (navigation as any).navigate('SongsScreen')
     }
     else if (item.title == 'KarKab\nSelection') {
@@ -133,11 +134,11 @@ const Search = () => {
     else if (item.title == 'Playlists') {
 
 
-      (navigation as any).navigate('PlayListScreen')
+      (navigation as any).navigate('PlayListScreen', { previousScreen: 'Search' })
 
 
     }
-    else if (item.title == 'Genre') {
+    else if (item.title == 'Song\nCategory') {
 
       (navigation as any).navigate('GenreScreen')
 
@@ -145,8 +146,14 @@ const Search = () => {
     else if (item.title == 'Performances') {
 
 
-      (navigation as any).navigate('PerformanceScreen')
-
+      //  (navigation as any).navigate('PerformanceScreen')
+      Toast.show({
+        type: 'info',
+        position: 'bottom',
+        bottomOffset: 200,
+        text1: 'Coming soon!',
+        // text2: "coming soon",
+      });
 
     }
 

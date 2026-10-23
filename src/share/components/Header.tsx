@@ -39,7 +39,7 @@ const Header: React.FC<HeaderProps> = ({
     <View style={{ paddingHorizontal: 5, paddingVertical: 14, }}>
 
 
-      {headername == 'Search' || headername == 'Library' ?
+      {headername == 'Search' || headername == 'Library' || headername == 'Profile' ?
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
           <AppImage
             source={Logo.mainlogo}

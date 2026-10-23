@@ -26,6 +26,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { launchImageLibrary } from 'react-native-image-picker';
 import { storage } from "../share/storage/mmkv";
 import { useTranslation } from "react-i18next";
+import { prefetchNextSongForQueue } from "../services/player";
 
 const Profile = () => {
     const navigation = useNavigation();
@@ -82,12 +83,12 @@ const Profile = () => {
 
 
     const features = [
-        {
-            image: Images.music,
-            number: profiledetail?.songs_count || 0,
-            title: 'song',
-            tintColor: '#E52450'
-        },
+        // {
+        //     image: Images.music,
+        //     number: profiledetail?.songs_count || 0,
+        //     title: 'song',
+        //     tintColor: '#E52450'
+        // },
         {
             image: Images.micros,
             number: profiledetail?.performance_count || 0,
@@ -632,7 +633,7 @@ const Profile = () => {
                                 </TouchableOpacity>
                             </View>
                             <View style={{ gap: 1 }}>
-                                <AppText width={'80%'} lineHeight={22} color={color.darkthemetext} fontSize={16} fontWeight="500" fontFamily={Inter.regular}>
+                                <AppText width={'80%'} lineHeight={22} color={color.darkthemetext} fontSize={20} fontWeight="500" fontFamily={Inter.regular}>
 
                                     {profiledetail?.name
 
@@ -644,8 +645,19 @@ const Profile = () => {
                                     }
                                 </AppText>
 
+                                <AppText width={'90%'} lineHeight={22} color={color.darkthemetext} fontSize={12} fontWeight="500"
+                                    style={{ flex: 1 }}
+                                    fontFamily={Inter.regular}>
 
-                                <View style={styles.vipview}>
+                                    {profiledetail?.email}
+
+
+
+
+
+
+                                </AppText>
+                                {/* <View style={styles.vipview}>
                                     <AppImage
                                         source={Images.rivip}
                                         width={15}
@@ -657,7 +669,7 @@ const Profile = () => {
                                         {t('Library.VIPpremium')}
                                     </AppText>
 
-                                </View>
+                                </View> */}
                                 <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
                                     <AppImage
                                         source={Images.star}
@@ -675,25 +687,29 @@ const Profile = () => {
                                 </View>
 
                                 <View style={{ flex: 1, width: '100%', }}>
-                                    <View style={{ flex: 1, width: 200, flexWrap: 'wrap' }}>
+                                    {
+                                        profiledetail?.bio ?
+                                            <View style={{ flex: 1, width: 200, flexWrap: 'wrap' }}>
 
 
-                                        <AppText
-                                            color="#CECECE"
-                                            fontSize={10}
-                                            lineHeight={18}
-                                            numberOfLines={3}
-                                            fontFamily={Inter.regular}
-                                            style={{
-                                                flexShrink: 1,
-                                                width: '100%',
-                                                flexWrap: 'wrap'
+                                                <AppText
+                                                    color="#CECECE"
+                                                    fontSize={10}
+                                                    lineHeight={18}
+                                                    numberOfLines={3}
+                                                    fontFamily={Inter.regular}
+                                                    style={{
+                                                        flexShrink: 1,
+                                                        width: '100%',
+                                                        flexWrap: 'wrap'
 
-                                            }}
-                                        >
-                                            {profiledetail?.bio || ''}
-                                        </AppText>
-                                    </View>
+                                                    }}
+                                                >
+                                                    {profiledetail?.bio || ''}
+                                                </AppText>
+                                            </View> : null}
+}
+
                                     <View
                                         style={{
                                             flexDirection: 'row',
@@ -1029,13 +1045,13 @@ const Profile = () => {
 
 
 
-                        <View style={[styles.titles]}>
+                        {/* <View style={[styles.titles]}>
                             <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
 
 
                                 {t('Library.recentactivity')}
                             </AppText>
-                            {/* <TouchableOpacity style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+                            <TouchableOpacity style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
                                 <AppText color={color.mgred} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
                                     See all
                                 </AppText>
@@ -1044,18 +1060,18 @@ const Profile = () => {
                                     width={5}
                                     height={8}
                                 />
-                            </TouchableOpacity> */}
+                            </TouchableOpacity>
 
 
-                        </View>
+                        </View> */}
 
 
-
+                        {/* 
                         <TouchableOpacity
                             activeOpacity={0.8}
                             style={[styles.card, { borderColor: color.searhbarbordercolor }]}
                         >
-                            {/* Image */}
+                           
                             <AppImage
                                 source={Images.profile}
                                 width={62}
@@ -1063,7 +1079,7 @@ const Profile = () => {
                                 radius={8}
                             />
 
-                            {/* Content */}
+                          
                             <View style={styles.content}>
                                 <AppText
                                     fontSize={10}
@@ -1084,13 +1100,7 @@ const Profile = () => {
                                 </AppText>
                                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                                     <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
-                                        {/* <AppImage
-                                    source={Images.mic}
-                                    width={16}
-                                    height={16}
-                                // radius={8}
-                                /> */}
-
+                                      
                                         <AppText
                                             fontSize={8}
                                             color={color.darkthemetext}
@@ -1108,28 +1118,11 @@ const Profile = () => {
 
                             </View>
 
-                            {/* Right Side */}
+                          
                             <View style={styles.right}>
 
 
-                                {/* <TouchableOpacity style={styles.playButton} onPress={play?stopRecording:playRecording}>
-{
-    play?
-  <View style={styles.pauseContainer}>
-              <View style={styles.pauseLine} />
-              <View style={styles.pauseLine} />
-            </View> 
-            :
-               <AppImage
-                                source={Images.playicon}
-                                width={8.2}
-                                height={8.2}
-                                tintColor={color.darkthemetext}
-                            />
-}
-                         
-                         
-                        </TouchableOpacity> */}
+                             
 
                                 <View style={{ gap: 2, alignItems: 'center' }}>
                                     <AppImage
@@ -1176,14 +1169,14 @@ const Profile = () => {
 
 
 
-                                {/* Menu */}
+                              
                                 <TouchableOpacity style={styles.menu}>
                                     <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
                                     <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
                                     <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
                                 </TouchableOpacity>
                             </View>
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
 
                         {/* <LinearGradient
                             colors={['#620D33', '#3B1230', '#220A20', '#3A120F', '#5B1B01']}
@@ -1393,7 +1386,7 @@ const styles = StyleSheet.create({
         gap: 4
     },
     dashboardview: {
-        marginTop: 10,
+        marginTop: 15,
         flexDirection: 'row',
         // justifyContent:'space-between',
         alignItems: 'center',

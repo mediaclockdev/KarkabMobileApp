@@ -296,7 +296,7 @@ const SwipeablePlaylistCard: React.FC<SwipeableCardProps> = ({
                             </AppText>
 
                             <View style={styles.dotSeparator} />
-
+                            {/* {console.log(item, "kkkkkk")} */}
                             <AppText
                                 color="#8F8986"
                                 fontSize={10}

@@ -23,6 +23,7 @@ import { useAppSelector } from "../share/hooks/useAppSelector";
 import Sound from 'react-native-nitro-sound';
 import { GlobalImage } from "../share/utils/GlobalImage";
 import { useTranslation } from "react-i18next";
+import Toast from "react-native-toast-message";
 
 const LIMIT = 15; // Set to 10 or 15 songs per page
 
@@ -80,7 +81,7 @@ const Library = () => {
     {
       image: Logo.headponeicon,
       title: 'Recently\nSung',
-      number: 18,
+      number: 0,
       bordercolor: '#9E8F1F',
     },
   ];
@@ -100,8 +101,9 @@ const Library = () => {
 
   useFocusEffect(
     useCallback(() => {
-      songlist(1, false);
-
+      songlist(1, true);
+      setSelectedTab('Songs')
+      setVisible(true)
     }, [])
   )
   useFocusEffect(
@@ -157,6 +159,7 @@ const Library = () => {
         } else {
           setSongdata(prev => [...prev, ...incomingSongs]);
         }
+        console.log(data?.favorite_songs_count, "dejdjebdeb")
 
         setNumberofsong(data?.total_songs || 0);
         setFavoritescount(data?.favorite_songs_count || 0);
@@ -265,7 +268,16 @@ const Library = () => {
       songlist(1);
       setVisible(true);
     } else if (item === 'Playlists') {
-      (navigation as any).navigate('PlayListScreen');
+      (navigation as any).navigate('PlayListScreen', { previousScreen: 'Library' });
+    } else if (item === 'Recently Played') {
+      // Toast.show(title="coming soon")
+      Toast.show({
+        type: 'info',
+        position: 'bottom',
+        bottomOffset: 200,
+        text1: 'Coming soon!',
+        // text2: "coming soon",
+      });
     }
   };
 

@@ -172,9 +172,9 @@ const ClassicSongItem = ({ item, onPress, songList, index }: Props) => {
             </View>
             <View style={styles.actions}>
                 {/* <View style={styles.infoRow}> */}
-                <AppText style={styles.info}>
+                {/* <AppText style={styles.info}>
                     ❤️ {item.likes_count}
-                </AppText>
+                </AppText> */}
 
                 <AppText style={styles.info}>
                     {formatDuration(item.duration)}

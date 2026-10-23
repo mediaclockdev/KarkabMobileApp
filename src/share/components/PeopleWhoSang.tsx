@@ -108,6 +108,7 @@ const PeopleWhoSang = ({
                     <AppText
                         marginTop={3}
                         fontSize={10}
+                        numberOfLines={1}
                         fontFamily={Inter.regular}
                         color="#A9A9A9"
                     >
