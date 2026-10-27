@@ -144,7 +144,8 @@
     "Songs": "الأغاني",
     "Discoverthousandsof": "اكتشف الآلاف من",
     "Sudanesesongs": "الأغاني السودانية",
-    "Yourrecorded": "تسجيلاتك"
+    "Yourrecorded": "تسجيلاتك",
+    "Yourrecordedshowhere": "سيظهر أداؤك المُسجَّل هنا"
   },
   "Search": {
     "whatwouldtosingtoday?": "ما الأغنية التي ترغب في غنائها اليوم؟",
@@ -182,6 +183,7 @@
     "Logout": "تسجيل الخروج",
     "Yourjourneyyourvoice": "رحلتك، صوتك",
     "Yourmusiccollection": "مجموعتك الموسيقية",
-    "SingItYourOwn": "غَنِّها بأسلوبك الخاص"
+    "SingItYourOwn": "غَنِّها بأسلوبك الخاص",
+    "MyPlaylists": "قوائمي الموسيقية"
   }
 }

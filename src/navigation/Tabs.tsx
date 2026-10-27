@@ -29,6 +29,10 @@ import { useAppDispatch, useAppSelector } from '../share/hooks/useAppSelector';
 import { closeSongAction, refreshRecordings } from '../auth/redux/authSlice';
 import DownloadsScreen from '../screens/Profile/DownloadsScreen';
 import VocalRecordingScreen from '../screens/VocalRecordingScreen';
+import TermsConditionsScreen from '../screens/Settings/TermsConditionsScreen';
+import PrivacyPolicyScreen from '../screens/Settings/PrivacyPolicyScreen';
+import AboutKarKabScreen from '../screens/Settings/AboutKarKabScreen';
+import ContactUsScreen from '../screens/Settings/ContactUsScreen';
 export const Tabs = () => {
     const songAction = useAppSelector(
         (state: any) => state.auth.songAction
@@ -61,6 +65,10 @@ export const Tabs = () => {
         { name: 'LanguageScreen', component: LanguageScreen },
         { name: 'DownloadsScreen', component: DownloadsScreen },
         { name: 'VocalRecordingScreen', component: VocalRecordingScreen },
+        { name: 'TermsConditionsScreen', component: TermsConditionsScreen },
+        { name: 'PrivacyPolicyScreen', component: PrivacyPolicyScreen },
+        { name: 'AboutKarKabScreen', component: AboutKarKabScreen },
+        { name: 'ContactUsScreen', component: ContactUsScreen },
 
     ];
 

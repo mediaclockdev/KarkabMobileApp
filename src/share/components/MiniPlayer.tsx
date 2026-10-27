@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     AppState,
@@ -29,7 +29,7 @@ import {
     isPlayerSwitching,
     restoreLastPlayedSong,
 } from '../../services/player';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 interface MiniPlayerProps {
     onNext?: () => void;
@@ -339,6 +339,9 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
 
     const currentSong = displaySong?.id ? displaySong : playsong;
 
+
+
+
     if (!currentSong?.id || hideMiniPlayer) return null;
 
     const effectiveDuration =
@@ -363,8 +366,9 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                 onPress={openFullPlayer}
                 style={styles.infoTouchArea}
             >
+
                 <Image
-                    source={GlobalImage(currentSong.cover_image_url) || currentSong?.album_picture_url || Images.singericon}
+                    source={currentSong.cover_image_url ? GlobalImage(currentSong.cover_image_url) : GlobalImage(currentSong?.album_picture_url)}
                     style={styles.image}
                 />
 

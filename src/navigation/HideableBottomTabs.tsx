@@ -71,7 +71,12 @@ export const HideableBottomTabs = ({ screens }: Props) => {
             currentRoute === 'LanguageScreen' ||
             currentRoute === 'DownloadsScreen' ||
             currentRoute === 'VocalRecordingScreen' ||
-            currentRoute === 'SongsListScreen'
+            currentRoute === 'SongsListScreen' ||
+            currentRoute === 'TermsConditionsScreen' ||
+            currentRoute === 'PrivacyPolicyScreen' ||
+            currentRoute === 'AboutKarKabScreen' ||
+            currentRoute === 'ContactUsScreen'
+
 
 
           ) {

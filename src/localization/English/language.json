@@ -143,7 +143,8 @@
     "Readysingtoday": "Ready to sing today",
     "Songs": "Songs",
     "Discoverthousandsof": "Discover thousands of",
-    "Sudanesesongs": "Sudanese songs"
+    "Sudanesesongs": "Sudanese songs",
+    "Yourrecordedshowhere": "Your recorded performance show here"
   },
   "Search": {
     "whatwouldtosingtoday?": "What would you like to sing today?",
@@ -185,6 +186,7 @@
     "Logout": "Logout",
     "Yourjourneyyourvoice": "Your journey , your voice",
     "Yourmusiccollection": "Your music collection",
-    "SingItYourOwn": "Sing It Your Own"
+    "SingItYourOwn": "Sing It Your Own",
+    "MyPlaylists": "My Playlists"
   }
 }

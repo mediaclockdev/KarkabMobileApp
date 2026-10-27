@@ -81,6 +81,11 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
           && route.name !== 'LanguageScreen'
           && route.name !== 'DownloadsScreen'
           && route.name !== 'VocalRecordingScreen'
+          && route.name !== 'TermsConditionsScreen'
+          && route.name !== 'PrivacyPolicyScreen'
+          && route.name !== 'AboutKarKabScreen'
+          && route.name !== 'ContactUsScreen'
+
 
         )
         .map((route, index) => {

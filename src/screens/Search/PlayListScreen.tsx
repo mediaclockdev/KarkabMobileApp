@@ -82,15 +82,7 @@ export default function PlayListScreen() {
     const [selected, setSelected] = useState('All');
     const [playlists, setPlaylists] =
         useState<Playlist[]>(defaultPlaylists);
-    const {
-
-        previousScreen,
-
-    } = route.params as {
-
-        previousScreen?: string;
-
-    };
+    const previousScreen = route?.params?.previousScreen;
     const [songs, setSongs] = useState<Song[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [loader, setLoader] = useState(false);

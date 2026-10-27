@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Alert,
     ScrollView,
@@ -21,6 +21,9 @@ import { storage } from '../../share/storage/mmkv';
 import { addsong, setAuthenticated } from '../../auth/redux/authSlice';
 import { useAppDispatch } from '../../share/hooks/useAppSelector';
 import Toast from 'react-native-toast-message';
+import apiUrls from '../../services/apiUrls';
+import ApiService from '../../services/api';
+import TrackPlayer from '@rntp/player';
 
 const SettingScreen = () => {
     const navigation = useNavigation();
@@ -31,6 +34,27 @@ const SettingScreen = () => {
     const [downloadWifi, setDownloadWifi] = useState(true);
 
     const dispatch = useAppDispatch();
+    const [settingdata, setSettingdata] = useState([])
+
+    const getsettingdata = async () => {
+        try {
+
+            const response = await ApiService.get(apiUrls.settingcontent);
+            const data = (response as any).data;
+            console.log(data.data, "ddhvehvd")
+            if (data?.success) {
+                setSettingdata(data.data);
+            }
+        } catch (error) {
+            console.log('populardata ERROR:', error);
+        } finally {
+
+        }
+    };
+
+    useEffect(() => {
+        getsettingdata()
+    }, [])
 
     const LogOutAlertOccurred = (title = 'User Logout', body = 'Are you sure you want to logout?', btnTxt = 'yes', btnTxt2 = 'No') => {
         Alert.alert(title, body, [
@@ -40,10 +64,12 @@ const SettingScreen = () => {
                     storage.set('userToken', '');
                     const token = storage.getString('userToken');
                     console.log(token, "fkfckfv")
-                    dispatch(setAuthenticated(false));
+                    await TrackPlayer.stop();
                     dispatch(
                         addsong
                             (''),)
+                    dispatch(setAuthenticated(false));
+
                 },
             },
 
@@ -242,7 +268,7 @@ const SettingScreen = () => {
                                 text1: 'Coming soon!',
                                 // text2: "coming soon",
                             });
-                            (navigation as any).navigate('LanguageScreen')
+                            //  (navigation as any).navigate('LanguageScreen')
                         },
                     })}
                 </View>
@@ -445,7 +471,7 @@ const SettingScreen = () => {
                 </View>
 
                 <View style={styles.settingsCard}>
-                    {renderSettingRow({
+                    {/* {renderSettingRow({
                         icon: '?',
                         title: 'Help Center',
                         subtitle: 'Get answers to common questions',
@@ -461,21 +487,21 @@ const SettingScreen = () => {
                         },
                     })}
 
-                    <View style={styles.divider} />
+                    <View style={styles.divider} /> */}
 
                     {renderSettingRow({
                         icon: '✉',
                         title: 'Contact Us',
                         subtitle: 'We are here to help',
                         onPress: () => {
-                            Toast.show({
-                                type: 'info',
-                                position: 'bottom',
-                                bottomOffset: 80,
-                                text1: 'Coming soon!',
-                                // text2: "coming soon",
-                            });
-
+                            // Toast.show({
+                            //     type: 'info',
+                            //     position: 'bottom',
+                            //     bottomOffset: 80,
+                            //     text1: 'Coming soon!',
+                            //     // text2: "coming soon",
+                            // });
+                            (navigation as any).navigate('ContactUsScreen');
                         },
                     })}
 
@@ -511,13 +537,14 @@ const SettingScreen = () => {
                         title: 'About Karaoke',
                         subtitle: 'Learn more about the app',
                         onPress: () => {
-                            Toast.show({
-                                type: 'info',
-                                position: 'bottom',
-                                bottomOffset: 80,
-                                text1: 'Coming soon!',
-                                // text2: "coming soon",
-                            });
+                            // Toast.show({
+                            //     type: 'info',
+                            //     position: 'bottom',
+                            //     bottomOffset: 80,
+                            //     text1: 'Coming soon!',
+                            //     // text2: "coming soon",
+                            // });
+                            (navigation as any).navigate('AboutKarKabScreen', { item: settingdata[2] })
 
                         },
                     })}
@@ -528,14 +555,14 @@ const SettingScreen = () => {
                         icon: '▤',
                         title: 'Terms & Conditions',
                         onPress: () => {
-                            Toast.show({
-                                type: 'info',
-                                position: 'bottom',
-                                bottomOffset: 80,
-                                text1: 'Coming soon!',
-                                // text2: "coming soon",
-                            });
-
+                            // Toast.show({
+                            //     type: 'info',
+                            //     position: 'bottom',
+                            //     bottomOffset: 80,
+                            //     text1: 'Coming soon!',
+                            //     // text2: "coming soon",
+                            // });
+                            (navigation as any).navigate('TermsConditionsScreen', { item: settingdata[0] })
                         },
                     })}
 
@@ -545,13 +572,14 @@ const SettingScreen = () => {
                         icon: '♢',
                         title: 'Privacy Policy',
                         onPress: () => {
-                            Toast.show({
-                                type: 'info',
-                                position: 'bottom',
-                                bottomOffset: 80,
-                                text1: 'Coming soon!',
-                                // text2: "coming soon",
-                            });
+                            // Toast.show({
+                            //     type: 'info',
+                            //     position: 'bottom',
+                            //     bottomOffset: 80,
+                            //     text1: 'Coming soon!',
+                            //     // text2: "coming soon",
+                            // });
+                            (navigation as any).navigate('PrivacyPolicyScreen', { item: settingdata[1] })
 
                         },
                     })}

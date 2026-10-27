@@ -111,10 +111,8 @@ const Recording = () => {
 
   // Modal & Save Form State
   const [saveModalVisible, setSaveModalVisible] = useState(false);
-  const [title, setTitle] = useState(data?.title || 'Song 1');
-  const [albumName, setAlbumName] = useState(
-    data?.album_name || data?.category?.title || 'Love Songs',
-  );
+  const [title, setTitle] = useState('');
+  const [albumName, setAlbumName] = useState('');
   const [status, setStatus] = useState<'private' | 'public'>('private');
   const [albumPicture, setAlbumPicture] = useState<{
     uri: string;
@@ -195,10 +193,10 @@ const Recording = () => {
 
   useEffect(() => {
     if (data?.title) {
-      setTitle(data.title);
+      //  setTitle(data.title);
     }
     if (data?.album_name || data?.category?.title) {
-      setAlbumName(data.album_name || data?.category?.title || '');
+      // setAlbumName(data.album_name || data?.category?.title || '');
     }
     if (data?.lyrics) {
       prepareLyrics(data);
@@ -466,11 +464,65 @@ const Recording = () => {
     }
   };
 
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     stopRecordings()
+  //     //setRecPercentage('0')
+  //   }, [])
+  // )
+
   useFocusEffect(
     useCallback(() => {
-      stopRecording()
+      // Show 0% when the Recording screen opens
+      setRecPercentage('0');
+      setRecordTime('00:00');
+      const result = Sound.stopRecorder();
+      Sound.removeRecordBackListener();
+      return () => {
+        // Optional cleanup when leaving the screen
+      };
     }, [])
-  )
+  );
+
+  const stopRecordings = async () => {
+    try {
+      if (recordTimerRef.current) {
+        clearInterval(recordTimerRef.current);
+        recordTimerRef.current = null;
+      }
+
+      const result = await Sound.stopRecorder();
+      Sound.removeRecordBackListener();
+
+      setPath(result);
+      setRecording(false);
+      isRecordingRef.current = false;
+      setRecPercentage('0')
+
+
+      try {
+        await Sound.stopPlayer();
+        isPlayingRef.current = false;
+        hasStartedRef.current = false;
+        setInstrumentalPlaying(false);
+      } catch (err) {
+        console.log('Error stopping player:', err);
+      }
+
+      setTimeout(() => {
+        scrollToSaveRecording();
+      }, 150);
+    } catch (e) {
+      console.log('Error stopping recording:', e);
+      if (recordTimerRef.current) {
+        clearInterval(recordTimerRef.current);
+        recordTimerRef.current = null;
+      }
+      setRecording(false);
+      isRecordingRef.current = false;
+    }
+  };
+
 
   // Stop recording and stop timer
   const stopRecording = async () => {
@@ -486,7 +538,10 @@ const Recording = () => {
       setPath(result);
       setRecording(false);
       isRecordingRef.current = false;
-      setRecPercentage('100');
+      if (!data) {
+        setRecPercentage('100');
+      }
+
 
       try {
         await Sound.stopPlayer();

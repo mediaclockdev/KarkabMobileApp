@@ -180,7 +180,7 @@ const ClassicSongItem = ({ item, onPress, songList, index }: Props) => {
                     {formatDuration(item.duration)}
                 </AppText>
 
-                <View
+                {/* <View
                     style={[
                         styles.levelBadge,
                         { borderColor: levelColor, borderWidth: 1 },
@@ -188,7 +188,7 @@ const ClassicSongItem = ({ item, onPress, songList, index }: Props) => {
                     <AppText style={[styles.levelText, { color: levelColor }]}>
                         {item.badge}
                     </AppText>
-                </View>
+                </View> */}
                 {/* </View> */}
 
                 <TouchableOpacity

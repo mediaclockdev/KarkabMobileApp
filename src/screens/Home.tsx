@@ -140,7 +140,7 @@ const Home = () => {
       //  console.log(data, 'dashbaordfun API RESPONSEdddd');
 
       if (data?.success) {
-        console.log(data.data.user_artists, 'dashbaordfun API RESPONSEdddd');
+        console.log(data.data, 'dashbaordfun API RESPONSEdddd');
         setArtistdatad(data.data.user_artists)
       }
     } catch (error) {
@@ -255,6 +255,7 @@ const Home = () => {
       setLoader(true);
       const response = await ApiService.get(apiUrls.getpopularsong);
       const data = (response as any).data;
+      console.log(data, "hfjerjfbjrbfjfb")
       if (data?.success) {
         setPopulardatas(data.songs);
       }
@@ -270,13 +271,14 @@ const Home = () => {
       setSongsArtistLoading(true);
       let url = apiUrls.artistsong;
       if (filter === 'Latest') {
-        url = `${apiUrls.artistsong}/latest`;
+        url = `${apiUrls.artistlatestsong}`;
       } else if (filter === 'Popular') {
-        url = `${apiUrls.artistsong}/popular`;
+        url = `${apiUrls.getpopularsong}`;
       }
 
       const response = await ApiService.get(url);
       const data = (response as any).data;
+      console.log(data, filter, `${apiUrls.artistsong}/popular`, "swhvwhdvhvdh")
       if (data?.success) {
         setSongsartistdata(data.songs || []);
       } else {
@@ -551,7 +553,7 @@ const Home = () => {
 
             <TouchableOpacity
               onPress={() => {
-                navigation.navigate('AllArtistScreen');
+                navigation.navigate('AllArtistScreen', { previousScreen: 'Home', });
               }}
               activeOpacity={0.4}
               style={{
@@ -815,7 +817,7 @@ const Home = () => {
               fontWeight="500"
               fontFamily={Inter.medium}
             >
-              {t('Home.recordedsongs')}
+              {t('Home.Yourrecordedshowhere')}
 
             </AppText>
 

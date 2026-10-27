@@ -79,7 +79,7 @@ const Librarylist = ({
   const [loadings, setLoadings] = useState(false);
   const [songs, setSongs] = useState<MusicItem[]>(musicData || []);
   const onEndReachedCalledDuringMomentum = useRef(false);
-
+  const [favoriteLoadingIds, setFavoriteLoadingIds] = useState<string[]>([]);
   useEffect(() => {
     setSongs(musicData || []);
   }, [musicData]);
@@ -145,10 +145,10 @@ const Librarylist = ({
         );
         onLikePress?.();
       } else {
-        Alert.alert("Error", res.error || res.message);
+        //  Alert.alert("Error", res.error || res.message);
       }
     } catch (error: any) {
-      Alert.alert("Error", error?.response?.data?.message || "failed");
+      // Alert.alert("Error", error?.response?.data?.message || "failed");
     }
   };
 
@@ -164,12 +164,71 @@ const Librarylist = ({
         );
         onDislikePress?.();
       } else {
-        Alert.alert("Error", res.error || res.message);
+        // Alert.alert("Error", res.error || res.message);
       }
     } catch (error: any) {
-      Alert.alert("Error", error?.response?.data?.message || "failed");
+      //Alert.alert("Error", error?.response?.data?.message || "failed");
     }
   };
+
+  const handleFavorite = async (item: MusicItem) => {
+    const id = item.id?.toString();
+
+    if (!id || favoriteLoadingIds.includes(id)) {
+      return;
+    }
+
+    const wasFavorite = !!item.is_favorite;
+    const nextFavorite = !wasFavorite;
+
+    // Update UI immediately
+    setSongs(prev =>
+      prev.map(song =>
+        song.id?.toString() === id
+          ? { ...song, is_favorite: nextFavorite }
+          : song
+      )
+    );
+
+    setFavoriteLoadingIds(prev => [...prev, id]);
+
+    try {
+      const response = nextFavorite
+        ? await ApiService.post(apiUrls.addfavorite(id))
+        : await ApiService.delete(apiUrls.addfavorite(id));
+
+      const res = response.data;
+
+      if (!res?.success) {
+        throw new Error(res?.message || 'Favorite request failed');
+      }
+
+      if (nextFavorite) {
+        onLikePress?.();
+      } else {
+        onDislikePress?.();
+      }
+    } catch (error: any) {
+      // Restore the previous state if the API fails
+      setSongs(prev =>
+        prev.map(song =>
+          song.id?.toString() === id
+            ? { ...song, is_favorite: wasFavorite }
+            : song
+        )
+      );
+
+      Alert.alert(
+        'Error',
+        error?.response?.data?.message ||
+        error?.message ||
+        'Unable to update favorite. Please try again.'
+      );
+    } finally {
+      setFavoriteLoadingIds(prev => prev.filter(songId => songId !== id));
+    }
+  };
+
 
   const handleEndReached = () => {
     if (!onEndReachedCalledDuringMomentum.current) {
@@ -238,48 +297,70 @@ const Librarylist = ({
             {item?.artist || item?.album_name}
           </AppText>
         </TouchableOpacity>
+        {/* {console.log(item, "kkkk")} */}
+        {
+          !item?.tags?.length || item?.tags?.length == 0 ?
+            null :
+            <>
 
-        {item.badge && (
-          <View
-            style={[
-              styles.badgeContainer,
-              { borderColor: item.badge === 'Trending' ? '#F86501' : item.badge === 'Popular' ? '#F8C706' : '#9AF332' }
-            ]}
-          >
-            <AppImage
-              source={item.badge === 'Trending' ? Images.lit : item.badge === 'Popular' ? Images.star : Images.mic}
-              height={10}
-              width={10}
-              tintColor={item.badge === 'Trending' ? '#F86501' : item.badge === 'Popular' ? '#F8C706' : '#9AF332'}
-              resizeMode="contain"
-            />
-            <AppText
-              color={item.badge === 'Trending' ? '#F86501' : item.badge === 'Popular' ? '#F8C706' : '#9AF332'}
-              fontSize={10}
-              fontFamily={Inter.regular}
-            >
-              {item.badge}
-            </AppText>
-          </View>
-        )}
+              {item?.tags[0] && (
+                <View
+                  style={[
+                    styles.badgeContainer,
+                    { borderColor: item.badge === 'Trending' ? '#F86501' : item.badge === 'Popular' ? '#F8C706' : '#9AF332' }
+                  ]}
+                >
+                  <AppImage
+                    source={item.title === 'Trending' ? Images.lit : item.title === 'Popular' ? Images.star : Images.mic}
+                    height={10}
+                    width={10}
+                    tintColor={item.title === 'Trending' ? '#F86501' : item.title === 'Popular' ? '#F8C706' : '#9AF332'}
+                    resizeMode="contain"
+                  />
+                  <AppText
+                    color={item.title === 'Trending' ? '#F86501' : item.title === 'Popular' ? '#F8C706' : '#9AF332'}
+                    fontSize={10}
+                    fontFamily={Inter.regular}
+                    numberOfLines={1}
+                  >
+                    {item.title}
+                  </AppText>
+                </View>
+              )}
+            </>
+        }
+
+
 
         <TouchableOpacity
-          onPress={() => {
-            if (!item.is_favorite) {
-              likefun(item.id);
-            } else {
-              dislikefun(item.id);
-            }
-          }}
+          disabled={favoriteLoadingIds.includes(item.id?.toString() || '')}
+          onPress={() => handleFavorite(item)}
+          style={{ padding: 5 }}
         >
-          <AppImage
-            source={!item.is_favorite ? Images.like : Banner.filllike}
-            height={15}
-            width={15}
-            tintColor={!item.is_favorite ? '#CDCECB' : '#E10815'}
-            style={{ marginHorizontal: 5 }}
-          />
+          {favoriteLoadingIds.includes(item.id?.toString() || '') ? (
+            <ActivityIndicator
+              size="small"
+              color="#E10815"
+            />
+          ) : (
+            <AppImage
+              source={
+                item.is_favorite
+                  ? Banner.filllike
+                  : Images.like
+              }
+              height={15}
+              width={15}
+              tintColor={
+                item.is_favorite
+                  ? '#E10815'
+                  : '#CDCECB'
+              }
+              style={{ marginHorizontal: 5 }}
+            />
+          )}
         </TouchableOpacity>
+
 
         <AppText fontSize={10} color={'#CDCECB'} marginTop={4} style={{ marginBottom: 5 }}>
           {item.duration || '00:00'}
@@ -414,6 +495,7 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     paddingHorizontal: 6,
     paddingVertical: 2,
+    width: 100
   },
   right: {
     flexDirection: 'row',

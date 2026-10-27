@@ -17,7 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Inter } from "../share/constants/fonts";
 import apiUrls from "../services/apiUrls";
 import ApiService from '../services/api';
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { useAppSelector } from "../share/hooks/useAppSelector";
 import Sound from 'react-native-nitro-sound';
@@ -58,7 +58,7 @@ const Library = () => {
 
   const playsong = useAppSelector((state: any) => state.auth.playsong);
   const recordingRefresh = useAppSelector((state: any) => state.auth.recordingRefresh);
-
+  const songRequestsRef = useRef(new Set<string>());
   const ferture = [
     {
       image: Images.music,
@@ -101,7 +101,8 @@ const Library = () => {
 
   useFocusEffect(
     useCallback(() => {
-      songlist(1, true);
+      setSongdata([]);
+      songlist(1);
       setSelectedTab('Songs')
       setVisible(true)
     }, [])
@@ -133,6 +134,7 @@ const Library = () => {
 
   // Fetch songs with pagination
   const songlist = async (pageNumber = 1, isRefresh = false) => {
+    console.log(pageNumber, "jjjjj")
     try {
       if (isRefresh) {
         setRefreshing(true);
@@ -145,12 +147,12 @@ const Library = () => {
       const response = await ApiService.get(apiUrls.getsonglist, {
         params: {
           page: pageNumber,
-
+          limit: pageNumber * 10,
         },
       });
 
       const data = (response as any).data;
-
+      console.log(data, "hhhh")
       if (data?.success) {
         const incomingSongs = data?.songs || [];
 

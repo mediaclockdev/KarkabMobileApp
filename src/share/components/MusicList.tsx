@@ -85,7 +85,7 @@ const SongItem = React.memo(({
   onStop,
   onOpenActions,
 }: SongItemProps) => {
-
+  const navigation = useNavigation();
   const handlePress = useCallback(() => {
     if (isPlaying && !isPaused) {
       onStop();
@@ -101,14 +101,17 @@ const SongItem = React.memo(({
   return (
     <View style={[styles.card, { borderColor: themeColor.homebordercolor }]}>
       {/* Image */}
-      <View style={styles.imageContainer}>
+      <TouchableOpacity
+        onPress={() => (navigation as any).navigate('.', { id: item.id })}
+
+        style={styles.imageContainer}>
         <AppImage
           source={GlobalImage(item?.cover_image_url)}
           width={49}
           height={89}
           resizeMode="cover"
         />
-      </View>
+      </TouchableOpacity>
 
       {/* Content */}
       <View style={styles.content}>

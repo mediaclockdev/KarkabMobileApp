@@ -48,6 +48,7 @@ const apiUrls = {
   recommendedsongs: `/api/songs/for-you?language=${getLanguage()}`,
   artistSongs: (id: number | string) => `/api/artists/${id}/songs?language=${getLanguage()}`,
   artistlatestsong: `/api/songs/latest?language=${getLanguage()}`,
+  // artistsong: `/api/songs?language=${getLanguage()}`,
   artistsong: `/api/songs?language=${getLanguage()}`,
   adjacentsong: (id: number | string) => `/api/songs/${id}/adjacent?language=${getLanguage()}`,
   createplaylist: `/api/playlists?language=${getLanguage()}`,
@@ -63,6 +64,8 @@ const apiUrls = {
   downloadsongs: (id: string | number) => `/api/songs/${id}/download?language=${getLanguage()}`,
   requestPublicRecording: (id: string | number) => `/api/recordings/${id}/request-public?language=${getLanguage()}`,
   playlistreorder: (id: string | number) => `/api/playlists/${id}/reorder?language=${getLanguage()}`,
+  settingcontent: `/api/admin/content?language=${getLanguage()}`,
+  contactus: `/api/contact-us?language=${getLanguage()}`
 };
 
 export default apiUrls;

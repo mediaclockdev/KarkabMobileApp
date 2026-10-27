@@ -27,6 +27,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import { storage } from "../share/storage/mmkv";
 import { useTranslation } from "react-i18next";
 import { prefetchNextSongForQueue } from "../services/player";
+import TrackPlayer from "@rntp/player";
 
 const Profile = () => {
     const navigation = useNavigation();
@@ -118,7 +119,7 @@ const Profile = () => {
         },
         {
             image: Images.playlist,
-            title: t('Library.Playlists'),
+            title: t('Library.MyPlaylists'),
             color: '#B95EE2'
         },
         {
@@ -456,6 +457,7 @@ const Profile = () => {
                     const token = storage.getString('userToken');
                     console.log(token, "fkfckfv")
                     dispatch(setAuthenticated(false));
+                    await TrackPlayer.stop();
                     dispatch(
                         addsong
                             (''),)
@@ -921,7 +923,8 @@ const Profile = () => {
                                                     justifyContent: 'space-between',
                                                 }}
                                                 imageStyle={{
-                                                    width: '120%',
+                                                    width: '170%',
+                                                    height: 111
                                                 }}
                                             >
                                                 {/* Play Button */}
@@ -980,10 +983,10 @@ const Profile = () => {
                                                         }}
                                                     >
                                                         <AppText
-                                                            color="#AFA7A2"
+                                                            color={color.darkthemetext}
                                                             fontSize={10}
-                                                            fontWeight="400"
-                                                            fontFamily={Inter.light}
+
+                                                            fontFamily={Inter.bold}
                                                         >
                                                             {getTimeAgo(item.updated_at)}
                                                         </AppText>
@@ -993,25 +996,25 @@ const Profile = () => {
                                                                 flexDirection: 'row',
                                                                 gap: 5,
                                                                 alignItems: 'center',
-                                                                borderWidth: 1,
-                                                                borderColor: '#121212',
+                                                                borderWidth: 2,
+                                                                borderColor: '#D07113',
                                                                 padding: 2,
                                                                 borderRadius: 5,
                                                             }}
                                                         >
-                                                            <AppImage
+                                                            {/* <AppImage
                                                                 source={Images.star}
                                                                 width={10}
                                                                 height={10}
                                                                 tintColor={'#D07113'}
-                                                            />
+                                                            /> */}
                                                             <AppText
-                                                                color="#D07113"
+                                                                color={color.darkthemetext}
                                                                 fontSize={10}
-                                                                fontWeight="400"
-                                                                fontFamily={Inter.light}
+
+                                                                fontFamily={Inter.medium}
                                                             >
-                                                                4.8
+                                                                {item.duration}
                                                             </AppText>
                                                         </View>
                                                     </View>

@@ -122,7 +122,26 @@ const AudioRec = () => {
     end: number;   // in ms
     words: LyricWord[];
   }
+  interface LyricTimestamp {
+    word: string;
+    start: number;
+    end: number;
+    lineIndex: number;
+    wordIndex: number;
+  }
 
+  interface LyricWord {
+    text: string;
+    start: number;
+    end: number;
+  }
+
+  interface LyricLine {
+    text: string;
+    start: number;
+    end: number;
+    words: LyricWord[];
+  }
   const lyricsListRef = useRef<FlatList>(null);
   const [lyricsLines, setLyricsLines] = useState<LyricLine[]>([]);
   const lyricsLinesRef = useRef<LyricLine[]>([]);
@@ -328,6 +347,7 @@ const AudioRec = () => {
    */
   useEffect(() => {
     const lines = lyricsLinesRef.current;
+    console.log(lines, "kkkkk")
     if (!lines || lines.length === 0 || isDraggingRef.current) return;
 
     const currentPosMs = currentPosition * 1000;
@@ -442,77 +462,158 @@ const AudioRec = () => {
     return words;
   };
 
-  const prepareLyrics = (song: any) => {
-    if (!song?.lyrics) {
-      setLyricsLines([]);
-      lyricsLinesRef.current = [];
-      return;
-    }
+  // const prepareLyrics = (song: any) => {
+  //   if (!song?.lyrics) {
+  //     setLyricsLines([]);
+  //     lyricsLinesRef.current = [];
+  //     return;
+  //   }
 
-    const lines: LyricLine[] = [];
-    const lyricRows = song.lyrics
-      .split('\n')
-      .map((l: string) => l.trim())
-      .filter(Boolean);
+  //   const lines: LyricLine[] = [];
+  //   const lyricRows = song.lyrics
+  //     .split('\n')
+  //     .map((l: string) => l.trim())
+  //     .filter(Boolean);
 
-    lyricRows.forEach((line: string, index: number) => {
-      const match = line.match(/^\[(\d{2}):(\d{2}(?:\.\d+)?)\](.*)$/);
-      if (!match) return;
+  //   lyricRows.forEach((line: string, index: number) => {
+  //     const match = line.match(/^\[(\d{2}):(\d{2}(?:\.\d+)?)\](.*)$/);
+  //     if (!match) return;
 
-      const minutes = Number(match[1]);
-      const seconds = Number(match[2]);
-      const start = (minutes * 60 + seconds) * 1000;
+  //     const minutes = Number(match[1]);
+  //     const seconds = Number(match[2]);
+  //     const start = (minutes * 60 + seconds) * 1000;
 
-      const nextLine = lyricRows[index + 1];
-      let end = start + 3500;
+  //     const nextLine = lyricRows[index + 1];
+  //     let end = start + 3500;
 
-      if (nextLine) {
-        const nextMatch = nextLine.match(/^\[(\d{2}):(\d{2}(?:\.\d+)?)\]/);
-        if (nextMatch) {
-          end = (Number(nextMatch[1]) * 60 + Number(nextMatch[2])) * 1000;
-        }
-      }
+  //     if (nextLine) {
+  //       const nextMatch = nextLine.match(/^\[(\d{2}):(\d{2}(?:\.\d+)?)\]/);
+  //       if (nextMatch) {
+  //         end = (Number(nextMatch[1]) * 60 + Number(nextMatch[2])) * 1000;
+  //       }
+  //     }
 
-      const rawText = match[3].trim();
-      const cleanText = rawText.replace(/<[^>]+>/g, '').trim();
-      if (cleanText) {
-        const words = parseWordsForLine(rawText, start, end);
-        lines.push({
-          text: cleanText,
-          start,
-          end,
-          words,
-        });
-      }
-    });
+  //     const rawText = match[3].trim();
+  //     const cleanText = rawText.replace(/<[^>]+>/g, '').trim();
+  //     if (cleanText) {
+  //       const words = parseWordsForLine(rawText, start, end);
+  //       lines.push({
+  //         text: cleanText,
+  //         start,
+  //         end,
+  //         words,
+  //       });
+  //     }
+  //   });
 
-    // Fallback: If song.lyrics exists but has no [mm:ss] timestamp tags
-    if (lines.length === 0 && lyricRows.length > 0) {
-      const totalDurSec = parseDurationToSeconds(song.duration) || 180;
-      const durationMs = totalDurSec * 1000;
-      const rowDuration = Math.max(durationMs / lyricRows.length, 3000);
+  //   // Fallback: If song.lyrics exists but has no [mm:ss] timestamp tags
+  //   if (lines.length === 0 && lyricRows.length > 0) {
+  //     const totalDurSec = parseDurationToSeconds(song.duration) || 180;
+  //     const durationMs = totalDurSec * 1000;
+  //     const rowDuration = Math.max(durationMs / lyricRows.length, 3000);
 
-      lyricRows.forEach((rowText: string, idx: number) => {
-        const start = idx * rowDuration;
-        const end = start + rowDuration;
-        const cleanText = rowText.trim();
-        if (cleanText) {
-          const words = parseWordsForLine(cleanText, start, end);
-          lines.push({
-            text: cleanText,
-            start,
-            end,
-            words,
+  //     lyricRows.forEach((rowText: string, idx: number) => {
+  //       const start = idx * rowDuration;
+  //       const end = start + rowDuration;
+  //       const cleanText = rowText.trim();
+  //       if (cleanText) {
+  //         const words = parseWordsForLine(cleanText, start, end);
+  //         lines.push({
+  //           text: cleanText,
+  //           start,
+  //           end,
+  //           words,
+  //         });
+  //       }
+  //     });
+  //   }
+
+  //   lyricsLinesRef.current = lines;
+  //   setLyricsLines(lines);
+  //   setActiveLyricIndex(0);
+  // };
+
+
+
+  const prepareLyrics = async (song: any) => {
+    console.log(song, "kkkkkkkkk")
+    try {
+      const timestamps: LyricTimestamp[] = Array.isArray(
+        song?.lyrics_timestamps
+      )
+        ? song.lyrics_timestamps
+        : [];
+
+      if (timestamps.length > 0) {
+        const grouped = new Map<number, LyricTimestamp[]>();
+
+        await timestamps.forEach(item => {
+          if (
+            typeof item.word !== 'string' ||
+            !Number.isFinite(Number(item.start)) ||
+            !Number.isFinite(Number(item.end)) ||
+            !Number.isFinite(Number(item.lineIndex))
+          ) {
+            return;
+          }
+
+          const lineIndex = Number(item.lineIndex);
+          const words = grouped.get(lineIndex) ?? [];
+
+          words.push({
+            ...item,
+            start: Number(item.start),
+            end: Number(item.end),
+            lineIndex,
+            wordIndex: Number(item.wordIndex ?? 0),
           });
-        }
-      });
+
+          grouped.set(lineIndex, words);
+        });
+
+        const parsedLines: LyricLine[] = Array.from(grouped.entries())
+          .sort(([a], [b]) => a - b)
+          .map(([, words]) => {
+            words.sort((a, b) => a.wordIndex - b.wordIndex);
+
+            const lyricWords: LyricWord[] = words.map(item => ({
+              text: item.word,
+              start: item.start,
+              end: item.end,
+            }));
+
+            return {
+              text: lyricWords.map(word => word.text).join(' '),
+              start: Math.min(...lyricWords.map(word => word.start)),
+              end: Math.max(...lyricWords.map(word => word.end)),
+              words: lyricWords,
+            };
+          })
+          .filter(line => line.words.length > 0);
+
+        lyricsLinesRef.current = parsedLines;
+        setLyricsLines(parsedLines);
+        setActiveLyricIndex(0);
+
+        console.log('Parsed timestamped lyrics:', parsedLines.length);
+
+        return;
+      }
+
+      // Fallback if this song has no word timestamps.
+      // lyricsLinesRef.current = [];
+      // setLyricsLines([]);
+      // setActiveLyricIndex(0);
+
+      console.log('No lyrics_timestamps available for song:', song?.id);
+    } catch (error) {
+      console.error('Error preparing lyrics:', error);
+
+      lyricsLinesRef.current = [];
+      setLyricsLines([]);
+      setActiveLyricIndex(0);
     }
-
-    lyricsLinesRef.current = lines;
-    setLyricsLines(lines);
-    setActiveLyricIndex(0);
   };
-
   const playSongItem = async (song: any) => {
     if (!song?.id) return;
 
@@ -602,6 +703,7 @@ const AudioRec = () => {
     try {
       setScreenLoading(true);
       const response = await ApiService.get(apiUrls.singlesongdetail(songid));
+      console.log(response, "kkkknnnnmmsssss")
       if ((response as any).data?.success) {
         const song = (response as any).data.song;
         setSongDetail(song);
@@ -706,7 +808,7 @@ const AudioRec = () => {
         setAdjectnextvdata(data.nextSong);
         adjectNextRef.current = data.nextSong;
         if (data.nextSong?.id) {
-          // prefetchNextSongForQueue(songid);
+          prefetchNextSongForQueue(songid);
         }
       }
     } catch (e) { }
@@ -1414,137 +1516,140 @@ const AudioRec = () => {
               </View>
 
               {/* Controls Row */}
-              {!showFullLyrics ? (
-                <View style={styles.controlsRow}>
-                  {/* 🔀 Shuffle */}
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={toggleShuffle}
-                    style={[
-                      styles.featureBtn,
-                      isShuffle && styles.featureBtnActive,
-                    ]}
+              {/* {!showFullLyrics ? ( */}
+              <View style={[styles.controlsRow, { marginBottom: Platform.OS === 'ios' ? 10 : 28, }]}>
+                {/* 🔀 Shuffle */}
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={toggleShuffle}
+                  style={[
+                    styles.featureBtn,
+                    isShuffle && styles.featureBtnActive,
+                  ]}
+                >
+                  <AppText
+                    color={isShuffle ? '#FF2D55' : 'rgba(255,255,255,0.45)'}
+                    fontSize={18}
+                    fontWeight="700"
+                    fontFamily={Inter.bold}
                   >
-                    <AppText
-                      color={isShuffle ? '#FF2D55' : 'rgba(255,255,255,0.45)'}
-                      fontSize={18}
-                      fontWeight="700"
-                      fontFamily={Inter.bold}
-                    >
-                      ⇄
-                    </AppText>
-                  </TouchableOpacity>
+                    ⇄
+                  </AppText>
+                </TouchableOpacity>
 
-                  {/* Previous */}
-                  <TouchableOpacity
-                    activeOpacity={0.6}
-                    disabled={!adjectprevdata?.id && currentPosition <= 3 && (!playlistQueue || playlistQueue.length <= 1)}
-                    onPress={async () => {
-                      if (currentPosition > 3) {
-                        setCurrentPosition(0);
-                        await TrackPlayer.seekTo(0);
-                        return;
-                      }
-                      if (adjectprevdata?.id && (!playlistQueue || playlistQueue.length <= 1)) {
-                        getSongDetail(adjectprevdata.id);
-                      } else {
-                        await skipToPreviousTrack(dispatch);
-                      }
-                    }}
-                    style={[
-                      styles.navBtn,
-                      !adjectprevdata?.id && currentPosition <= 3 && (!playlistQueue || playlistQueue.length <= 1) && { opacity: 0.3 },
-                    ]}
-                  >
+                {/* Previous */}
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  disabled={!adjectprevdata?.id && currentPosition <= 3 && (!playlistQueue || playlistQueue.length <= 1)}
+                  onPress={async () => {
+                    if (currentPosition > 3) {
+                      setCurrentPosition(0);
+                      await TrackPlayer.seekTo(0);
+                      return;
+                    }
+                    if (adjectprevdata?.id && (!playlistQueue || playlistQueue.length <= 1)) {
+                      getSongDetail(adjectprevdata.id);
+                    } else {
+                      await skipToPreviousTrack(dispatch);
+                    }
+                  }}
+                  style={[
+                    styles.navBtn,
+                    !adjectprevdata?.id && currentPosition <= 3 && (!playlistQueue || playlistQueue.length <= 1) && { opacity: 0.3 },
+                  ]}
+                >
+                  <AppImage
+                    source={Images.leftarrow}
+                    width={20}
+                    height={24}
+                    tintColor="#FFFFFF"
+                  />
+                </TouchableOpacity>
+
+                {/* Hero Play / Pause */}
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={styles.heroPlayButton}
+                  onPress={handlePlayPause}
+                >
+                  {isBuffering ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : playing ? (
+                    <View style={styles.pauseContainer}>
+                      <View style={styles.pauseBar} />
+                      <View style={styles.pauseBar} />
+                    </View>
+                  ) : (
                     <AppImage
-                      source={Images.leftarrow}
-                      width={20}
-                      height={24}
+                      source={Images.playicon}
+                      width={28}
+                      height={28}
                       tintColor="#FFFFFF"
                     />
-                  </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
 
-                  {/* Hero Play / Pause */}
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    style={styles.heroPlayButton}
-                    onPress={handlePlayPause}
-                  >
-                    {isBuffering ? (
-                      <ActivityIndicator size="small" color="#FFFFFF" />
-                    ) : playing ? (
-                      <View style={styles.pauseContainer}>
-                        <View style={styles.pauseBar} />
-                        <View style={styles.pauseBar} />
-                      </View>
-                    ) : (
-                      <AppImage
-                        source={Images.playicon}
-                        width={28}
-                        height={28}
-                        tintColor="#FFFFFF"
-                      />
-                    )}
-                  </TouchableOpacity>
+                {/* Next */}
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  onPress={async () => {
+                    if (adjectnextdata?.id || (!playlistQueue || playlistQueue.length <= 1)) {
 
-                  {/* Next */}
-                  <TouchableOpacity
-                    activeOpacity={0.6}
-                    onPress={async () => {
-                      if (adjectnextdata?.id && (!playlistQueue || playlistQueue.length <= 1)) {
-                        getSongDetail(adjectnextdata.id);
-                      } else {
-                        await skipToNextTrack(dispatch);
-                      }
-                    }}
-                    style={[
-                      styles.navBtn,
-                      { transform: [{ rotate: '180deg' }] },
-                    ]}
-                  >
-                    <AppImage
-                      source={Images.leftarrow}
-                      width={20}
-                      height={24}
-                      tintColor="#FFFFFF"
-                    />
-                  </TouchableOpacity>
+                      await getSongDetail(adjectnextdata.id);
+                    } else {
+                      await getrendomsong()
+                      //  await skipToNextTrack(dispatch);
+                    }
+                  }}
+                  style={[
+                    styles.navBtn,
+                    { transform: [{ rotate: '180deg' }] },
+                  ]}
+                >
+                  <AppImage
+                    source={Images.leftarrow}
+                    width={20}
+                    height={24}
+                    tintColor="#FFFFFF"
+                  />
+                </TouchableOpacity>
 
-                  {/* 🔁 Repeat */}
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={toggleRepeatMode}
-                    style={[
-                      styles.featureBtn,
-                      repeatMode !== 'off' && styles.featureBtnActive,
-                    ]}
+                {/* 🔁 Repeat */}
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={toggleRepeatMode}
+                  style={[
+                    styles.featureBtn,
+                    repeatMode !== 'off' && styles.featureBtnActive,
+                  ]}
+                >
+                  <AppText
+                    color={
+                      repeatMode !== 'off' ? '#FF2D55' : 'rgba(255,255,255,0.45)'
+                    }
+                    fontSize={18}
+                    fontWeight="700"
+                    fontFamily={Inter.bold}
                   >
-                    <AppText
-                      color={
-                        repeatMode !== 'off' ? '#FF2D55' : 'rgba(255,255,255,0.45)'
-                      }
-                      fontSize={18}
-                      fontWeight="700"
-                      fontFamily={Inter.bold}
-                    >
-                      ↻
-                    </AppText>
-                    {repeatMode === 'one' && (
-                      <View style={styles.repeatBadge}>
-                        <AppText color="#FFFFFF" fontSize={8} fontWeight="800">
-                          1
-                        </AppText>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                </View>) : null}
+                    ↻
+                  </AppText>
+                  {repeatMode === 'one' && (
+                    <View style={styles.repeatBadge}>
+                      <AppText color="#FFFFFF" fontSize={8} fontWeight="800">
+                        1
+                      </AppText>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+              {/* ) : null} */}
 
               {/* Bottom Quick Tools */}
               {!showFullLyrics ? (
                 <View style={[
                   styles.bottomDock,
                   {
-                    marginBottom: Platform.OS === 'ios' ? 10 : 60,
+                    marginBottom: Platform.OS === 'ios' ? 10 : 40,
                   },
                 ]}>
                   <TouchableOpacity
