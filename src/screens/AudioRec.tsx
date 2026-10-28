@@ -347,7 +347,7 @@ const AudioRec = () => {
    */
   useEffect(() => {
     const lines = lyricsLinesRef.current;
-    console.log(lines, "kkkkk")
+    // console.log(lines, "kkkkk")
     if (!lines || lines.length === 0 || isDraggingRef.current) return;
 
     const currentPosMs = currentPosition * 1000;

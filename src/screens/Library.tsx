@@ -390,7 +390,7 @@ const Library = () => {
                 <TouchableOpacity
                   style={{ height: 29, width: 105 }}
                   onPress={() => {
-                    (navigation as any).navigate('Recording');
+                    (navigation as any).navigate('Recording', { prevScreen: 'Library', data: '' });
                   }}
                 >
                   <LinearGradient
