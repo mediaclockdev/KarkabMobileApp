@@ -14,6 +14,7 @@ import {
 import { storage } from '../storage/mmkv';
 import { useAppDispatch } from './useAppSelector';
 import { loginSuccess, setAuthenticated, setLoginState } from '../../auth/redux/authSlice';
+import { ensureFcmToken } from '../../services/fcmToken';
 
 type Field = 'name' | 'email' | 'password' | 'confirmPassword';
 
@@ -65,12 +66,15 @@ export const useSignup = () => {
     try {
       setLoading(true);
 
-      const { data } = await ApiService.post(apiUrls.signup, {
+      const fcmToken = await ensureFcmToken();
+      const response = await ApiService.post(apiUrls.signup, {
         name: values.name.trim(),
         email: values.email.trim().toLowerCase(),
         password: values.password,
+        device_token: fcmToken || '',
         language: language,
       });
+      const data = response.data as any;
 
       if (data?.success) {
         Toast.show({

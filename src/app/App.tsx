@@ -7,6 +7,8 @@ import RootNavigator from '../navigation/RootNavigator';
 import { storage } from '../share/storage/mmkv';
 
 import { setupAudioPlayer } from '../services/player';
+import { initNotificationHandlers } from '../services/notificationService';
+import { ensureFcmToken } from '../services/fcmToken';
 
 LogBox.ignoreAllLogs(true);
 
@@ -41,8 +43,15 @@ const App = () => {
 
         initializePlayer();
 
+        // Initialize push notification handlers and fetch FCM token
+        const unsubscribeNotifications = initNotificationHandlers();
+        ensureFcmToken();
+
         return () => {
             mounted = false;
+            if (typeof unsubscribeNotifications === 'function') {
+                unsubscribeNotifications();
+            }
         };
     }, []);
 

@@ -3,6 +3,7 @@ import api from './api'
 export interface LoginCredentials {
   email: string
   password: string
+  device_token?: string | null
 }
 
 export interface SignupData {
@@ -26,6 +27,8 @@ export interface AuthResponse extends AuthTokens {
     avatar?: string
   }
 }
+
+export type LoginResponse = AuthResponse
 
 export interface OtpVerification {
   phoneNumber: string

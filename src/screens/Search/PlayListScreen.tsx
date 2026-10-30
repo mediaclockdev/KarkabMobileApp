@@ -22,6 +22,10 @@ import { Inter } from '../../share/constants/fonts';
 
 import ApiService from '../../services/api';
 import apiUrls from '../../services/apiUrls';
+import { useAppDispatch, useAppSelector } from '../../share/hooks/useAppSelector';
+import { isPausesd } from '../../auth/redux/authSlice';
+import TrackPlayer from '@rntp/player';
+import { playSongList, playPlaylistById } from '../../services/player';
 
 interface Playlist {
     id: string;
@@ -88,6 +92,32 @@ export default function PlayListScreen() {
     const [loader, setLoader] = useState(false);
     const [loading, setLoading] = useState(false);
     const [songsLoading, setSongsLoading] = useState(false);
+    const dispatch = useAppDispatch();
+    const playsong = useAppSelector((state: any) => state.auth.playsong);
+    const isPaused = useAppSelector((state: any) => state.auth.isPaused);
+
+    const isCurrentPlaylistPlaying =
+        songs.length > 0 &&
+        playsong?.id &&
+        songs.some((s: any) => s.id?.toString() === playsong.id?.toString());
+
+    const handlePlaySelectedPlaylist = async () => {
+        if (!songs || songs.length === 0) return;
+
+        if (isCurrentPlaylistPlaying) {
+            if (!isPaused) {
+                await TrackPlayer.pause();
+                dispatch(isPausesd(true));
+            } else {
+                await TrackPlayer.play();
+                dispatch(isPausesd(false));
+            }
+            return;
+        }
+
+        dispatch(isPausesd(false));
+        await playSongList(songs, 0, true);
+    };
 
     /**
      * Get playlist categories
@@ -220,7 +250,16 @@ export default function PlayListScreen() {
                         resizeMode="cover"
                     />
 
-                    <View style={styles.playButton}>
+                    <TouchableOpacity
+                        style={styles.playButton}
+                        activeOpacity={0.8}
+                        onPress={async (e) => {
+                            e.stopPropagation();
+                            setSelected(item.id);
+                            await getPlaylistSongs(item.id);
+                            await playPlaylistById(item.id, 0, false);
+                        }}
+                    >
                         <AppImage
                             source={Images.bplay}
                             width={18}
@@ -228,7 +267,7 @@ export default function PlayListScreen() {
                             resizeMode="contain"
                             tintColor="#FFFFFF"
                         />
-                    </View>
+                    </TouchableOpacity>
                 </View>
 
                 <AppText
@@ -432,23 +471,26 @@ export default function PlayListScreen() {
                                     </AppText>
                                 </View>
 
-                                {/* <TouchableOpacity
+                                <TouchableOpacity
                                     style={styles.mainPlayButton}
                                     activeOpacity={0.8}
-                                    onPress={() => {
-                                        if (songs.length > 0) {
-                                            // Play first song
-                                            // Add your player dispatch here
-                                        }
-                                    }}
+                                    onPress={handlePlaySelectedPlaylist}
                                 >
-                                    <AppImage
-                                        source={Images.playicon}
-                                        width={20}
-                                        height={20}
-                                        resizeMode="contain"
-                                    />
-                                </TouchableOpacity> */}
+                                    {isCurrentPlaylistPlaying && !isPaused ? (
+                                        <View style={{ flexDirection: 'row', gap: 3, justifyContent: 'center', alignItems: 'center' }}>
+                                            <View style={{ width: 3, height: 16, backgroundColor: '#FFFFFF', borderRadius: 1 }} />
+                                            <View style={{ width: 3, height: 16, backgroundColor: '#FFFFFF', borderRadius: 1 }} />
+                                        </View>
+                                    ) : (
+                                        <AppImage
+                                            source={Images.playicon}
+                                            width={20}
+                                            height={20}
+                                            resizeMode="contain"
+                                            tintColor="#FFFFFF"
+                                        />
+                                    )}
+                                </TouchableOpacity>
                             </View>
 
                             {/* SONG HEADER */}
@@ -459,15 +501,10 @@ export default function PlayListScreen() {
                                 </AppText>
 
                                 <TouchableOpacity
-                                    onPress={() => {
-                                        (navigation as any).navigate('SongsListScreen', {
-                                            songs: songs,
-                                            previousScreen: 'PlayListScreen',
-                                        });
-                                    }}
+                                    onPress={handlePlaySelectedPlaylist}
                                 >
                                     <AppText style={styles.view}>
-                                        Play All
+                                        {isCurrentPlaylistPlaying && !isPaused ? 'Pause' : 'Play All'}
                                     </AppText>
                                 </TouchableOpacity>
                             </View>
@@ -488,6 +525,7 @@ export default function PlayListScreen() {
                                         item={item}
                                         songList={songs}
                                         index={idx}
+                                        onPress={() => (navigation as any).navigate('.', { id: item.id, })}
                                     />
                                 ))
                             ) : (

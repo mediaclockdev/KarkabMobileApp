@@ -30,6 +30,12 @@ type PlaylistSong = {
     artist: string;
     image: any;
     duration: string;
+    original_song?: string;
+    file_path?: string;
+    audio_url?: string;
+    recording_url?: string;
+    cover_image_url?: string;
+    [key: string]: any;
 };
 
 type AvailableSong = {
@@ -64,9 +70,23 @@ const PlaylistDetailScreen = () => {
     const [playingId, setPlayingId] = useState<string | null>(null);
     const [loadings, setLoadings] = useState(false);
     const isPaused = useAppSelector((state: any) => state.auth.isPaused);
+    const playsong = useAppSelector((state: any) => state.auth.playsong);
     const recordingRefresh = useAppSelector(
         state => state.auth.recordingRefresh
     );
+
+    useEffect(() => {
+        if (playsong?.id) {
+            setPlayingId(playsong.id.toString());
+        } else {
+            setPlayingId(null);
+        }
+    }, [playsong?.id]);
+
+    const isCurrentPlaylistPlaying = useMemo(() => {
+        if (!playsong?.id || songs.length === 0) return false;
+        return songs.some(s => s.id?.toString() === playsong.id?.toString());
+    }, [playsong?.id, songs]);
     /**
      * ==========================================
      * GET PLAYLIST DETAILS / SONGS
@@ -101,6 +121,7 @@ const PlaylistDetailScreen = () => {
 
                 const formattedSongs: PlaylistSong[] =
                     playlistSongs.map((item: any) => ({
+                        ...item,
                         id: String(item.id || item.song_id),
                         title:
                             item.title ||
@@ -118,6 +139,8 @@ const PlaylistDetailScreen = () => {
                                 ? { uri: item.image }
                                 : Images.profile,
                         duration: item.duration || '0:00',
+                        cover_image_url: item.cover_image_url || (typeof item.image === 'string' ? item.image : undefined),
+                        original_song: item.original_song || item.recording_url || item.file_path || item.path || item.url || item.audio_url || item.audio_file,
                     }));
 
                 setSongs(formattedSongs);
@@ -341,56 +364,94 @@ const PlaylistDetailScreen = () => {
      * PLAYLIST SONG
      * ==========================================
      */
-    const stopRecording = async () => {
-        try {
-            await dispatch(isPausesd(true));
-            await TrackPlayer.pause();
-            try {
+    const handlePlayAll = async () => {
+        if (!songs || songs.length === 0) {
+            dispatch(
+                showToast({
+                    visible: true,
+                    message: 'No songs in this playlist to play.',
+                    type: 'error',
+                }),
+            );
+            return;
+        }
 
-            } catch (e) { }
-        } catch (error) {
-            console.log('Stop Error:', error);
+        // If this playlist is already playing, toggle pause / play
+        if (isCurrentPlaylistPlaying) {
+            if (!isPaused) {
+                await TrackPlayer.pause();
+                dispatch(isPausesd(true));
+            } else {
+                await TrackPlayer.play();
+                dispatch(isPausesd(false));
+            }
+            return;
+        }
+
+        // Otherwise start from index 0
+        setLoadings(true);
+        dispatch(isPausesd(false));
+        try {
+            await playSongList(songs, 0, true);
+        } catch (e) {
+            console.log('Error playing playlist:', e);
+        } finally {
+            setLoadings(false);
         }
     };
-    const playRecording = async (item: any) => {
-        try {
 
-        } catch (e) { }
+    const handleToggleSong = async (item: PlaylistSong, index?: number) => {
+        const isThisSongPlaying = playsong?.id?.toString() === item.id?.toString();
 
-        setPlayingId(item.id?.toString());
-        setLoadings(true);
-        await dispatch(isPausesd(false));
-
-        try {
-            const list = songs.length > 0 ? songs : [];
-            const songIndex = list.findIndex(
-                (s: any) => s.id?.toString() === item.id?.toString()
-            );
-            const initialIndex = songIndex >= 0 ? songIndex : 0;
-            if (list.length > 0) {
-                await playSongList(list, initialIndex, true);
+        if (isThisSongPlaying) {
+            if (!isPaused) {
+                await TrackPlayer.pause();
+                dispatch(isPausesd(true));
             } else {
-                await playTrackSong(item, true);
+                await TrackPlayer.play();
+                dispatch(isPausesd(false));
             }
+            return;
+        }
+
+        setPlayingId(item.id.toString());
+        setLoadings(true);
+        dispatch(isPausesd(false));
+
+        try {
+            const list = songs.length > 0 ? songs : [item];
+            const targetIdx =
+                typeof index === 'number' && index >= 0
+                    ? index
+                    : list.findIndex(
+                        (s: any) => s.id?.toString() === item.id?.toString(),
+                    );
+            await playSongList(list, targetIdx >= 0 ? targetIdx : 0, true);
         } catch (error) {
-            console.log('Librarylist play error:', error);
+            console.log('Playlist song play error:', error);
             dispatch(addsong({ ...item }));
         } finally {
             setLoadings(false);
         }
     };
+
     const renderPlaylistSong = ({
         item,
+        index,
     }: {
         item: PlaylistSong;
+        index: number;
     }) => {
+        const isThisSongActive = playsong?.id?.toString() === item.id?.toString();
+
         return (
             <TouchableOpacity
                 activeOpacity={0.8}
-                style={styles.songCard}
-                onPress={() => {
-                    navigation.navigate('.', { id: item.id, prevScreen: 'PlaylistDetailScreen' });
-                }}
+                style={[
+                    styles.songCard,
+                    isThisSongActive && { borderColor: '#EFCB61', borderWidth: 1 }
+                ]}
+                onPress={() => handleToggleSong(item, index)}
             >
                 <AppImage
                     source={item.image}
@@ -402,7 +463,7 @@ const PlaylistDetailScreen = () => {
 
                 <View style={styles.songInfo}>
                     <AppText
-                        color={colors.darkthemetext}
+                        color={isThisSongActive ? '#EFCB61' : colors.darkthemetext}
                         fontSize={12}
                         fontWeight="600"
                         fontFamily={Inter.medium}
@@ -432,20 +493,13 @@ const PlaylistDetailScreen = () => {
                 </View>
                 <TouchableOpacity
                     style={styles.playButton}
-                    // onPress={() => {
-                    //     playingId?.toString() === item.id?.toString() && !isPaused
-                    //         ? stopRecording()
-                    //         : playRecording(item);
-                    // }}
-                    onPress={() => {
-                        navigation.navigate('.', { id: item.id, prevScreen: 'PlaylistDetailScreen' });
-                    }}
+                    onPress={() => handleToggleSong(item, index)}
                 >
                     {loadings && playingId?.toString() === item.id?.toString() ? (
                         <ActivityIndicator size="small" color="#FFFFFF" />
                     ) : (
                         <>
-                            {playingId?.toString() === item.id?.toString() && !isPaused ? (
+                            {isThisSongActive && !isPaused ? (
                                 <View style={styles.pauseContainer}>
                                     <View style={styles.pauseLine} />
                                     <View style={styles.pauseLine} />
@@ -455,7 +509,7 @@ const PlaylistDetailScreen = () => {
                                     source={Images.playicon}
                                     width={10}
                                     height={10}
-                                    tintColor={color.darkthemetext}
+                                    tintColor={isThisSongActive ? '#EFCB61' : colors.darkthemetext}
                                 />
                             )}
                         </>
@@ -725,10 +779,11 @@ const PlaylistDetailScreen = () => {
                         </AppText>
 
                         {/* PLAY ALL */}
-                        {/* {songs.length > 0 && (
+                        {songs.length > 0 && (
                             <TouchableOpacity
                                 activeOpacity={0.85}
                                 style={styles.playAllButton}
+                                onPress={handlePlayAll}
                             >
                                 <LinearGradient
                                     colors={[
@@ -739,12 +794,20 @@ const PlaylistDetailScreen = () => {
                                     end={{ x: 1, y: 1 }}
                                     style={styles.playAllGradient}
                                 >
-                                    <AppImage
-                                        source={Images.playicon}
-                                        width={12}
-                                        height={12}
-                                        resizeMode="contain"
-                                    />
+                                    {isCurrentPlaylistPlaying && !isPaused ? (
+                                        <View style={styles.pauseContainer}>
+                                            <View style={[styles.pauseLine, { backgroundColor: '#FFFFFF' }]} />
+                                            <View style={[styles.pauseLine, { backgroundColor: '#FFFFFF' }]} />
+                                        </View>
+                                    ) : (
+                                        <AppImage
+                                            source={Images.playicon}
+                                            width={12}
+                                            height={12}
+                                            resizeMode="contain"
+                                            tintColor="#FFFFFF"
+                                        />
+                                    )}
 
                                     <AppText
                                         color="#FFFFFF"
@@ -753,11 +816,11 @@ const PlaylistDetailScreen = () => {
                                         fontFamily={Inter.medium}
                                         marginLeft={7}
                                     >
-                                        Play All
+                                        {isCurrentPlaylistPlaying && !isPaused ? 'Pause' : 'Play All'}
                                     </AppText>
                                 </LinearGradient>
                             </TouchableOpacity>
-                        )} */}
+                        )}
                     </View>
 
                     {/* SONG HEADER */}
@@ -810,7 +873,7 @@ const PlaylistDetailScreen = () => {
                     <FlatList
                         data={songs}
                         keyExtractor={item => item.id}
-                        renderItem={renderPlaylistSong}
+                        renderItem={({ item, index }) => renderPlaylistSong({ item, index })}
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={
                             songs.length === 0

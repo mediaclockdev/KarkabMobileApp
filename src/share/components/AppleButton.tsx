@@ -13,6 +13,7 @@ import { loginSuccess, setAuthenticated } from "../../auth/redux/authSlice"
 import { useDispatch } from "react-redux"
 import { storage } from "../storage/mmkv"
 import { useTranslation } from 'react-i18next';
+import { ensureFcmToken } from "../../services/fcmToken";
 
 
 export default function AppleButton() {
@@ -24,10 +25,12 @@ const { t } = useTranslation();
     console.log("Apple Login API called with ID Token:", identityToken);
     try {
       setLoading(true);
+      const fcmToken = await ensureFcmToken();
       const response = await ApiService.post(
         apiUrls.Applelogin,
         {
-          'identityToken': identityToken,
+          identityToken: identityToken,
+          device_token: fcmToken || '',
         }
       );
 

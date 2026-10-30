@@ -10,10 +10,11 @@ import {
     validateLogin,
 } from './Loginvalidation';
 import { loginSuccess, setAuthenticated, setLoginState } from '../../auth/redux/authSlice';
-import authService from '../../services/auth.service';
+import authService, { AuthResponse } from '../../services/auth.service';
 import ApiService from '../../services/api';
 import apiUrls from '../../services/apiUrls';
 import i18n from '../../localization/i18n';
+import { ensureFcmToken } from '../../services/fcmToken';
 const EMPTY_ERRORS: LoginErrors = { email: null, password: null };
 
 /**
@@ -41,7 +42,7 @@ export const useLogin = () => {
     }, []);
 
     const persistSession = useCallback(
-        (res: authService.LoginResponse) => {
+        (res: any) => {
             const authData = {
                 user: res.user ?? null,
                 accessToken: res.token ?? null,
@@ -66,11 +67,15 @@ export const useLogin = () => {
         try {
             setLoading(true);
 
+            const fcmToken = await ensureFcmToken();
+            console.log('🔑 Submitting login with FCM device_token:', fcmToken);
+
             const response = await ApiService.post(
                 apiUrls.login,
                 {
-                    email: email,
+                    email: email.trim(),
                     password: password,
+                    device_token: fcmToken || '',
                     language: language,
                 }
             );

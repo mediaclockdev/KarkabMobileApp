@@ -39,6 +39,7 @@ import {
   playTrackSong,
   parseDurationToSeconds,
 } from '../services/player';
+import AudioRecSkeleton from '../share/components/AudioRecSkeleton';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -247,7 +248,7 @@ const AudioRec = () => {
       (!songdetail?.id && !screenLoading) ||
       (songdetail?.id && playsong.id.toString() !== songdetail.id.toString())
     ) {
-      console.log('🎧 [AudioRec] Synchronizing with remote song switch:', playsong.title);
+      console.log('🎧 [AudioRec] Synchronizing with remote song switch:', playsong);
       setSongDetail(playsong);
       prepareLyrics(playsong);
       if (type !== 'recordings') {
@@ -599,13 +600,16 @@ const AudioRec = () => {
 
         return;
       }
+      else {
+        // Fallback if this song has no word timestamps.
+        lyricsLinesRef.current = [];
+        setLyricsLines([]);
+        setActiveLyricIndex(0);
 
-      // Fallback if this song has no word timestamps.
-      // lyricsLinesRef.current = [];
-      // setLyricsLines([]);
-      // setActiveLyricIndex(0);
+        console.log('No lyrics_timestamps available for song:', song?.id);
+      }
 
-      console.log('No lyrics_timestamps available for song:', song?.id);
+
     } catch (error) {
       console.error('Error preparing lyrics:', error);
 
@@ -1074,9 +1078,10 @@ const AudioRec = () => {
         </View>
 
         {screenLoading ? (
-          <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#FF2D55" />
-          </View>
+          // <View style={styles.centerContainer}>
+          //   <ActivityIndicator size="large" color="#FF2D55" />
+          // </View>
+          <AudioRecSkeleton />
         ) : (
           <View style={styles.mainLayout}>
             {/* 🔄 MODE 1: ROTATING ARTIST PROFILE + SINGLE LINE (When showFullLyrics === false) */}

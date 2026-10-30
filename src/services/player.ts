@@ -101,7 +101,12 @@ export const formatSongToMediaItem = (
         song.path ||
         song.url ||
         song.audio_url ||
-        song.audio_file;
+        song.audio_file ||
+        song.song_url ||
+        song.file ||
+        song.media_url ||
+        song.audio ||
+        song.song_file;
     const audioUrl = getMediaAudioUrl(rawAudio);
     if (!audioUrl) return null;
 
@@ -361,6 +366,48 @@ export const playSongList = async (
         setTimeout(() => {
             isSwitchingSong = false;
         }, 500);
+    }
+};
+
+/**
+ * Fetches and plays all songs in a playlist by playlistId.
+ * Supports both user-created custom playlists and curated app playlists.
+ */
+export const playPlaylistById = async (
+    playlistId: string | number,
+    initialIndex: number = 0,
+    isUserPlaylist: boolean = true,
+): Promise<any> => {
+    try {
+        console.log(`🎶 Fetching playlist ${playlistId} to play...`);
+        let songs: any[] = [];
+
+        if (isUserPlaylist) {
+            try {
+                const response = await ApiService.get(apiUrls.playlistDetail(playlistId));
+                const data = (response as any)?.data;
+                songs = data?.playlist?.songs || data?.playlist?.playlist_songs || data?.songs || [];
+            } catch (userErr) {
+                console.log('playlistDetail fetch notice, trying app playlist endpoint:', userErr);
+                const response = await ApiService.get(apiUrls.getplaylistsongs(playlistId));
+                const data = (response as any)?.data;
+                songs = data?.playlist?.songs || data?.songs || [];
+            }
+        } else {
+            const response = await ApiService.get(apiUrls.getplaylistsongs(playlistId));
+            const data = (response as any)?.data;
+            songs = data?.playlist?.songs || data?.songs || [];
+        }
+
+        if (!Array.isArray(songs) || songs.length === 0) {
+            console.log('playPlaylistById: No songs found in playlist', playlistId);
+            return null;
+        }
+
+        return await playSongList(songs, initialIndex, true);
+    } catch (error) {
+        console.log('❌ playPlaylistById error:', error);
+        return null;
     }
 };
 

@@ -13,6 +13,7 @@ import { useAppDispatch } from "../hooks/useAppSelector";
 import { useTranslation } from "react-i18next";
 import { storage } from "../storage/mmkv";
 import Toast from "react-native-toast-message";
+import { ensureFcmToken } from "../../services/fcmToken";
 
 export default function GoogleButton() {
   const dispatch = useAppDispatch();
@@ -81,10 +82,12 @@ export default function GoogleButton() {
     console.log("Google Login API called with ID Token:", idToken);
     try {
       setLoading(true);
+      const fcmToken = await ensureFcmToken();
       const response = await ApiService.post(
         apiUrls.Googlelogin,
         {
           idToken,
+          device_token: fcmToken || '',
         }
       );
 

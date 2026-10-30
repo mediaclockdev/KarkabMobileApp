@@ -121,11 +121,13 @@
 //     try {
 //       setLoading(true);
 //       console.log(email, password, "jjegjgedjgejg")
+//       const fcmToken = await ensureFcmToken();
 //       const response = await ApiService.post(
 //         apiUrls.login,
 //         {
 //           email: email,
 //           password: password,
+//           device_token: fcmToken || '',
 //         }
 //       );
 //       const res = response.data

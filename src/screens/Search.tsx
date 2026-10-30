@@ -21,6 +21,7 @@ import { Sound } from "react-native-nitro-sound";
 import TagLIst from "../share/components/TagLIst";
 import { useTranslation } from "react-i18next";
 import Toast from "react-native-toast-message";
+import HomeSkeleton from "../share/components/HomeSkeleton";
 
 const Search = () => {
   //const [search, setSearch] = useState('')
@@ -418,9 +419,12 @@ const Search = () => {
           />
           {
             loader ?
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#EFCB61" />
-              </View> :
+              // <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              //   <ActivityIndicator size="large" color="#EFCB61" />
+              // </View> 
+              // 
+              <HomeSkeleton />
+              :
               <ScrollView showsVerticalScrollIndicator={false} style={{ gap: 20, marginVertical: 10 }}>
 
                 <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>

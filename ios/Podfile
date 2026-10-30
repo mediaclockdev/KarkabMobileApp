@@ -35,7 +35,7 @@
 #   installer.pods_project.targets.each do |target|
 #     target.build_configurations.each do |config|
 #       config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
-#       config.build_settings['DEFINES_MODULE'] = 'YES'
+#       # config.build_settings['DEFINES_MODULE'] = 'YES'
 #     end
 #   end
 # end
@@ -45,6 +45,7 @@
 
 
 # Resolve react_native_pods.rb with node to allow for hoisting
+ENV['RCT_USE_PREBUILT_RNCORE'] = '0'
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
     "react-native/scripts/react_native_pods.rb",
@@ -68,7 +69,7 @@ target 'KarKab' do
   $RNFirebaseAsStaticFramework = true
 
   use_react_native!(
-    :path => config[:reactNativePath],
+    :path => config[:reactNativePath], 
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
@@ -82,7 +83,7 @@ target 'KarKab' do
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
-        config.build_settings['DEFINES_MODULE'] = 'YES'
+        # # config.build_settings['DEFINES_MODULE'] = 'YES'
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
       end
     end

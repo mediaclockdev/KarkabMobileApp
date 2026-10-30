@@ -36,6 +36,7 @@ import { addsong } from '../auth/redux/authSlice';
 import { getLastPlayed } from '../services/lastPlayed';
 import { GlobalImage } from '../share/utils/GlobalImage';
 import { useTranslation } from 'react-i18next';
+import HomeSkeleton from '../share/components/HomeSkeleton';
 
 const { width } = Dimensions.get('window');
 
@@ -379,9 +380,10 @@ const Home = () => {
       />
 
       {loader ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#EFCB61" />
-        </View>
+        // <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        //   <ActivityIndicator size="large" color="#EFCB61" />
+        // </View>
+        <HomeSkeleton />
       ) : (
         <ScrollView
           nestedScrollEnabled={true}

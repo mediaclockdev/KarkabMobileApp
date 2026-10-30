@@ -710,7 +710,6 @@ const Profile = () => {
                                                     {profiledetail?.bio || ''}
                                                 </AppText>
                                             </View> : null}
-}
 
                                     <View
                                         style={{

@@ -28,6 +28,7 @@ import { Inter } from '../../share/constants/fonts';
 import apiUrls from '../../services/apiUrls';
 import { showToast } from '../../auth/redux/authSlice';
 import { useAppDispatch } from '../../share/hooks/useAppSelector';
+import { playPlaylistById } from '../../services/player';
 
 type Playlist = {
     id: string;
@@ -817,7 +818,7 @@ const CreatePlaylist = () => {
     /**
      * Play complete playlist
      */
-    const handlePlayPlaylist = (playlist: Playlist) => {
+    const handlePlayPlaylist = async (playlist: Playlist) => {
         if (playlist.songs === 0) {
             Alert.alert(
                 'Empty Playlist',
@@ -826,7 +827,36 @@ const CreatePlaylist = () => {
             return;
         }
 
-        console.log('Play playlist:', playlist.id);
+        try {
+            console.log('🎶 Initiating playlist playback:', playlist.name, playlist.id);
+            dispatch(
+                showToast({
+                    visible: true,
+                    message: `Loading ${playlist.name}...`,
+                    type: 'success',
+                }),
+            );
+
+            const result = await playPlaylistById(playlist.id, 0, true);
+            if (!result) {
+                dispatch(
+                    showToast({
+                        visible: true,
+                        message: 'No playable songs found in this playlist.',
+                        type: 'error',
+                    }),
+                );
+            }
+        } catch (error: any) {
+            console.log('handlePlayPlaylist error:', error);
+            dispatch(
+                showToast({
+                    visible: true,
+                    message: 'Could not play playlist.',
+                    type: 'error',
+                }),
+            );
+        }
     };
 
     const renderPlaylist = ({
