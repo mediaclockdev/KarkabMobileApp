@@ -9,6 +9,7 @@ import {
 import AppText from './AppText';
 import { Banner, Images } from '../constants/media';
 import { Inter } from '../constants/fonts';
+import { useNavigation } from '@react-navigation/native';
 
 
 
@@ -16,7 +17,7 @@ import { Inter } from '../constants/fonts';
 
 const BannerCard = () => {
 
-
+    const navigation = useNavigation();
     return (
 
         <ImageBackground
@@ -24,11 +25,14 @@ const BannerCard = () => {
             source={Banner.ArtistBanner}
 
             style={styles.container}
-            resizeMode='contain'
+            resizeMode='cover'
             imageStyle={{
                 borderRadius: 12,
                 width: '100%',
-                alignSelf: 'center'
+                alignSelf: 'center',
+                height: '100%',
+                justifyContent: 'center',
+                alignItems: 'center',
             }}
 
 
@@ -54,6 +58,9 @@ const BannerCard = () => {
 
                 <TouchableOpacity
                     style={styles.button}
+                    onPress={() => {
+                        (navigation as any).navigate('AllArtistScreen', { previousScreen: 'ArtistScreen' })
+                    }}
                 >
 
                     <AppText style={styles.buttonText}>
@@ -85,9 +92,9 @@ const styles = StyleSheet.create({
 
 
     container: {
-        height: 105,
+        height: 145,
         // marginHorizontal: 15,
-        marginTop: 20,
+        marginTop: 30,
         overflow: 'hidden',
         width: '100%',
         borderRadius: 12,
@@ -96,7 +103,7 @@ const styles = StyleSheet.create({
 
     overlay: {
         flex: 1,
-        padding: 12,
+        padding: 25,
         backgroundColor: 'rgba(0,0,0,0.35)'
     },
 
@@ -105,7 +112,8 @@ const styles = StyleSheet.create({
         fontSize: 10,
         color: '#F6A202',
         fontWeight: '700',
-        fontFamily: Inter.semibold
+        fontFamily: Inter.semibold,
+        marginBottom: 10
     },
 
 

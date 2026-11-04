@@ -102,7 +102,7 @@ const SongItem = React.memo(({
     <View style={[styles.card, { borderColor: themeColor.homebordercolor }]}>
       {/* Image */}
       <TouchableOpacity
-        onPress={() => (navigation as any).navigate('.', { id: item.id })}
+        onPress={() => (navigation as any).navigate('.', { id: item.id, previousScreen: 'Home' })}
 
         style={styles.imageContainer}>
         <AppImage

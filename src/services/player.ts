@@ -3,6 +3,7 @@
 import { Platform, PermissionsAndroid } from 'react-native';
 import TrackPlayer, { PlayerCommand, type MediaItem } from '@rntp/player';
 import type { Dispatch } from '@reduxjs/toolkit';
+import ReactNativeBlobUtil from 'react-native-blob-util';
 
 import {
     addsong,
@@ -32,9 +33,15 @@ export const getMediaAudioUrl = (url?: string | null): string => {
         !clean.startsWith('https://') &&
         !clean.startsWith('file://')
     ) {
-        const base = BASE_URL.replace(/\/$/, '');
-        const path = clean.replace(/^\//, '');
-        fullUrl = `${base}/${path}`;
+        if (clean.includes('uploads/recordings/')) {
+            const s3Base = 'https://karkab-media-storage.s3.ap-southeast-2.amazonaws.com';
+            const path = clean.replace(/^\//, '');
+            fullUrl = `${s3Base}/${path}`;
+        } else {
+            const base = BASE_URL.replace(/\/$/, '');
+            const path = clean.replace(/^\//, '');
+            fullUrl = `${base}/${path}`;
+        }
     }
     try {
         return encodeURI(decodeURI(fullUrl));
@@ -56,6 +63,54 @@ export const getArtworkUrl = (url?: string | null): string | undefined => {
     const base = BASE_URL.replace(/\/$/, '');
     const path = clean.replace(/^\//, '');
     return `${base}/${path}`;
+};
+
+/**
+ * Resolves recording audio URLs on iOS so that TrackPlayer / AVPlayer
+ * can stream them with the correct M4A/AAC container parser.
+ */
+export const resolvePlayableAudioUrl = async (song: any): Promise<string | null> => {
+    try {
+        if (Platform.OS !== 'ios' || !song) return null;
+
+        const rawUrl =
+            song._resolvedAudioUrl ||
+            song.recording_url ||
+            song.recordingUrl ||
+            (song.file_path && String(song.file_path).includes('uploads/recordings/') ? song.file_path : null);
+
+        if (!rawUrl || typeof rawUrl !== 'string') return null;
+
+        const cleanUrl = getMediaAudioUrl(rawUrl);
+        if (!cleanUrl || !cleanUrl.includes('uploads/recordings/')) return null;
+
+        const { fs } = ReactNativeBlobUtil;
+        const filename = cleanUrl.split('/').pop()?.split('?')[0] || `rec_${song.id}.mp3`;
+        const m4aFilename = filename.replace(/\.(mp3|wav)$/i, '') + '.m4a';
+        const targetDir = `${fs.dirs.CacheDir}/recordings`;
+        const targetPath = `${targetDir}/${m4aFilename}`;
+
+        const exists = await fs.exists(targetPath);
+        if (exists) {
+            return `file://${targetPath}`;
+        }
+
+        const dirExists = await fs.exists(targetDir);
+        if (!dirExists) {
+            await fs.mkdir(targetDir);
+        }
+
+        const res = await ReactNativeBlobUtil.config({
+            path: targetPath,
+        }).fetch('GET', cleanUrl);
+
+        if (res.info().status === 200) {
+            return `file://${targetPath}`;
+        }
+    } catch (e) {
+        console.log('resolvePlayableAudioUrl error:', e);
+    }
+    return null;
 };
 
 /**
@@ -95,8 +150,10 @@ export const formatSongToMediaItem = (
 ): MediaItem | null => {
     if (!song?.id) return null;
     const rawAudio =
-        song.original_song ||
+        song._resolvedAudioUrl ||
         song.recording_url ||
+        song.recordingUrl ||
+        song.original_song ||
         song.file_path ||
         song.path ||
         song.url ||
@@ -303,15 +360,23 @@ export const playSongList = async (
             return null;
         }
 
+        // Resolve target recording URL on iOS if needed
+        const requestedSong = songs[initialIndex] || songs[0];
+        const resolvedTargetUrl = await resolvePlayableAudioUrl(requestedSong);
+
         // Filter and map valid songs
         const mediaItems: MediaItem[] = [];
         const validSongs: any[] = [];
 
         songs.forEach((s, idx) => {
-            const item = formatSongToMediaItem(s, idx);
+            const isTarget = s.id?.toString() === requestedSong?.id?.toString();
+            const songToFormat = isTarget && resolvedTargetUrl
+                ? { ...s, _resolvedAudioUrl: resolvedTargetUrl }
+                : s;
+            const item = formatSongToMediaItem(songToFormat, idx);
             if (item) {
                 mediaItems.push(item);
-                validSongs.push(s);
+                validSongs.push(songToFormat);
             }
         });
 
@@ -433,8 +498,11 @@ export const playTrackSong = async (song: any, autoPlay: boolean = true) => {
             }
         }
 
+        const resolvedUrl = await resolvePlayableAudioUrl(song);
+        const songToPlay = resolvedUrl ? { ...song, _resolvedAudioUrl: resolvedUrl } : song;
+
         // Otherwise play as single item with full media item metadata
-        const mediaItem = formatSongToMediaItem(song, 0);
+        const mediaItem = formatSongToMediaItem(songToPlay, 0);
         if (!mediaItem) {
             console.log('❌ playTrackSong: Could not format media item for song', song.title);
             return null;

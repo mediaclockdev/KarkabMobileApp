@@ -605,6 +605,7 @@ export default function SongsScreen() {
                                 width={(width - 45) / 3}
                                 onpress={() => (navigation as any).navigate('.', {
                                     id: item.id,
+                                    previousScreen: 'SongsScreen',
                                 })}
 
                             />
@@ -686,6 +687,7 @@ export default function SongsScreen() {
                                     width={(width - 45) / 3}
                                     onpress={() => (navigation as any).navigate('.', {
                                         id: item.id,
+                                        previousScreen: 'SongsScreen',
                                     })}
 
                                 />
@@ -797,6 +799,7 @@ export default function SongsScreen() {
                                 item={item}
                                 onpress={() => (navigation as any).navigate('.', {
                                     id: item.id,
+                                    previousScreen: 'SongsScreen',
                                 })}
                             />
                         ))}

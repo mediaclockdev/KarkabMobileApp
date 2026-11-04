@@ -240,7 +240,7 @@ const ArtistScreen = () => {
 
 
 
-                    <FlatList
+                    {/* <FlatList
 
                         horizontal
 
@@ -261,7 +261,7 @@ const ArtistScreen = () => {
 
                         )}
 
-                    />
+                    /> */}
 
 
 
@@ -486,7 +486,8 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 14,
         fontWeight: '600',
-        fontFamily: Inter.medium
+        fontFamily: Inter.medium,
+        marginTop: 10
     },
 
 

@@ -8,11 +8,9 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import AppText from '../../share/components/AppText';
 import AppImage from '../../share/components/AppImage';
 import SearchBar from '../../share/components/SearchBar';
-
 import color from '../../share/constants/color';
 import { Inter } from '../../share/constants/fonts';
 import { Images, Logo } from '../../share/constants/media';
@@ -32,7 +30,6 @@ const SettingScreen = () => {
     const [darkMode, setDarkMode] = useState(true);
     const [highQuality, setHighQuality] = useState(false);
     const [downloadWifi, setDownloadWifi] = useState(true);
-
     const dispatch = useAppDispatch();
     const [settingdata, setSettingdata] = useState([])
 
@@ -56,7 +53,10 @@ const SettingScreen = () => {
         getsettingdata()
     }, [])
 
-    const LogOutAlertOccurred = (title = 'User Logout', body = 'Are you sure you want to logout?', btnTxt = 'yes', btnTxt2 = 'No') => {
+    const LogOutAlertOccurred = (title = 'User Logout',
+        body = 'Are you sure you want to logout?',
+        btnTxt = 'yes',
+        btnTxt2 = 'No') => {
         Alert.alert(title, body, [
             {
                 text: btnTxt,
@@ -66,8 +66,7 @@ const SettingScreen = () => {
                     console.log(token, "fkfckfv")
                     await TrackPlayer.stop();
                     dispatch(
-                        addsong
-                            (''),)
+                        addsong(''),)
                     dispatch(setAuthenticated(false));
 
                 },
@@ -214,14 +213,14 @@ const SettingScreen = () => {
                         </View>
                     </View>
 
-                    <TouchableOpacity style={styles.micContainer}>
+                    {/* <TouchableOpacity style={styles.micContainer}>
                         <AppImage
                             source={Images.mics}
                             height={15}
                             width={18}
                             resizeMode="contain"
                         />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
 
                 {/* Account */}
@@ -340,7 +339,7 @@ const SettingScreen = () => {
                 </View>
 
                 {/* Playback & Download */}
-                <View style={styles.sectionHeader}>
+                {/* <View style={styles.sectionHeader}>
                     <AppText style={styles.sectionTitle}>
                         Playback & Downloads
                     </AppText>
@@ -363,17 +362,17 @@ const SettingScreen = () => {
                         },
                     })}
 
-                    {/* <View style={styles.divider} /> */}
+                    <View style={styles.divider} />
 
-                    {/* {renderSettingRow({
+                    {renderSettingRow({
                         icon: '⇩',
                         title: 'Download Settings',
                         subtitle: 'Manage downloaded songs',
-                    })} */}
+                    })}
 
-                    {/* <View style={styles.divider} /> */}
+                    <View style={styles.divider} />
 
-                    {/* {renderSettingRow({
+                    {renderSettingRow({
                         icon: '⌁',
                         title: 'Download over Wi-Fi',
                         subtitle: 'Save mobile data',
@@ -381,7 +380,7 @@ const SettingScreen = () => {
                             downloadWifi,
                             setDownloadWifi,
                         ),
-                    })} */}
+                    })}
 
                     <View style={styles.divider} />
 
@@ -400,10 +399,10 @@ const SettingScreen = () => {
 
                         },
                     })}
-                </View>
+                </View> */}
 
                 {/* Privacy */}
-                <View style={styles.sectionHeader}>
+                {/* <View style={styles.sectionHeader}>
                     <AppText style={styles.sectionTitle}>
                         Privacy & Security
                     </AppText>
@@ -461,7 +460,7 @@ const SettingScreen = () => {
 
                         },
                     })}
-                </View>
+                </View> */}
 
                 {/* Support */}
                 <View style={styles.sectionHeader}>
@@ -623,7 +622,7 @@ const styles = StyleSheet.create({
         paddingBottom: 130,
     },
 
-    /* Header */
+
 
     header: {
         flexDirection: 'row',
@@ -663,8 +662,6 @@ const styles = StyleSheet.create({
         marginLeft: 12,
         backgroundColor: 'transparent',
     },
-
-    /* Sections */
 
     sectionHeader: {
         marginTop: 19,

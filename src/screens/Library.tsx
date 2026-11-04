@@ -5,6 +5,10 @@ import {
   ImageBackground,
   TextInput,
   ActivityIndicator,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Platform,
+  KeyboardAvoidingView,
 } from "react-native"
 import Header from "../share/components/Header";
 import color, { useAppColors } from "../share/constants/color";
@@ -78,12 +82,12 @@ const Library = () => {
       number: recordingcount,
       bordercolor: '#8F4602',
     },
-    {
-      image: Logo.headponeicon,
-      title: 'Recently\nSung',
-      number: 0,
-      bordercolor: '#9E8F1F',
-    },
+    // {
+    //   image: Logo.headponeicon,
+    //   title: 'Recently\nSung',
+    //   number: 0,
+    //   bordercolor: '#9E8F1F',
+    // },
   ];
 
   useFocusEffect(
@@ -109,7 +113,6 @@ const Library = () => {
   )
   useFocusEffect(
     useCallback(() => {
-
       getRecording();
     }, [recordingRefresh])
   )
@@ -329,10 +332,10 @@ const Library = () => {
               borderWidth: 1,
               justifyContent: 'center',
               alignItems: 'center',
-              width: '23.6%',
+              width: '30.6%',
               flexDirection: 'row',
-              gap: 6,
-              paddingHorizontal: 8,
+              gap: 10,
+              paddingHorizontal: 0,
               paddingVertical: 10,
               borderRadius: 8,
             }}
@@ -347,14 +350,14 @@ const Library = () => {
                 borderRadius: 50,
               }}
             >
-              <AppImage source={item.image} height={20} width={20} />
+              <AppImage source={item.image} height={28} width={28} />
             </View>
 
             <View>
-              <AppText fontSize={7} fontFamily={Inter.regular} color={color.darkthemetext}>
+              <AppText fontSize={9} fontFamily={Inter.regular} color={color.darkthemetext}>
                 {item.title}
               </AppText>
-              <AppText fontSize={16} fontFamily={Inter.regular} color={color.darkthemetext}>
+              <AppText fontSize={17} fontFamily={Inter.regular} color={color.darkthemetext}>
                 {item.number}
               </AppText>
             </View>
@@ -474,7 +477,7 @@ const Library = () => {
                       style={{ flex: 1, padding: 8, justifyContent: 'space-between' }}
                     >
                       <TouchableOpacity
-                        onPress={() => (navigation as any).navigate('.', { id: item.id, type: 'recordings' })}
+                        onPress={() => (navigation as any).navigate('.', { id: item.id, type: 'recordings', previousScreen: 'Library' })}
                         style={{
                           height: 27,
                           width: 27,
@@ -579,136 +582,144 @@ const Library = () => {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: color.darkbackround }]}>
-      {/* Header */}
-      <Header
-        rightIcon={Images.bell}
-        onRightPress={() => { (navigation as any).navigate('NotificationScreen') }}
-        rightView={
-          <LinearGradient
-            colors={['#845726', '#4D2001']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{ borderRadius: 8 }}
-          >
-            <TouchableOpacity
-              style={{
-                width: 62,
-                height: 28,
-                borderRadius: 8,
-                flexDirection: 'row',
-                backgroundColor: color.darkbackround,
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: 2,
-                margin: 1,
-              }}
-              onPress={() => {
-                (navigation as any).navigate('Recording');
-              }}
-            >
-              <AppImage source={Images.mic} width={15} height={15} tintColor={color.darkthemetext} />
-              <AppText color={color.darkthemetext} fontSize={10} fontWeight="400" fontFamily={Inter.regular}>
-                {t('Library.Rooms')}
-              </AppText>
-            </TouchableOpacity>
-          </LinearGradient>
-        }
-      />
-
-      {/* Top Tabs */}
-      <View style={[styles.toptitle, { backgroundColor: color.darkbackround, borderColor: '#302E2E' }]}>
-        {['Songs', 'Playlists', 'Favorites', 'Recently Played'].map((item, index) => (
-          <TouchableOpacity key={index} style={styles.tabItem} onPress={() => handlepages(item)}>
-            <AppText
-              color={color.darkthemetext}
-              fontSize={12}
-              fontWeight="500"
-              fontFamily={Inter.medium}
-            >
-              {item}
-            </AppText>
-            {selectedTab === item && <View style={styles.bottomLine} />}
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Filter Row */}
-      <View style={styles.filterview}>
-        {/* All Genres */}
-        <LinearGradient
-          colors={['#8E6B3E', '#292727']}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={{ borderRadius: 25 }}
-        >
-          <TouchableOpacity
-            onPress={() => {
-              setPage(1);
-              songlist(1);
-              setVisible(true);
-            }}
-            style={[styles.filter, { backgroundColor: color.darkbackround, margin: 1 }]}
-          >
-            <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
-              <AppImage source={Images.music} tintColor={"#ADA03E"} height={10} width={10} />
-              <AppText color={color.darkthemetext} fontSize={8} fontWeight="500" fontFamily={Inter.medium}>
-                All Genres
-              </AppText>
-            </View>
-            <AppImage
-              source={Logo.downarrow}
-              width={7}
-              height={4}
-              resizeMode="contain"
-              style={{ marginTop: 2 }}
-              tintColor={color.darkthemetext}
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: color.darkbackround }]}
+    >
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={{ flex: 1 }}>
+            <Header
+              rightIcon={Images.bell}
+              onRightPress={() => { (navigation as any).navigate('NotificationScreen') }}
+              rightView={
+                <LinearGradient
+                  colors={['#845726', '#4D2001']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{ borderRadius: 8 }}
+                >
+                  <TouchableOpacity
+                    style={{
+                      width: 62,
+                      height: 28,
+                      borderRadius: 8,
+                      flexDirection: 'row',
+                      backgroundColor: color.darkbackround,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: 2,
+                      margin: 1,
+                    }}
+                    onPress={() => {
+                      (navigation as any).navigate('Recording');
+                    }}
+                  >
+                    <AppImage source={Images.mic} width={15} height={15} tintColor={color.darkthemetext} />
+                    <AppText color={color.darkthemetext} fontSize={10} fontWeight="400" fontFamily={Inter.regular}>
+                      {t('Library.Rooms')}
+                    </AppText>
+                  </TouchableOpacity>
+                </LinearGradient>
+              }
             />
-          </TouchableOpacity>
-        </LinearGradient>
 
-        {/* Sudanese Arabic */}
-        <LinearGradient
-          colors={['#8E6B3E', '#292727']}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={{ borderRadius: 25 }}
-        >
-          <TouchableOpacity
-            onPress={() => { (navigation as any).navigate('SudaneseClassicsScreen') }}
-            style={[styles.filter, { backgroundColor: color.darkbackround, margin: 1 }]}
-          >
-            <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
-              <AppImage source={Logo.glob} height={10} width={10} />
-              <AppText color={color.darkthemetext} fontSize={8} fontWeight="500" fontFamily={Inter.medium}>
-                Sudanese Arabic
-              </AppText>
+            {/* Top Tabs */}
+            <View style={[styles.toptitle, { backgroundColor: color.darkbackround, borderColor: '#302E2E' }]}>
+              {['Songs', 'Playlists', 'Favorites'].map((item, index) => (
+                <TouchableOpacity key={index} style={styles.tabItem} onPress={() => handlepages(item)}>
+                  <AppText
+                    color={color.darkthemetext}
+                    fontSize={12}
+                    fontWeight="500"
+                    fontFamily={Inter.medium}
+                  >
+                    {item}
+                  </AppText>
+                  {selectedTab === item && <View style={styles.bottomLine} />}
+                </TouchableOpacity>
+              ))}
             </View>
-          </TouchableOpacity>
-        </LinearGradient>
 
-        {/* Sort */}
-        <LinearGradient
-          colors={['#8E6B3E', '#292727']}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={{ borderRadius: 25 }}
-        >
-          <TouchableOpacity
-            onPress={() => setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))}
-            style={[styles.filter, { backgroundColor: color.darkbackround, margin: 1 }]}
-          >
-            <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
-              <AppImage source={Logo.sort} height={10} width={10} />
-              <AppText color={color.darkthemetext} fontSize={8} fontWeight="500" fontFamily={Inter.medium}>
-                {sortOrder === 'asc' ? 'Sort ▲' : 'Sort ▼'}
-              </AppText>
-            </View>
-          </TouchableOpacity>
-        </LinearGradient>
+            {/* Filter Row */}
+            <View style={styles.filterview}>
+              {/* All Genres */}
+              <LinearGradient
+                colors={['#8E6B3E', '#292727']}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={{ borderRadius: 25 }}
+              >
+                <TouchableOpacity
+                  onPress={() => {
+                    setPage(1);
+                    songlist(1);
+                    setVisible(true);
+                  }}
+                  style={[styles.filter, { backgroundColor: color.darkbackround, margin: 1 }]}
+                >
+                  <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
+                    <AppImage source={Images.music} tintColor={"#ADA03E"} height={10} width={10} />
+                    <AppText color={color.darkthemetext} fontSize={8} fontWeight="500" fontFamily={Inter.medium}>
+                      All Genres
+                    </AppText>
+                  </View>
+                  <AppImage
+                    source={Logo.downarrow}
+                    width={7}
+                    height={4}
+                    resizeMode="contain"
+                    style={{ marginTop: 2 }}
+                    tintColor={color.darkthemetext}
+                  />
+                </TouchableOpacity>
+              </LinearGradient>
 
-        {/* Filter */}
-        {/* <LinearGradient
+              {/* Sudanese Arabic */}
+              <LinearGradient
+                colors={['#8E6B3E', '#292727']}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={{ borderRadius: 25 }}
+              >
+                <TouchableOpacity
+                  onPress={() => { (navigation as any).navigate('SudaneseClassicsScreen') }}
+                  style={[styles.filter, { backgroundColor: color.darkbackround, margin: 1 }]}
+                >
+                  <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
+                    <AppImage source={Logo.glob} height={10} width={10} />
+                    <AppText color={color.darkthemetext} fontSize={8} fontWeight="500" fontFamily={Inter.medium}>
+                      Sudanese Arabic
+                    </AppText>
+                  </View>
+                </TouchableOpacity>
+              </LinearGradient>
+
+              {/* Sort */}
+              <LinearGradient
+                colors={['#8E6B3E', '#292727']}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={{ borderRadius: 25 }}
+              >
+                <TouchableOpacity
+                  onPress={() => setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))}
+                  style={[styles.filter, { backgroundColor: color.darkbackround, margin: 1 }]}
+                >
+                  <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
+                    <AppImage source={Logo.sort} height={10} width={10} />
+                    <AppText color={color.darkthemetext} fontSize={8} fontWeight="500" fontFamily={Inter.medium}>
+                      {sortOrder === 'asc' ? 'Sort ▲' : 'Sort ▼'}
+                    </AppText>
+                  </View>
+                </TouchableOpacity>
+              </LinearGradient>
+
+              {/* Filter */}
+              {/* <LinearGradient
           colors={['#8E6B3E', '#292727']}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
@@ -723,27 +734,30 @@ const Library = () => {
             </View>
           </TouchableOpacity>
         </LinearGradient> */}
-      </View>
+            </View>
 
-      {/* Main List with Integrated Header and Pagination */}
-      <View style={{ flex: 1 }}>
-        <Librarylist
-          ListHeaderComponent={renderHeader()}
-          musicData={filteredSongs}
-          loading={isLoading && page === 1}
-          refreshing={refreshing}
-          loadingMore={loadingMore}
-          hasMore={hasMore}
-          onRefresh={handleRefresh}
-          onLoadMore={handleLoadMore}
-          onLikePress={() => {
-            songlist(page);
-          }}
-          onDislikePress={() => {
-            songlist(page);
-          }}
-        />
-      </View>
+            {/* Main List with Integrated Header and Pagination */}
+            <View style={{ flex: 1 }}>
+              <Librarylist
+                ListHeaderComponent={renderHeader()}
+                musicData={filteredSongs}
+                loading={isLoading && page === 1}
+                refreshing={refreshing}
+                loadingMore={loadingMore}
+                hasMore={hasMore}
+                onRefresh={handleRefresh}
+                onLoadMore={handleLoadMore}
+                onLikePress={() => {
+                  songlist(page);
+                }}
+                onDislikePress={() => {
+                  songlist(page);
+                }}
+              />
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

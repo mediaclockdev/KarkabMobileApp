@@ -59,7 +59,8 @@ export async function displayNotification(remoteMessage: any) {
             },
             ios: {
                 foregroundPresentationOptions: {
-                    alert: true,
+                    banner: true,
+                    list: true,
                     sound: true,
                     badge: true,
                 },

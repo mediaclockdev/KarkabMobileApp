@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Platform,
 } from 'react-native'
 import AppText from '../components/AppText'
 import AppImage from '../components/AppImage'
@@ -255,7 +256,7 @@ const Librarylist = ({
     return (
       <View style={[styles.card, { borderColor: '#1A1A1A' }]}>
         <TouchableOpacity
-          onPress={() => (navigation as any).navigate('.', { id: item.id, type: type })}
+          onPress={() => (navigation as any).navigate('.', { id: item.id, type: type, previousScreen: 'Library' })}
         >
           <View style={styles.imageContainer}>
             {item?.cover_image_url ? (
@@ -277,7 +278,7 @@ const Librarylist = ({
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => (navigation as any).navigate('.', { id: item.id, type: type })}
+          onPress={() => (navigation as any).navigate('.', { id: item.id, type: type, previousScreen: 'Library' })}
           style={styles.content}
         >
           <AppText
@@ -412,6 +413,9 @@ const Librarylist = ({
   return (
     <FlatList
       data={songs}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+      automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
       keyExtractor={(item, index) => (item?.id ? `${item.id}-${index}` : index.toString())}
       renderItem={renderItem}
       showsVerticalScrollIndicator={false}

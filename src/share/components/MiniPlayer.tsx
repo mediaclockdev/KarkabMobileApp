@@ -329,8 +329,10 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
     const openFullPlayer = () => {
         const targetSong = displaySong?.id ? displaySong : playsong;
         if (targetSong?.id) {
+            const isRec = !!(targetSong?.recording_url || targetSong?.recordingUrl || targetSong?.type === 'recordings');
             (navigation as any).navigate('.', {
                 id: targetSong.id,
+                type: isRec ? 'recordings' : undefined,
             });
 
             // dispatch(openSongAction(playsong));

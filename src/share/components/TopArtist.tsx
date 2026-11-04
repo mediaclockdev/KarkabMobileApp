@@ -54,11 +54,10 @@ const TopArtist = ({
             <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center', marginTop: 5, }}>
 
 
-                <AppText
-                    numberOfLines={1}
-                    style={styles.artistName}
-                >
-                    {item?.name}
+                <AppText style={styles.artistName}>
+                    {item?.name?.length > 15
+                        ? `${item.name.substring(0, 15)}...`
+                        : item?.name}
                 </AppText>
                 <AppImage
                     source={Logo.Bluetick}
@@ -81,12 +80,12 @@ const TopArtist = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: 11,
-                marginTop: 3
+                marginTop: 5
             }}>
                 <AppText
                     numberOfLines={1}
                     color='#ffff'
-                    fontSize={8}
+                    fontSize={10}
                     style={{ includeFontPadding: false }}
                 >
                     Popular
@@ -94,7 +93,7 @@ const TopArtist = ({
             </View>
 
 
-        </TouchableOpacity>
+        </TouchableOpacity >
 
     );
 
@@ -108,16 +107,16 @@ export default TopArtist;
 const styles = StyleSheet.create({
 
     artistContainer: {
-        width: 82,
+        //    width: 92,
         alignItems: 'center',
-        marginRight: 18,
+        marginHorizontal: 18,
         // alignSelf: 'center'
     },
 
 
     imageWrapper: {
-        width: 57,
-        height: 57,
+        width: 67,
+        height: 67,
         borderRadius: 35,
         overflow: 'hidden',
         backgroundColor: '#6D2C02',
@@ -134,9 +133,9 @@ const styles = StyleSheet.create({
     artistName: {
         //   marginTop: 5,
         color: '#fff',
-        fontSize: 8,
+        fontSize: 10,
         textAlign: 'center',
-        fontFamily: Inter.medium
+        fontFamily: Inter.bold,
     },
 
 

@@ -525,7 +525,7 @@ export default function PlayListScreen() {
                                         item={item}
                                         songList={songs}
                                         index={idx}
-                                        onPress={() => (navigation as any).navigate('.', { id: item.id, })}
+                                        onPress={() => (navigation as any).navigate('.', { id: item.id, previousScreen: 'PlayListScreen' })}
                                     />
                                 ))
                             ) : (

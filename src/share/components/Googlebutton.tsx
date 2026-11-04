@@ -88,6 +88,7 @@ export default function GoogleButton() {
         {
           idToken,
           device_token: fcmToken || '',
+          device: 'android',
         }
       );
 

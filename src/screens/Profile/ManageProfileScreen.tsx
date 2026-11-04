@@ -29,8 +29,8 @@ import DateTimePicker, {
 
 const ManageProfileScreen = () => {
     const navigation = useNavigation();
-    const [name, setName] = useState('Kareena');
-    const [username, setUsername] = useState('@kareena');
+    const [name, setName] = useState('');
+    const [username, setUsername] = useState('');
     const [bio, setBio] = useState(
         'Music is my escape\nKaraoke is where I shine',
     );

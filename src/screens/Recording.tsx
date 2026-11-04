@@ -3534,7 +3534,6 @@ const Recording = () => {
       setIsPaused(false);
       isPausedRef.current = false;
       pauseStartTimeRef.current = 0;
-
       isPlayingRef.current = false;
       hasStartedRef.current = false;
       isStartingRef.current = false;

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     FlatList,
+    RefreshControl,
     StyleSheet,
     Switch,
     TouchableOpacity,
@@ -10,19 +11,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import AppText from '../../share/components/AppText';
 import AppImage from '../../share/components/AppImage';
-
+import ApiService from '../../services/api';
 import color from '../../share/constants/color';
 import { Inter } from '../../share/constants/fonts';
 import { Images, Logo } from '../../share/constants/media';
 import { useNavigation } from '@react-navigation/native';
+import apiUrls from '../../services/apiUrls';
 
 type NotificationItem = {
     id: string;
-    type: 'achievement' | 'performance' | 'like' | 'system' | 'follow';
+    type: 'achievement' | 'performance' | 'like' | 'system' | 'follow' | 'song';
     title: string;
     message: string;
     time: string;
     unread: boolean;
+    imageUrl?: string | null;
+    songId?: number | null;
+    songTitle?: string | null;
+    artistName?: string | null;
 };
 
 const notifications: NotificationItem[] = [
@@ -105,9 +111,17 @@ const NotificationScreen = () => {
     const [newSongNotifications, setNewSongNotifications] =
         useState(false);
 
-    const [items, setItems] = useState(notifications);
+    const [items, setItems] = useState<NotificationItem[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const loadMoreNotifications = () => {
+        if (!loading && currentPage < totalPages) {
+            fetchNotifications(currentPage + 1);
+        }
+    };
 
-    const unreadCount = items.filter(item => item.unread).length;
 
     const getIcon = (type: NotificationItem['type']) => {
         switch (type) {
@@ -123,14 +137,15 @@ const NotificationScreen = () => {
             case 'follow':
                 return '♙';
 
+            case 'song':
+                return '♫';
+
             default:
                 return 'i';
         }
     };
 
-    const getIconColor = (
-        type: NotificationItem['type'],
-    ) => {
+    const getIconColor = (type: NotificationItem['type']) => {
         switch (type) {
             case 'achievement':
                 return '#F6A202';
@@ -144,32 +159,183 @@ const NotificationScreen = () => {
             case 'follow':
                 return '#F3870C';
 
+            case 'song':
+                return '#F6A202';
+
             default:
                 return '#6FA8FF';
         }
     };
 
-    const markAllAsRead = () => {
-        setItems(current =>
-            current.map(item => ({
-                ...item,
-                unread: false,
-            })),
-        );
+    const markAsRead = async (id: string) => {
+        const notification = items.find(item => item.id === id);
+
+        if (!notification || !notification.unread) return;
+
+        try {
+            const response = await ApiService.put(
+                apiUrls.marknotification(id),
+                {}
+            );
+
+            const result = (response as any)?.data;
+
+            if (result?.success) {
+                setItems(prev =>
+                    prev.map(item =>
+                        item.id === id ? { ...item, unread: false } : item
+                    )
+                );
+
+                setUnreadCount(prev => Math.max(0, prev - 1));
+            }
+        } catch (error) {
+            console.log('Mark notification as read error:', error);
+        }
     };
 
-    const markAsRead = (id: string) => {
-        setItems(current =>
-            current.map(item =>
-                item.id === id
-                    ? {
-                        ...item,
-                        unread: false,
-                    }
-                    : item,
-            ),
-        );
+    const markAllAsRead = async () => {
+        const unreadNotifications = items.filter(item => item.unread);
+
+        if (unreadNotifications.length === 0) return;
+
+        try {
+            await Promise.all(
+                unreadNotifications.map(item =>
+                    ApiService.put(
+                        apiUrls.marknotification(item.id),
+                        {}
+                    )
+                )
+            );
+
+            setItems(previous =>
+                previous.map(item => ({
+                    ...item,
+                    unread: false,
+                }))
+            );
+
+            setUnreadCount(0);
+        } catch (error) {
+            console.log('Mark all notifications as read error:', error);
+        }
     };
+
+
+
+
+
+
+    const fetchNotifications = useCallback(async (page = 1) => {
+        try {
+            setLoading(true);
+
+            const response = await ApiService.get(
+                `${apiUrls.getnotifications}?page=${page}&limit=20`
+            );
+
+            const result = (response as any)?.data;
+
+            console.log('NOTIFICATION RESPONSE:', result);
+
+            if (result?.success) {
+                const formattedNotifications: NotificationItem[] =
+                    (result.notifications || []).map((item: any) => ({
+                        id: String(item.id),
+                        type: getNotificationType(item.type),
+                        title: item.title || 'Notification',
+                        message: item.body || '',
+                        time: item.when || '',
+                        unread: Boolean(item.unread ?? !item.isRead),
+                        imageUrl: item.imageUrl || null,
+                        songId: item.songId ?? null,
+                        songTitle: item.songTitle ?? null,
+                        artistName: item.artistName ?? null,
+                    }));
+
+                setItems(previous =>
+                    page === 1
+                        ? formattedNotifications
+                        : [...previous, ...formattedNotifications]
+                );
+
+                setUnreadCount(result.unreadCount ?? 0);
+                setCurrentPage(result.pagination?.page ?? page);
+                setTotalPages(result.pagination?.totalPages ?? 1);
+            }
+        } catch (error) {
+            console.log('FETCH NOTIFICATIONS ERROR:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const getNotificationType = (
+        type: string,
+    ): NotificationItem['type'] => {
+        switch (String(type || '').toLowerCase()) {
+            case 'achievement':
+                return 'achievement';
+
+            case 'like':
+                return 'like';
+
+            case 'follow':
+                return 'follow';
+
+            case 'performance':
+            case 'view':
+                return 'performance';
+
+            case 'song_published':
+                return 'song';
+
+            default:
+                return 'system';
+        }
+    };
+
+    useEffect(() => {
+        fetchNotifications(1);
+    }, [fetchNotifications]);
+
+
+
+    const formatNotificationTime = (date: any): string => {
+        if (!date) return '';
+
+        const notificationDate = new Date(date);
+
+        if (Number.isNaN(notificationDate.getTime())) {
+            return String(date);
+        }
+
+        const diff = Math.max(
+            0,
+            Date.now() - notificationDate.getTime(),
+        );
+
+        const minutes = Math.floor(diff / 60000);
+
+        if (minutes < 1) return 'Just now';
+        if (minutes < 60) return `${minutes} min ago`;
+
+        const hours = Math.floor(minutes / 60);
+
+        if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+
+        const days = Math.floor(hours / 24);
+
+        if (days === 1) return 'Yesterday';
+        if (days < 7) return `${days} days ago`;
+
+        return notificationDate.toLocaleDateString();
+    };
+
+    useEffect(() => {
+        fetchNotifications();
+    }, [fetchNotifications]);
 
     const renderNotification = ({
         item,
@@ -320,7 +486,7 @@ const NotificationScreen = () => {
                                                             styles.countText
                                                         }
                                                     >
-                                                        {unreadCount}
+                                                        {unreadCount - 1}
                                                     </AppText>
                                                 </View>
                                             )}
@@ -334,7 +500,7 @@ const NotificationScreen = () => {
                                 </View>
                             </View>
 
-                            <TouchableOpacity
+                            {/* <TouchableOpacity
                                 style={styles.micContainer}
                             >
                                 <AppImage
@@ -343,7 +509,7 @@ const NotificationScreen = () => {
                                     width={18}
                                     resizeMode="contain"
                                 />
-                            </TouchableOpacity>
+                            </TouchableOpacity> */}
                         </View>
 
                         {/* Top actions */}
@@ -378,216 +544,234 @@ const NotificationScreen = () => {
                         </View>
                     </>
                 }
-                ListFooterComponent={
-                    <>
-                        {/* Notification Settings */}
-                        <View style={styles.sectionHeader}>
-                            <AppText style={styles.sectionTitle}>
-                                Notification Settings
-                            </AppText>
-                        </View>
+                // ListFooterComponent={
+                //     <>
+                //         {/* Notification Settings */}
+                //         <View style={styles.sectionHeader}>
+                //             <AppText style={styles.sectionTitle}>
+                //                 Notification Settings
+                //             </AppText>
+                //         </View>
 
-                        <View style={styles.settingsCard}>
-                            {/* Main notifications */}
-                            <View style={styles.settingRow}>
-                                <View
-                                    style={[
-                                        styles.settingIcon,
-                                        {
-                                            borderColor:
-                                                '#F6A202',
-                                        },
-                                    ]}
-                                >
-                                    <AppText
-                                        style={[
-                                            styles.settingIconText,
-                                            {
-                                                color: '#F6A202',
-                                            },
-                                        ]}
-                                    >
-                                        ♧
-                                    </AppText>
-                                </View>
+                //         <View style={styles.settingsCard}>
+                //             {/* Main notifications */}
+                //             <View style={styles.settingRow}>
+                //                 <View
+                //                     style={[
+                //                         styles.settingIcon,
+                //                         {
+                //                             borderColor:
+                //                                 '#F6A202',
+                //                         },
+                //                     ]}
+                //                 >
+                //                     <AppText
+                //                         style={[
+                //                             styles.settingIconText,
+                //                             {
+                //                                 color: '#F6A202',
+                //                             },
+                //                         ]}
+                //                     >
+                //                         ♧
+                //                     </AppText>
+                //                 </View>
 
-                                <View style={styles.settingContent}>
-                                    <AppText
-                                        style={styles.settingTitle}
-                                    >
-                                        Push Notifications
-                                    </AppText>
+                //                 <View style={styles.settingContent}>
+                //                     <AppText
+                //                         style={styles.settingTitle}
+                //                     >
+                //                         Push Notifications
+                //                     </AppText>
 
-                                    <AppText
-                                        style={
-                                            styles.settingSubtitle
-                                        }
-                                    >
-                                        Receive notifications from
-                                        the app
-                                    </AppText>
-                                </View>
+                //                     <AppText
+                //                         style={
+                //                             styles.settingSubtitle
+                //                         }
+                //                     >
+                //                         Receive notifications from
+                //                         the app
+                //                     </AppText>
+                //                 </View>
 
-                                {renderSwitch(
-                                    notificationsEnabled,
-                                    setNotificationsEnabled,
-                                )}
-                            </View>
+                //                 {renderSwitch(
+                //                     notificationsEnabled,
+                //                     setNotificationsEnabled,
+                //                 )}
+                //             </View>
 
-                            <View style={styles.divider} />
+                //             <View style={styles.divider} />
 
-                            {/* Performance */}
-                            <View style={styles.settingRow}>
-                                <View
-                                    style={[
-                                        styles.settingIcon,
-                                        {
-                                            borderColor:
-                                                '#C34CFF',
-                                        },
-                                    ]}
-                                >
-                                    <AppText
-                                        style={[
-                                            styles.settingIconText,
-                                            {
-                                                color: '#C34CFF',
-                                            },
-                                        ]}
-                                    >
-                                        ♫
-                                    </AppText>
-                                </View>
+                //             {/* Performance */}
+                //             <View style={styles.settingRow}>
+                //                 <View
+                //                     style={[
+                //                         styles.settingIcon,
+                //                         {
+                //                             borderColor:
+                //                                 '#C34CFF',
+                //                         },
+                //                     ]}
+                //                 >
+                //                     <AppText
+                //                         style={[
+                //                             styles.settingIconText,
+                //                             {
+                //                                 color: '#C34CFF',
+                //                             },
+                //                         ]}
+                //                     >
+                //                         ♫
+                //                     </AppText>
+                //                 </View>
 
-                                <View style={styles.settingContent}>
-                                    <AppText
-                                        style={styles.settingTitle}
-                                    >
-                                        Performance Updates
-                                    </AppText>
+                //                 <View style={styles.settingContent}>
+                //                     <AppText
+                //                         style={styles.settingTitle}
+                //                     >
+                //                         Performance Updates
+                //                     </AppText>
 
-                                    <AppText
-                                        style={
-                                            styles.settingSubtitle
-                                        }
-                                    >
-                                        Likes, views and performance
-                                        activity
-                                    </AppText>
-                                </View>
+                //                     <AppText
+                //                         style={
+                //                             styles.settingSubtitle
+                //                         }
+                //                     >
+                //                         Likes, views and performance
+                //                         activity
+                //                     </AppText>
+                //                 </View>
 
-                                {renderSwitch(
-                                    performanceNotifications,
-                                    setPerformanceNotifications,
-                                )}
-                            </View>
+                //                 {renderSwitch(
+                //                     performanceNotifications,
+                //                     setPerformanceNotifications,
+                //                 )}
+                //             </View>
 
-                            <View style={styles.divider} />
+                //             <View style={styles.divider} />
 
-                            {/* Achievements */}
-                            <View style={styles.settingRow}>
-                                <View
-                                    style={[
-                                        styles.settingIcon,
-                                        {
-                                            borderColor:
-                                                '#F6A202',
-                                        },
-                                    ]}
-                                >
-                                    <AppText
-                                        style={[
-                                            styles.settingIconText,
-                                            {
-                                                color: '#F6A202',
-                                            },
-                                        ]}
-                                    >
-                                        ★
-                                    </AppText>
-                                </View>
+                //             {/* Achievements */}
+                //             <View style={styles.settingRow}>
+                //                 <View
+                //                     style={[
+                //                         styles.settingIcon,
+                //                         {
+                //                             borderColor:
+                //                                 '#F6A202',
+                //                         },
+                //                     ]}
+                //                 >
+                //                     <AppText
+                //                         style={[
+                //                             styles.settingIconText,
+                //                             {
+                //                                 color: '#F6A202',
+                //                             },
+                //                         ]}
+                //                     >
+                //                         ★
+                //                     </AppText>
+                //                 </View>
 
-                                <View style={styles.settingContent}>
-                                    <AppText
-                                        style={styles.settingTitle}
-                                    >
-                                        Achievements
-                                    </AppText>
+                //                 <View style={styles.settingContent}>
+                //                     <AppText
+                //                         style={styles.settingTitle}
+                //                     >
+                //                         Achievements
+                //                     </AppText>
 
-                                    <AppText
-                                        style={
-                                            styles.settingSubtitle
-                                        }
-                                    >
-                                        Badges, streaks and rewards
-                                    </AppText>
-                                </View>
+                //                     <AppText
+                //                         style={
+                //                             styles.settingSubtitle
+                //                         }
+                //                     >
+                //                         Badges, streaks and rewards
+                //                     </AppText>
+                //                 </View>
 
-                                {renderSwitch(
-                                    achievementNotifications,
-                                    setAchievementNotifications,
-                                )}
-                            </View>
+                //                 {renderSwitch(
+                //                     achievementNotifications,
+                //                     setAchievementNotifications,
+                //                 )}
+                //             </View>
 
-                            <View style={styles.divider} />
+                //             <View style={styles.divider} />
 
-                            {/* New songs */}
-                            <View style={styles.settingRow}>
-                                <View
-                                    style={[
-                                        styles.settingIcon,
-                                        {
-                                            borderColor:
-                                                '#FF2857',
-                                        },
-                                    ]}
-                                >
-                                    <AppText
-                                        style={[
-                                            styles.settingIconText,
-                                            {
-                                                color: '#FF2857',
-                                            },
-                                        ]}
-                                    >
-                                        ♬
-                                    </AppText>
-                                </View>
+                //             {/* New songs */}
+                //             <View style={styles.settingRow}>
+                //                 <View
+                //                     style={[
+                //                         styles.settingIcon,
+                //                         {
+                //                             borderColor:
+                //                                 '#FF2857',
+                //                         },
+                //                     ]}
+                //                 >
+                //                     <AppText
+                //                         style={[
+                //                             styles.settingIconText,
+                //                             {
+                //                                 color: '#FF2857',
+                //                             },
+                //                         ]}
+                //                     >
+                //                         ♬
+                //                     </AppText>
+                //                 </View>
 
-                                <View style={styles.settingContent}>
-                                    <AppText
-                                        style={styles.settingTitle}
-                                    >
-                                        New Songs
-                                    </AppText>
+                //                 <View style={styles.settingContent}>
+                //                     <AppText
+                //                         style={styles.settingTitle}
+                //                     >
+                //                         New Songs
+                //                     </AppText>
 
-                                    <AppText
-                                        style={
-                                            styles.settingSubtitle
-                                        }
-                                    >
-                                        Get notified about new songs
-                                    </AppText>
-                                </View>
+                //                     <AppText
+                //                         style={
+                //                             styles.settingSubtitle
+                //                         }
+                //                     >
+                //                         Get notified about new songs
+                //                     </AppText>
+                //                 </View>
 
-                                {renderSwitch(
-                                    newSongNotifications,
-                                    setNewSongNotifications,
-                                )}
-                            </View>
-                        </View>
+                //                 {renderSwitch(
+                //                     newSongNotifications,
+                //                     setNewSongNotifications,
+                //                 )}
+                //             </View>
+                //         </View>
 
-                        {/* Empty footer */}
-                        <View style={styles.footer}>
-                            <AppText style={styles.footerText}>
-                                You're all caught up!
-                            </AppText>
+                //         {/* Empty footer */}
+                //         <View style={styles.footer}>
+                //             <AppText style={styles.footerText}>
+                //                 You're all caught up!
+                //             </AppText>
 
-                            <AppText style={styles.footerSubtext}>
-                                Check back later for new updates
-                            </AppText>
-                        </View>
-                    </>
+                //             <AppText style={styles.footerSubtext}>
+                //                 Check back later for new updates
+                //             </AppText>
+                //         </View>
+                //     </>
+                // }
+                ListEmptyComponent={
+                    <View style={{ alignItems: 'center', marginTop: 40 }}>
+                        <AppText style={{ color: '#888', fontSize: 12 }}>
+                            {loading
+                                ? 'Loading notifications...'
+                                : 'No notifications found'}
+                        </AppText>
+                    </View>
+                }
+                onEndReached={loadMoreNotifications}
+                onEndReachedThreshold={0.5}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={loading && currentPage === 1}
+                        onRefresh={() => fetchNotifications(1)}
+                        tintColor="#F6A202"
+                    />
                 }
             />
         </SafeAreaView>

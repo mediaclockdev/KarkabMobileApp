@@ -9,6 +9,7 @@ import { storage } from '../share/storage/mmkv';
 import { setupAudioPlayer } from '../services/player';
 import { initNotificationHandlers } from '../services/notificationService';
 import { ensureFcmToken } from '../services/fcmToken';
+import { NotificationCountProvider } from '../services/NotificationCountContext';
 
 LogBox.ignoreAllLogs(true);
 
@@ -63,7 +64,10 @@ const App = () => {
             />
 
             <Providers>
-                <RootNavigator />
+                <NotificationCountProvider>
+                    <RootNavigator />
+                </NotificationCountProvider>
+
             </Providers>
         </SafeAreaProvider>
     );

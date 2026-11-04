@@ -1,4 +1,4 @@
-import { ActivityIndicator, Alert, TouchableOpacity, View } from "react-native"
+import { ActivityIndicator, Alert, Platform, TouchableOpacity, View } from "react-native"
 import AppImage from "./AppImage"
 import { Logo } from "../constants/media"
 import AppText from "./AppText"
@@ -20,7 +20,7 @@ export default function AppleButton() {
   const color = useAppColors()
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
-const { t } = useTranslation();
+  const { t } = useTranslation();
   const handleAppleLoginfun = async (identityToken: string) => {
     console.log("Apple Login API called with ID Token:", identityToken);
     try {
@@ -31,6 +31,7 @@ const { t } = useTranslation();
         {
           identityToken: identityToken,
           device_token: fcmToken || '',
+          device: 'ios',
         }
       );
 

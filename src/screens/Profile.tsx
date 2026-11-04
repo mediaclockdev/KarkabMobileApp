@@ -933,7 +933,7 @@ const Profile = () => {
                                                         //     ? stopRecording()
                                                         //     : playRecording(item)
 
-                                                        (navigation as any).navigate('.', { id: item.id, type: 'recordings' });
+                                                        (navigation as any).navigate('.', { id: item.id, type: 'recordings', previousScreen: 'Profile' });
                                                     }}
                                                     style={{
                                                         borderWidth: 2,

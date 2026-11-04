@@ -15,6 +15,7 @@ import ApiService from '../../services/api';
 import apiUrls from '../../services/apiUrls';
 import i18n from '../../localization/i18n';
 import { ensureFcmToken } from '../../services/fcmToken';
+import { Platform } from 'react-native';
 const EMPTY_ERRORS: LoginErrors = { email: null, password: null };
 
 /**
@@ -76,6 +77,7 @@ export const useLogin = () => {
                     email: email.trim(),
                     password: password,
                     device_token: fcmToken || '',
+                    device: Platform.OS === 'ios' ? 'ios' : 'android',
                     language: language,
                 }
             );

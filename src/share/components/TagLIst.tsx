@@ -37,6 +37,7 @@ export default function TagLIst({
         (navigation as any).navigate('.', {
             previousScreen: 'Search',
             id: item.id,
+
         });
     };
 

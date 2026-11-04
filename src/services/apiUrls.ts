@@ -65,7 +65,11 @@ const apiUrls = {
   requestPublicRecording: (id: string | number) => `/api/recordings/${id}/request-public?language=${getLanguage()}`,
   playlistreorder: (id: string | number) => `/api/playlists/${id}/reorder?language=${getLanguage()}`,
   settingcontent: `/api/admin/content?language=${getLanguage()}`,
-  contactus: `/api/contact-us?language=${getLanguage()}`
+  contactus: `/api/contact-us?language=${getLanguage()}`,
+  getnotifications: `/api/notifications?language=${getLanguage()}`,
+  marknotification: (id: string | number) => `/api/notifications/${id}/read?language=${getLanguage()}`,
+  notificationcount: `/api/notifications/count?language=${getLanguage()}`,
+
 };
 
 export default apiUrls;

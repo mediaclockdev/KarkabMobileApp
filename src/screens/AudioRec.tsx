@@ -233,7 +233,13 @@ const AudioRec = () => {
       return;
     }
 
-    if (type === 'recordings') {
+    const isRecording =
+      type === 'recordings' ||
+      playsong?.recording_url ||
+      playsong?.recordingUrl ||
+      playsong?.type === 'recordings';
+
+    if (isRecording) {
       getrecDetail(activeSongId);
     } else {
       getSongDetail(activeSongId);
@@ -724,14 +730,11 @@ const AudioRec = () => {
         getSongadjacent(song.id);
       }
     } catch (error: any) {
-      getrendomsong()
-      // dispatch(
-      //   showToast({
-      //     visible: true,
-      //     message: error?.message || 'Failed to load track.',
-      //     type: 'error',
-      //   })
-      // );
+      try {
+        await getrecDetail(songid);
+      } catch (recErr) {
+        getrendomsong();
+      }
     } finally {
 
       setScreenLoading(false);
@@ -758,6 +761,10 @@ const AudioRec = () => {
 
         if (activeMediaId !== song.id?.toString()) {
           await playSongItem(song);
+        } else {
+          try {
+            await TrackPlayer.play();
+          } catch (e) { }
         }
         setAdjectprevdata(null);
         setAdjectnextvdata(null);
@@ -1004,6 +1011,13 @@ const AudioRec = () => {
 
   const currentLyricLine =
     activeLyricLine?.text || songdetail?.title || 'Sing along...';
+  const handleBack = () => {
+    if (previousScreen) {
+      navigation.navigate(previousScreen);
+    } else {
+      navigation.goBack();
+    }
+  };
 
   return (
     <View style={styles.screen}>
@@ -1017,13 +1031,7 @@ const AudioRec = () => {
         {/* Top Header */}
         <View style={styles.topHeader}>
           <TouchableOpacity
-            onPress={() => {
-              if (previousScreen === 'Search') {
-                navigation.navigate('Search');
-              } else {
-                navigation.goBack();
-              }
-            }}
+            onPress={handleBack}
             style={styles.grabBarTouch}
           >
             <AppImage

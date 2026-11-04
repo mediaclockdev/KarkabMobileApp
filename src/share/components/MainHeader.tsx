@@ -17,6 +17,7 @@ import { Inter } from '../constants/fonts';
 import { GlobalImage } from '../utils/GlobalImage';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { useNotificationCount } from '../../services/NotificationCountContext';
 interface MainHeaderProps {
   user?: any
   userName?: string
@@ -44,6 +45,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({
       .toUpperCase() || '';
   };
 
+  const { unreadCount } = useNotificationCount();
   return (
 
     <View style={[styles.header, { backgroundColor: color.darkbackround, }]}>
@@ -151,9 +153,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({
             }}
           >
             <TouchableOpacity
-              onPress={() => {
-                navigation.navigate('NotificationScreen')
-              }}
+              onPress={() => navigation.navigate('NotificationScreen')}
               activeOpacity={0.8}
               style={{
                 width: 34,
@@ -162,16 +162,47 @@ const MainHeader: React.FC<MainHeaderProps> = ({
                 justifyContent: 'center',
                 alignItems: 'center',
                 backgroundColor: color.darkbackround,
-                margin: 1
+                margin: 1,
               }}
             >
-              <Image
-                source={Images.bell}
-                style={styles.actionIcon}
-              />
+              <View>
+                <Image
+                  source={Images.bell}
+                  style={styles.actionIcon}
+                />
+
+                {unreadCount > 0 && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: -14,
+                      right: -15,
+                      minWidth: 16,
+                      height: 16,
+                      borderRadius: 10,
+                      backgroundColor: '#FC6101',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      paddingHorizontal: 3,
+                      borderWidth: 1,
+                      borderColor: color.darkbackround,
+                    }}
+                  >
+                    <AppText
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      style={{
+                        color: '#FFFFFF',
+                        fontSize: 9,
+                        fontWeight: '700',
+                      }}
+                    >
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </AppText>
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
-
-
           </LinearGradient>
 
         </View>
@@ -193,7 +224,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'red'
+
 
   },
   profilecontainer: {

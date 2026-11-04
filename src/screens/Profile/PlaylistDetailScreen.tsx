@@ -451,7 +451,8 @@ const PlaylistDetailScreen = () => {
                     styles.songCard,
                     isThisSongActive && { borderColor: '#EFCB61', borderWidth: 1 }
                 ]}
-                onPress={() => handleToggleSong(item, index)}
+                // onPress={() => handleToggleSong(item, index)}
+                onPress={() => (navigation as any).navigate('.', { id: item.id, previousScreen: 'PlaylistDetailScreen' })}
             >
                 <AppImage
                     source={item.image}

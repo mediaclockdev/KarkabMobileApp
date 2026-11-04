@@ -16,6 +16,7 @@ import AppImage from './AppImage'
 import LinearGradient from 'react-native-linear-gradient'
 import { navigate } from '../../navigation/NavigationService'
 import { useTranslation } from 'react-i18next'
+import { useNotificationCount } from '../../services/NotificationCountContext'
 
 interface HeaderProps {
   headername?: string
@@ -35,6 +36,7 @@ const Header: React.FC<HeaderProps> = ({
   backpress,
 }) => {
   const color = useAppColors();
+  const { unreadCount } = useNotificationCount();
   return (
     <View style={{ paddingHorizontal: 5, paddingVertical: 14, }}>
 
@@ -265,7 +267,7 @@ const Header: React.FC<HeaderProps> = ({
                         fontWeight: '700',
                       }}
                     >
-                      3
+                      {unreadCount > 99 ? '99+' : unreadCount}
                     </Text>
                   </View>
                 </View> :
@@ -276,7 +278,6 @@ const Header: React.FC<HeaderProps> = ({
                   end={{ x: 1, y: 1 }}
                   style={{
                     borderRadius: 25,
-                    // padding: 1,
                   }}
                 >
                   <TouchableOpacity
@@ -289,7 +290,7 @@ const Header: React.FC<HeaderProps> = ({
                       justifyContent: 'center',
                       alignItems: 'center',
                       backgroundColor: color.darkbackround,
-                      margin: 1
+                      margin: 1,
                     }}
                   >
                     <Image
@@ -300,9 +301,36 @@ const Header: React.FC<HeaderProps> = ({
                         resizeMode: 'contain',
                       }}
                     />
+
+                    {unreadCount > 0 && (
+                      <View
+                        style={{
+                          position: 'absolute',
+                          top: -5,
+                          right: -5,
+                          minWidth: 17,
+                          height: 17,
+                          borderRadius: 10,
+                          backgroundColor: '#FC6101',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          paddingHorizontal: 3,
+                          borderWidth: 1,
+                          borderColor: color.darkbackround,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: '#FFFFFF',
+                            fontSize: 9,
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
-
-
                 </LinearGradient>
           }
           {/* <TouchableOpacity

@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
 
     container: {
 
-        height: 47,
+        height: 67,
         //  marginHorizontal: 10,
         marginBottom: 14,
 
@@ -150,8 +150,8 @@ const styles = StyleSheet.create({
 
     image: {
 
-        width: 36,
-        height: 36,
+        width: 46,
+        height: 46,
         borderRadius: 31,
         borderWidth: 2,
         borderColor: '#6D2C02'
@@ -169,8 +169,8 @@ const styles = StyleSheet.create({
 
     name: {
 
-        fontSize: 10,
-        fontWeight: '700',
+        fontSize: 14,
+
         color: '#FFFFFF',
         fontFamily: Inter.medium
 
@@ -189,7 +189,8 @@ const styles = StyleSheet.create({
     followers: {
 
         marginTop: 3,
-        fontSize: 8,
+        fontSize: 12,
+        fontFamily: Inter.light,
         color: '#6B7280',
 
     },

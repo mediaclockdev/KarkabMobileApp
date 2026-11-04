@@ -78,7 +78,11 @@ const PeopleWhoSang = ({
     const renderArtist = ({ item }: { item: Artist }) => {
 
         return (
-            <View style={styles.artistCard}>
+            <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => onPlay?.(item)}
+                style={styles.artistCard}
+            >
                 {/* Artist Image */}
 
 
@@ -129,7 +133,7 @@ const PeopleWhoSang = ({
                         ▶
                     </AppText>
                 </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
         );
     };
     const { width } = useWindowDimensions();

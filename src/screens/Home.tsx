@@ -32,7 +32,7 @@ import PeopleWhoSang from '../share/components/PeopleWhoSang';
 import PopularSongs from '../share/components/PopularSongs';
 import ArtistRow from '../share/components/ArtistRow';
 import LinearGradient from 'react-native-linear-gradient';
-import { addsong } from '../auth/redux/authSlice';
+import { addsong, loaderstate, setLoginState } from '../auth/redux/authSlice';
 import { getLastPlayed } from '../services/lastPlayed';
 import { GlobalImage } from '../share/utils/GlobalImage';
 import { useTranslation } from 'react-i18next';
@@ -142,7 +142,13 @@ const Home = () => {
 
       if (data?.success) {
         console.log(data.data, 'dashbaordfun API RESPONSEdddd');
-        setArtistdatad(data.data.user_artists)
+        if (data.data.user_artists.length === 0) {
+          dispatch(setLoginState('first'));
+        }
+        else {
+          setArtistdatad(data.data.user_artists)
+        }
+
       }
     } catch (error) {
       console.log('trandingdata ERROR:', error);
@@ -357,7 +363,7 @@ const Home = () => {
 
   // Spotify Navigation helper
   const openPlayer = (songId: number) => {
-    navigation.navigate('.', { id: songId });
+    navigation.navigate('.', { id: songId, previousScreen: 'Home' });
   };
 
   if (loginState === 'first') {
@@ -397,7 +403,7 @@ const Home = () => {
               progressBackgroundColor={color.darkgray}
             />
           }
-          contentContainerStyle={{ paddingVertical: 20 }}
+          contentContainerStyle={{ paddingBottom: 20, paddingTop: 0 }}
           style={styles.innercontainer}
         >
           <HomeBanner data={bannerdata} />
@@ -675,6 +681,7 @@ const Home = () => {
                   width={(width - 45) / 3}
                   onpress={() => (navigation as any).navigate('.', {
                     id: item.id,
+                    previousScreen: 'Home',
                   })}
 
                 />
@@ -856,7 +863,7 @@ const Home = () => {
             profileimage={profiledetail}
             onPlay={(artist) => {
               console.log('Playing:', artist.name);
-              navigation.navigate('.', { id: artist.id, type: 'recordings' });
+              navigation.navigate('.', { id: artist.id, type: 'recordings', previousScreen: 'Home' });
             }}
             onSeeAll={() => { }}
           />
@@ -909,7 +916,7 @@ const Home = () => {
             profileimage={profiledetail}
             onPlay={(artist) => {
               console.log('Playing:', artist.name);
-              navigation.navigate('.', { id: artist.id, type: 'recordings' });
+              navigation.navigate('.', { id: artist.id, type: 'recordings', previousScreen: 'Home' });
             }}
             onSeeAll={() => { }}
           />
