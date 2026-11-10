@@ -13,6 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import RenderHTML from 'react-native-render-html';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import AppImage from '../../share/components/AppImage';
+import { Images, Logo } from '../../share/constants/media';
 
 const GOLD = '#D49A5C';
 const BG = '#080808';
@@ -85,11 +87,16 @@ const AboutKarKabScreen = () => {
             >
                 <View style={styles.brandCard}>
                     <View style={styles.logoBox}>
-                        <Text style={styles.logoLetter}>K</Text>
+                        {/* <Text style={styles.logoLetter}>K</Text> */}
+                        <AppImage
+                            source={Logo.mainlogo}
+                            height={68}
+                            width={68}
+                        />
                     </View>
 
                     <Text style={styles.brandName}>KarKab</Text>
-                    <Text style={styles.brandArabic}>كركب</Text>
+                    <Text style={styles.brandArabic}>كاركاب</Text>
 
                     <Text style={styles.brandDescription}>
                         {isArabic
@@ -266,7 +273,7 @@ const styles = StyleSheet.create({
         width: 82,
         height: 82,
         borderRadius: 26,
-        backgroundColor: GOLD,
+        backgroundColor: '#0000',
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 15,

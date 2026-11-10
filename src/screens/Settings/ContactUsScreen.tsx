@@ -20,6 +20,7 @@ import { Inter } from '../../share/constants/fonts';
 import { Logo } from '../../share/constants/media';
 import ApiService from '../../services/api';
 import apiUrls from '../../services/apiUrls';
+import LinearGradient from 'react-native-linear-gradient';
 
 const ContactUsScreen = () => {
     const navigation = useNavigation();
@@ -200,16 +201,25 @@ const ContactUsScreen = () => {
                             onPress={handleSubmit}
                             disabled={loading}
                         >
-                            {loading ? (
-                                <ActivityIndicator color="#FFFFFF" />
-                            ) : (
-                                <>
-                                    <AppText style={styles.submitButtonText}>
-                                        Submit Request
-                                    </AppText>
-                                    <AppText style={styles.submitIcon}>➤</AppText>
-                                </>
-                            )}
+                            <LinearGradient
+                                colors={['#FA6144', '#D83B7E', '#7E3FF2']}
+                                start={{ x: 0.2, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={{ height: '100%', width: '100%', borderRadius: 22, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', }}
+                            >
+
+
+                                {loading ? (
+                                    <ActivityIndicator color="#FFFFFF" />
+                                ) : (
+                                    <>
+                                        <AppText style={styles.submitButtonText}>
+                                            Submit Request
+                                        </AppText>
+                                        <AppText style={styles.submitIcon}>➤</AppText>
+                                    </>
+                                )}
+                            </LinearGradient>
                         </TouchableOpacity>
                     </View>
 
@@ -275,7 +285,7 @@ const styles = StyleSheet.create({
     },
 
     headerSubtitle: {
-        color: '#F6A202',
+        color: '#FA6144',
         fontSize: 12,
         fontFamily: Inter.regular,
         marginTop: 4,
@@ -384,11 +394,11 @@ const styles = StyleSheet.create({
     submitButton: {
         minHeight: 52,
         backgroundColor: '#F6A202',
-        borderRadius: 13,
+        borderRadius: 22,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 16,
+        // paddingHorizontal: 16,
         marginTop: 4,
     },
 
@@ -397,14 +407,14 @@ const styles = StyleSheet.create({
     },
 
     submitButtonText: {
-        color: '#090909',
+        color: '#FFFF',
         fontSize: 14,
         fontWeight: '700',
         fontFamily: Inter.medium,
     },
 
     submitIcon: {
-        color: '#090909',
+        color: '#FFFF',
         fontSize: 17,
         marginLeft: 10,
     },
@@ -421,7 +431,7 @@ const styles = StyleSheet.create({
     },
 
     footerIcon: {
-        color: '#F6A202',
+        color: '#FA6144',
         fontSize: 26,
         marginRight: 14,
     },

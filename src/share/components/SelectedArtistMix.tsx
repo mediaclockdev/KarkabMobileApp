@@ -144,8 +144,8 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    width: 100,
-    height: 100,
+    width: 105,
+    height: 105,
     borderWidth: 1,
     borderRadius: 10,
     overflow: 'hidden',
@@ -160,7 +160,11 @@ const styles = StyleSheet.create({
 
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.18)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    //backgroundColor: 'red',
+    height: '100%',
+    width: '100%',
+    position: 'absolute',
   },
 
   bottomContent: {

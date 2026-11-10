@@ -21,15 +21,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Inter } from "../share/constants/fonts";
 import apiUrls from "../services/apiUrls";
 import ApiService from '../services/api';
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { useAppSelector } from "../share/hooks/useAppSelector";
 import Sound from 'react-native-nitro-sound';
 import { GlobalImage } from "../share/utils/GlobalImage";
 import { useTranslation } from "react-i18next";
 import Toast from "react-native-toast-message";
-
-const LIMIT = 15; // Set to 10 or 15 songs per page
+import SearchBar from '../share/components/SearchBar';
+const LIMIT = 15;
 
 const Library = () => {
   const color = useAppColors();
@@ -53,8 +53,7 @@ const Library = () => {
   const [searchText, setSearchText] = useState('');
   const [visible, setVisible] = useState(true);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [selectedTab, setSelectedTab] = useState('Songs');
-
+  const [selectedTab, setSelectedTab] = useState<'Songs' | 'Favorites' | 'Playlists'>('Songs');
   // Recordings & Audio States
   const [recdata, setRecdata] = useState<any[]>([]);
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -63,6 +62,7 @@ const Library = () => {
   const playsong = useAppSelector((state: any) => state.auth.playsong);
   const recordingRefresh = useAppSelector((state: any) => state.auth.recordingRefresh);
   const songRequestsRef = useRef(new Set<string>());
+
   const ferture = [
     {
       image: Images.music,
@@ -150,34 +150,29 @@ const Library = () => {
       const response = await ApiService.get(apiUrls.getsonglist, {
         params: {
           page: pageNumber,
-          limit: pageNumber * 10,
+          limit: LIMIT,
         },
       });
 
       const data = (response as any).data;
-      console.log(data, "hhhh")
       if (data?.success) {
         const incomingSongs = data?.songs || [];
 
         if (pageNumber === 1) {
           setSongdata(incomingSongs);
         } else {
-          setSongdata(prev => [...prev, ...incomingSongs]);
+          setSongdata(prev => {
+            const existingIds = new Set(prev.map(s => String(s.id)));
+            const newSongs = incomingSongs.filter((s: any) => !existingIds.has(String(s.id)));
+            return [...prev, ...newSongs];
+          });
         }
-        console.log(data?.favorite_songs_count, "dejdjebdeb")
 
         setNumberofsong(data?.total_songs || 0);
         setFavoritescount(data?.favorite_songs_count || 0);
         setRecordingcount(data?.overall_recordings_count || 0);
 
-        // Check if more songs are available
-        if (data?.total_songs !== undefined) {
-          const totalLoaded = (pageNumber === 1 ? incomingSongs.length : songdata.length + incomingSongs.length);
-          setHasMore(totalLoaded < data.total_songs);
-        } else {
-          setHasMore(incomingSongs.length >= LIMIT);
-        }
-
+        setHasMore(incomingSongs.length >= LIMIT);
         setPage(pageNumber);
       }
     } catch (error) {
@@ -213,7 +208,11 @@ const Library = () => {
         if (pageNumber === 1) {
           setSongdata(incomingSongs);
         } else {
-          setSongdata(prev => [...prev, ...incomingSongs]);
+          setSongdata(prev => {
+            const existingIds = new Set(prev.map(s => String(s.id)));
+            const newSongs = incomingSongs.filter((s: any) => !existingIds.has(String(s.id)));
+            return [...prev, ...newSongs];
+          });
         }
         setHasMore(incomingSongs.length >= LIMIT);
         setPage(pageNumber);
@@ -226,6 +225,49 @@ const Library = () => {
       setLoadingMore(false);
     }
   };
+
+  const getRecentplay = async (pageNumber = 1, isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else if (pageNumber === 1) {
+        setIsLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const response = await ApiService.get(apiUrls.recentlypalyed, {
+        params: {
+          page: pageNumber,
+          limit: LIMIT,
+        },
+      });
+      console.log("RECENTLY PLAYED RESPONSE:", response);
+      const data = (response as any).data;
+
+      if (data?.success) {
+        const incomingSongs = data?.songs || [];
+        if (pageNumber === 1) {
+          setSongdata(incomingSongs);
+        } else {
+          setSongdata(prev => {
+            const existingIds = new Set(prev.map(s => String(s.id)));
+            const newSongs = incomingSongs.filter((s: any) => !existingIds.has(String(s.id)));
+            return [...prev, ...newSongs];
+          });
+        }
+        setHasMore(incomingSongs.length >= LIMIT);
+        setPage(pageNumber);
+      }
+    } catch (error) {
+      console.log("FAVORITES ERROR:", error);
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
+      setLoadingMore(false);
+    }
+  };
+
 
   const getRecording = async () => {
     try {
@@ -262,27 +304,32 @@ const Library = () => {
   };
 
   const handlepages = (item: string) => {
-    setSelectedTab(item);
+    if (item === 'Playlists') {
+      setSelectedTab('Playlists');
+      (navigation as any).navigate('PlayListScreen', {
+        previousScreen: 'Library',
+      });
+      return;
+    }
+
+    if (item !== 'Songs' && item !== 'Favorites' && item !== 'Recent Played') return;
+
+    setSelectedTab(item as 'Songs' | 'Favorites');
     setPage(1);
     setHasMore(true);
+    setSearchText('');
 
-    if (item === 'Favorites') {
-      getFavorites(1);
-      setVisible(false);
-    } else if (item === 'Songs') {
-      songlist(1);
+    if (item === 'Songs') {
       setVisible(true);
-    } else if (item === 'Playlists') {
-      (navigation as any).navigate('PlayListScreen', { previousScreen: 'Library' });
-    } else if (item === 'Recently Played') {
-      // Toast.show(title="coming soon")
-      Toast.show({
-        type: 'info',
-        position: 'bottom',
-        bottomOffset: 200,
-        text1: 'Coming soon!',
-        // text2: "coming soon",
-      });
+      songlist(1);
+    }
+    else if (item === 'Recent Played') {
+      getRecentplay(1);
+    }
+
+    else {
+      setVisible(false);
+      getFavorites(1);
     }
   };
 
@@ -297,7 +344,7 @@ const Library = () => {
 
       const artist = normalizeText(
         typeof item?.artist === 'object'
-          ? item?.artist?.name
+          ? (item?.artist as any)?.name
           : item?.artist
       );
 
@@ -322,8 +369,9 @@ const Library = () => {
   // Render everything above the songs list inside ListHeaderComponent
   const renderHeader = () => (
     <View style={{ gap: 20, paddingTop: 16 }}>
+
       {/* 4 Feature Cards */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         {ferture.map((item, index) => (
           <View
             key={index}
@@ -363,13 +411,13 @@ const Library = () => {
             </View>
           </View>
         ))}
-      </View>
+      </View> */}
 
       {visible && (
         <>
 
           {/* Karaoke Banner */}
-          <View
+          {/* <View
             style={{
               borderWidth: 1,
               borderColor: 'brown',
@@ -423,12 +471,12 @@ const Library = () => {
                 </TouchableOpacity>
               </View>
             </ImageBackground>
-          </View>
+          </View> */}
 
-          {recdata?.length ? (
+          {/* {recdata?.length ? (
             <>
 
-              {/* Continue Singing Section */}
+        
               <View style={[styles.titles, { width: '100%' }]}>
                 <View style={{ flexDirection: 'row', gap: 5, justifyContent: "center", alignItems: 'center' }}>
                   <AppText color={'#FB6B01'} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
@@ -526,19 +574,14 @@ const Library = () => {
             </>
 
           ) : (
-            // <View style={styles.centerContainer}>
-            //   <AppImage source={Logo.ymusic} width={20} height={20} />
-            //   <AppText color={color.darkthemetext} fontSize={14} marginTop={10}>
-            //     {t('Library.norecordingfound')}
-            //   </AppText>
-            // </View>
+           
             null
-          )}
+          )} */}
 
 
 
           {/* All Songs Count & Search Bar */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          {/* <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View style={{ flexDirection: 'row' }}>
               <AppText color="#F46E00" fontSize={12} fontFamily={Inter.regular}>
                 {t('Library.allsongs')}
@@ -575,151 +618,292 @@ const Library = () => {
                 <AppImage source={Logo.gfilter} height={12} width={25} />
               </TouchableOpacity>
             </View>
-          </View>
+          </View> */}
         </>
       )}
     </View>
   );
+  const toggleSort = () => {
+    setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+  };
+
+  const memoizedHeader = useMemo(() => {
+    return renderHeader();
+  }, [
+    numberofsong,
+    favoritescount,
+    recordingcount,
+    visible,
+    recdata,
+    searchText,
+    songdata.length,
+    t,
+    color.darkthemetext,
+  ]);
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: color.darkbackround }]}
     >
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-          <View style={{ flex: 1 }}>
-            <Header
-              rightIcon={Images.bell}
-              onRightPress={() => { (navigation as any).navigate('NotificationScreen') }}
-              rightView={
+      <View style={{ flex: 1 }}>
+        <Header
+          rightIcon={Images.bell}
+          onRightPress={() => { (navigation as any).navigate('NotificationScreen', { previousScreen: 'Library' }) }}
+          rightView={
+            <LinearGradient
+              colors={['#845726', '#4D2001']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{ borderRadius: 8 }}
+            >
+              <TouchableOpacity
+                style={{
+                  width: 62,
+                  height: 28,
+                  borderRadius: 8,
+                  flexDirection: 'row',
+                  backgroundColor: color.darkbackround,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 2,
+                  margin: 1,
+                }}
+                onPress={() => {
+                  (navigation as any).navigate('Recording');
+                }}
+              >
+                <AppImage source={Images.mic} width={15} height={15} tintColor={color.darkthemetext} />
+                <AppText color={color.darkthemetext} fontSize={10} fontWeight="400" fontFamily={Inter.regular}>
+                  {t('Library.Rooms')}
+                </AppText>
+              </TouchableOpacity>
+            </LinearGradient>
+          }
+        />
+        <SearchBar
+
+          value={''}
+          onFilterPress={() => console.log('filter')}
+          onPress={() => {
+            navigation.navigate('SearchSongSecreen', { previousScreen: 'Home' });
+          }}
+        />
+
+        {/* Top Tabs */}
+        <View style={[styles.toptitle, { backgroundColor: color.darkbackround, borderColor: '#302E2E', marginTop: 10 }]}>
+          {['Songs', 'Playlists', 'Favorites', 'Recent Played'].map((item, index) => (
+            <TouchableOpacity key={index} style={styles.tabItem} onPress={() => handlepages(item)}>
+              <AppText
+                color={color.darkthemetext}
+                fontSize={12}
+                fontWeight="500"
+                fontFamily={Inter.medium}
+              >
+                {item}
+              </AppText>
+              {selectedTab === item && <LinearGradient
+                colors={['#FF741D', '#E52B8D', '#9A16F5']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.bottomLine}
+              />}
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Filter Row */}
+        <View style={styles.filterview}>
+          {/* All Genres */}
+          <View
+            style={{
+              borderRadius: 25,
+              // backgroundColor: color.graycolor,
+              borderWidth: 1,
+              borderColor: '#292727',
+            }}
+          >
+            <TouchableOpacity
+              // onPress={() => {
+              //   setPage(1);
+              //   songlist(1);
+              //   setVisible(true);
+              // }}
+              onPress={() => handlepages('Songs')}
+              style={[styles.filter, { margin: 1 }]}
+            >
+              {selectedTab === 'Songs' ? (
                 <LinearGradient
-                  colors={['#845726', '#4D2001']}
+                  colors={['#FF741D', '#E52B8D', '#9A16F5']}
                   start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{ borderRadius: 8 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{
+                    flex: 1,
+                    borderRadius: 25,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: 28,
+                    width: 80,
+                  }}
                 >
-                  <TouchableOpacity
+                  <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
+                    <AppImage source={Images.music} tintColor="white" height={10} width={10} />
+                    <AppText color="white" fontSize={8} fontWeight="500" fontFamily={Inter.medium}>
+                      All Songs
+                    </AppText>
+                  </View>
+                </LinearGradient>
+              ) : (
+                <View style={{
+                  flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center',
+
+                }}>
+
+
+                  <View
                     style={{
-                      width: 62,
-                      height: 28,
-                      borderRadius: 8,
+                      flex: 1,
                       flexDirection: 'row',
-                      backgroundColor: color.darkbackround,
-                      justifyContent: 'center',
+                      gap: 5,
                       alignItems: 'center',
-                      gap: 2,
-                      margin: 1,
-                    }}
-                    onPress={() => {
-                      (navigation as any).navigate('Recording');
+                      justifyContent: 'center',
                     }}
                   >
-                    <AppImage source={Images.mic} width={15} height={15} tintColor={color.darkthemetext} />
-                    <AppText color={color.darkthemetext} fontSize={10} fontWeight="400" fontFamily={Inter.regular}>
-                      {t('Library.Rooms')}
+                    <AppImage
+                      source={Banner.filllike}
+                      tintColor="white"
+                      height={10}
+                      width={10}
+                    />
+                    <AppText
+                      color="white"
+                      fontSize={8}
+                      fontWeight="500"
+                      fontFamily={Inter.medium}
+                    >
+                      All Songs
                     </AppText>
-                  </TouchableOpacity>
-                </LinearGradient>
-              }
-            />
+                  </View>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
 
-            {/* Top Tabs */}
-            <View style={[styles.toptitle, { backgroundColor: color.darkbackround, borderColor: '#302E2E' }]}>
-              {['Songs', 'Playlists', 'Favorites'].map((item, index) => (
-                <TouchableOpacity key={index} style={styles.tabItem} onPress={() => handlepages(item)}>
+          {/* Sudanese Arabic */}
+          <View
+            style={{
+              borderRadius: 25,
+              backgroundColor: color.graycolor,
+              borderWidth: 1,
+              borderColor: '#292727',
+            }}
+          >
+            <TouchableOpacity
+              onPress={() => handlepages('Favorites')}
+              style={[
+                styles.filter,
+                {
+                  backgroundColor: color.darkbackround,
+                  margin: 1,
+                  overflow: 'hidden',
+                },
+              ]}
+            >
+              {selectedTab === 'Favorites' ? (
+                <LinearGradient
+                  colors={['#FF741D', '#E52B8D', '#9A16F5']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{
+                    flex: 1,
+                    borderRadius: 25,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: 28,
+                    width: 80,
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
+                    <AppImage
+                      source={Banner.filllike}
+                      tintColor="white"
+                      height={10}
+                      width={10}
+                    />
+                    <AppText
+                      color="white"
+                      fontSize={8}
+                      fontWeight="500"
+                      fontFamily={Inter.medium}
+                    >
+                      Favorites
+                    </AppText>
+                  </View>
+                </LinearGradient>
+              ) : (
+                <View
+                  style={{
+                    flex: 1,
+                    flexDirection: 'row',
+                    gap: 5,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <AppImage
+                    source={Banner.filllike}
+                    tintColor="white"
+                    height={10}
+                    width={10}
+                  />
                   <AppText
-                    color={color.darkthemetext}
-                    fontSize={12}
+                    color="white"
+                    fontSize={8}
                     fontWeight="500"
                     fontFamily={Inter.medium}
                   >
-                    {item}
+                    Favorites
                   </AppText>
-                  {selectedTab === item && <View style={styles.bottomLine} />}
-                </TouchableOpacity>
-              ))}
-            </View>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
 
-            {/* Filter Row */}
-            <View style={styles.filterview}>
-              {/* All Genres */}
-              <LinearGradient
-                colors={['#8E6B3E', '#292727']}
-                start={{ x: 0.5, y: 0 }}
-                end={{ x: 0.5, y: 1 }}
-                style={{ borderRadius: 25 }}
-              >
-                <TouchableOpacity
-                  onPress={() => {
-                    setPage(1);
-                    songlist(1);
-                    setVisible(true);
-                  }}
-                  style={[styles.filter, { backgroundColor: color.darkbackround, margin: 1 }]}
-                >
-                  <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
-                    <AppImage source={Images.music} tintColor={"#ADA03E"} height={10} width={10} />
-                    <AppText color={color.darkthemetext} fontSize={8} fontWeight="500" fontFamily={Inter.medium}>
-                      All Genres
-                    </AppText>
-                  </View>
-                  <AppImage
-                    source={Logo.downarrow}
-                    width={7}
-                    height={4}
-                    resizeMode="contain"
-                    style={{ marginTop: 2 }}
-                    tintColor={color.darkthemetext}
-                  />
-                </TouchableOpacity>
-              </LinearGradient>
+          {/* Sort */}
+          <TouchableOpacity
+            onPress={toggleSort}
+            style={[
+              styles.filter,
+              {
+                backgroundColor: color.darkbackround,
+                margin: 1,
+                overflow: 'hidden',
+              },
+            ]}
+          >
+            <LinearGradient
+              colors={['#FF741D', '#E52B8D', '#9A16F5']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                flex: 1,
+                borderRadius: 25,
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: 28,
+                width: 80,
+              }}
+            >
+              <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
+                <AppImage source={Logo.sort} height={10} width={10} tintColor="white" />
 
-              {/* Sudanese Arabic */}
-              <LinearGradient
-                colors={['#8E6B3E', '#292727']}
-                start={{ x: 0.5, y: 0 }}
-                end={{ x: 0.5, y: 1 }}
-                style={{ borderRadius: 25 }}
-              >
-                <TouchableOpacity
-                  onPress={() => { (navigation as any).navigate('SudaneseClassicsScreen') }}
-                  style={[styles.filter, { backgroundColor: color.darkbackround, margin: 1 }]}
-                >
-                  <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
-                    <AppImage source={Logo.glob} height={10} width={10} />
-                    <AppText color={color.darkthemetext} fontSize={8} fontWeight="500" fontFamily={Inter.medium}>
-                      Sudanese Arabic
-                    </AppText>
-                  </View>
-                </TouchableOpacity>
-              </LinearGradient>
-
-              {/* Sort */}
-              <LinearGradient
-                colors={['#8E6B3E', '#292727']}
-                start={{ x: 0.5, y: 0 }}
-                end={{ x: 0.5, y: 1 }}
-                style={{ borderRadius: 25 }}
-              >
-                <TouchableOpacity
-                  onPress={() => setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))}
-                  style={[styles.filter, { backgroundColor: color.darkbackround, margin: 1 }]}
-                >
-                  <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
-                    <AppImage source={Logo.sort} height={10} width={10} />
-                    <AppText color={color.darkthemetext} fontSize={8} fontWeight="500" fontFamily={Inter.medium}>
-                      {sortOrder === 'asc' ? 'Sort ▲' : 'Sort ▼'}
-                    </AppText>
-                  </View>
-                </TouchableOpacity>
-              </LinearGradient>
-
-              {/* Filter */}
-              {/* <LinearGradient
+                <AppText color="white" fontSize={8} fontFamily={Inter.medium}>
+                  Sort {sortOrder === 'asc' ? '▲' : '▼'}
+                </AppText>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+          {/* Filter */}
+          {/* <LinearGradient
           colors={['#8E6B3E', '#292727']}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
@@ -734,30 +918,28 @@ const Library = () => {
             </View>
           </TouchableOpacity>
         </LinearGradient> */}
-            </View>
+        </View>
 
-            {/* Main List with Integrated Header and Pagination */}
-            <View style={{ flex: 1 }}>
-              <Librarylist
-                ListHeaderComponent={renderHeader()}
-                musicData={filteredSongs}
-                loading={isLoading && page === 1}
-                refreshing={refreshing}
-                loadingMore={loadingMore}
-                hasMore={hasMore}
-                onRefresh={handleRefresh}
-                onLoadMore={handleLoadMore}
-                onLikePress={() => {
-                  songlist(page);
-                }}
-                onDislikePress={() => {
-                  songlist(page);
-                }}
-              />
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+        {/* Main List with Integrated Header and Pagination */}
+        <View style={{ flex: 1 }}>
+          <Librarylist
+            ListHeaderComponent={memoizedHeader}
+            musicData={filteredSongs}
+            loading={isLoading && page === 1}
+            refreshing={refreshing}
+            loadingMore={loadingMore}
+            hasMore={hasMore}
+            onRefresh={handleRefresh}
+            onLoadMore={handleLoadMore}
+            onLikePress={() => {
+              songlist(page);
+            }}
+            onDislikePress={() => {
+              songlist(page);
+            }}
+          />
+        </View>
+      </View>
     </SafeAreaView>
   );
 };
@@ -771,7 +953,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   toptitle: {
-    borderTopWidth: 1,
+    borderTopWidth: 0,
     borderBottomWidth: 1,
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -779,7 +961,7 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 15,
     backgroundColor: '#080808',
     borderRadius: 11,
   },
@@ -795,8 +977,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingVertical: 8,
+    // paddingHorizontal: 8,
+    // 
+    height: 28,
+    width: 80,
     borderRadius: 24,
     borderWidth: 0,
     gap: 8,
@@ -821,7 +1005,7 @@ const styles = StyleSheet.create({
   },
   bottomLine: {
     position: 'absolute',
-    bottom: -10,
+    bottom: -15,
     width: '125%',
     height: 2,
     backgroundColor: '#F66A01',

@@ -26,6 +26,7 @@ import { GlobalImage } from '../../share/utils/GlobalImage';
 import DateTimePicker, {
     DateTimePickerAndroid,
 } from '@react-native-community/datetimepicker';
+import LinearGradient from 'react-native-linear-gradient';
 
 const ManageProfileScreen = () => {
     const navigation = useNavigation();
@@ -774,13 +775,22 @@ const ManageProfileScreen = () => {
                         onPress={handleSave}
                         disabled={saving}
                     >
-                        <AppText style={styles.saveIcon}>
-                            ✓
-                        </AppText>
+                        <LinearGradient
+                            colors={['#FA6144', '#D83B7E', '#7E3FF2']}
+                            start={{ x: 0.2, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={{ height: '100%', width: '100%', borderRadius: 22, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', }}
+                        >
 
-                        <AppText style={styles.saveText}>
-                            {saving ? 'Saving...' : 'Save Changes'}
-                        </AppText>
+
+                            <AppText style={styles.saveIcon}>
+                                ✓
+                            </AppText>
+
+                            <AppText style={styles.saveText}>
+                                {saving ? 'Saving...' : 'Save Changes'}
+                            </AppText>
+                        </LinearGradient>
                     </TouchableOpacity>
 
                     {/* Cancel */}
@@ -871,7 +881,7 @@ const styles = StyleSheet.create({
     },
 
     subtitle: {
-        color: '#FFF97E',
+        color: '#FA6144',
         fontSize: 12,
         marginTop: 2,
         fontFamily: Inter.regular,
@@ -889,7 +899,7 @@ const styles = StyleSheet.create({
     },
 
     closeText: {
-        color: '#F6A202',
+        color: '#FA6144',
         fontSize: 25,
         lineHeight: 25,
         fontWeight: '300',
@@ -1219,7 +1229,7 @@ const styles = StyleSheet.create({
 
     saveButton: {
         height: 51,
-        borderRadius: 13,
+        borderRadius: 22,
         backgroundColor: '#F3870C',
         marginTop: 21,
         flexDirection: 'row',

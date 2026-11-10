@@ -69,7 +69,8 @@ const apiUrls = {
   getnotifications: `/api/notifications?language=${getLanguage()}`,
   marknotification: (id: string | number) => `/api/notifications/${id}/read?language=${getLanguage()}`,
   notificationcount: `/api/notifications/count?language=${getLanguage()}`,
-
+  recentlypalyed: `/api/songs/recently-played?language=${getLanguage()}`,
+  searchapi: `/api/search?language=${getLanguage()}`,
 };
 
 export default apiUrls;

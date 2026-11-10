@@ -32,6 +32,7 @@ export const HideableBottomTabs = ({ screens }: Props) => {
 
   const isTablet = width >= 768;
   const TAB_HEIGHT = isTablet ? 85 : 65;
+
   useEffect(() => {
     restoreLastPlayedSong();
   }, []);
@@ -42,7 +43,6 @@ export const HideableBottomTabs = ({ screens }: Props) => {
         screenOptions={{
           headerShown: false,
           tabBarShowLabel: false,
-
           tabBarStyle:
             loginState === 'first'
               ? { display: 'none' }
@@ -55,11 +55,12 @@ export const HideableBottomTabs = ({ screens }: Props) => {
           // Always hide tab bar for these screens
           if (
             loginState === 'first' ||
+            currentRoute === '.' ||
             currentRoute === 'Recording' ||
             currentRoute === 'SearchSongSecreen' ||
             currentRoute === 'SelectedArtistScreen' ||
             currentRoute === 'AllArtistScreen' ||
-            currentRoute === 'PlayListScreen' ||
+            // currentRoute === 'PlayListScreen' ||
             currentRoute === 'GenreScreen' ||
             currentRoute === 'PerformanceScreen' ||
             currentRoute === 'SettingScreen' ||
@@ -75,10 +76,8 @@ export const HideableBottomTabs = ({ screens }: Props) => {
             currentRoute === 'TermsConditionsScreen' ||
             currentRoute === 'PrivacyPolicyScreen' ||
             currentRoute === 'AboutKarKabScreen' ||
-            currentRoute === 'ContactUsScreen'
-
-
-
+            currentRoute === 'ContactUsScreen' ||
+            currentRoute === 'Search'
           ) {
             return null;
           }
@@ -143,5 +142,7 @@ const styles = StyleSheet.create({
 
     overflow: 'hidden',
     zIndex: 999,
+    borderTopColor: '#333',
+    borderTopWidth: 1,
   },
 });

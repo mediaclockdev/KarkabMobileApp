@@ -104,8 +104,8 @@ const ArtistRow = ({
                                         source={{
                                             uri: artist?.artist_image || artist?.artist_image,
                                         }}
-                                        width={72}
-                                        height={72}
+                                        width={92}
+                                        height={92}
                                         style={styles.image}
                                     />
 
@@ -136,7 +136,7 @@ const ArtistRow = ({
 
                                 <AppText
                                     color={color.darkthemetext}
-                                    fontSize={12}
+                                    fontSize={14}
                                     fontFamily={Inter.medium}
                                     numberOfLines={1}
                                     style={styles.name}
@@ -154,9 +154,11 @@ const ArtistRow = ({
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-        gap: 14,
+        gap: 34,
         paddingVertical: 8,
-        marginBottom: 15
+        marginBottom: 15,
+        marginHorizontal: 15,
+        marginTop: 5,
     },
 
     artistItem: {
@@ -165,16 +167,16 @@ const styles = StyleSheet.create({
     },
 
     imageContainer: {
-        width: 76,
-        height: 76,
-        borderRadius: 38,
+        width: 86,
+        height: 86,
+        borderRadius: 46,
         borderWidth: 1,
         alignItems: 'center',
         justifyContent: 'center',
     },
 
     image: {
-        borderRadius: 36,
+        borderRadius: 46,
     },
 
     name: {

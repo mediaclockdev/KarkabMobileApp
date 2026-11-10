@@ -968,7 +968,7 @@ const CreatePlaylist = () => {
                 headertitle="Your music, your way"
                 rightIcon={Images.bell}
                 onRightPress={() => {
-                    navigation.navigate('NotificationScreen');
+                    navigation.navigate('NotificationScreen', { previousScreen: 'CreatePlaylist' });
                 }}
                 backpress={() => {
                     const previousScreen = route?.params?.previousScreen;

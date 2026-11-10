@@ -1,7 +1,7 @@
+
 import React from 'react';
 import {
     FlatList,
-    Image,
     StyleSheet,
     TouchableOpacity,
     useWindowDimensions,
@@ -9,10 +9,9 @@ import {
 } from 'react-native';
 
 import AppText from '../../share/components/AppText';
-import { Inter } from '../../share/constants/fonts';
-import { Images, Logo } from '../constants/media';
-import { GlobalImage } from '../utils/GlobalImage';
 import AppImage from './AppImage';
+import { Inter } from '../../share/constants/fonts';
+import { Logo } from '../constants/media';
 import color from '../constants/color';
 
 interface Artist {
@@ -20,6 +19,11 @@ interface Artist {
     name: string;
     time: string;
     image: string;
+    album_picture_url?: string;
+    album_name?: string;
+    title?: string;
+    public_request_status?: string;
+    duration?: string;
 }
 
 interface PeopleWhoSangProps {
@@ -29,53 +33,14 @@ interface PeopleWhoSangProps {
     profileimage?: any;
 }
 
-const DEFAULT_ARTISTS: Artist[] = [
-    {
-        id: '1',
-        name: 'Ahmed',
-        time: '1:42',
-        image: Images.profile,
-    },
-    {
-        id: '2',
-        name: 'Sara',
-        time: '2:15',
-        image: Images.profile,
-    },
-    {
-        id: '3',
-        name: 'Mohamed',
-        time: '3:05',
-        image: Images.profile,
-    },
-    {
-        id: '4',
-        name: 'Heba',
-        time: '1:58',
-        image: Images.profile,
-    },
-];
-
 const PeopleWhoSang = ({
-    artists,
+    artists = [],
     onPlay,
-    onSeeAll,
-    profileimage,
 }: PeopleWhoSangProps) => {
-    const formatCreatedAt = (dateString?: string) => {
-        if (!dateString) return '';
+    const { width } = useWindowDimensions();
 
-        const date = new Date(dateString);
-
-        if (isNaN(date.getTime())) return '';
-
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
-    };
     const renderArtist = ({ item }: { item: Artist }) => {
+        const isLive = item?.public_request_status === 'approved';
 
         return (
             <TouchableOpacity
@@ -83,95 +48,128 @@ const PeopleWhoSang = ({
                 onPress={() => onPlay?.(item)}
                 style={styles.artistCard}
             >
-                {/* Artist Image */}
+                {/* Album Artwork */}
+                <View style={styles.imageContainer}>
+                    <AppImage
+                        source={item?.album_picture_url || item?.image}
+                        style={styles.artistImage}
+                        resizeMode="cover"
+                    />
 
+                    {isLive && (
+                        <View style={styles.liveDot}>
+                            <View style={styles.dot} />
+                        </View>
+                    )}
+                </View>
 
-                <Image source={GlobalImage(item?.album_picture_url)} style={styles.artistImage} />
-
-                {item?.public_request_status === 'approved' && (
-                    <View style={styles.approvedLabel}>
-                        <AppText
-                            fontSize={8}
-                            fontFamily={Inter.semibold}
-                            color="#FFFFFF"
-                        >
-                            Live
-                        </AppText>
-                    </View>
-                )}
-                {/* Artist Info */}
+                {/* Recording Information */}
                 <View style={styles.artistInfo}>
                     <AppText
-                        fontSize={12}
+                        fontSize={13}
                         fontFamily={Inter.semibold}
                         color="#FFFFFF"
-                        numberOfLines={1}>
-                        {item?.album_name}
+                        numberOfLines={1}
+                    >
+                        {item?.album_name || item?.name || 'Untitled'}
                     </AppText>
 
                     <AppText
-                        marginTop={3}
+                        marginTop={4}
                         fontSize={10}
-                        numberOfLines={1}
                         fontFamily={Inter.regular}
                         color="#A9A9A9"
+                        numberOfLines={1}
                     >
-                        {item?.title}
+                        {item?.title || 'Recording'}
                     </AppText>
+
+                    <View style={styles.bottomInfo}>
+                        {isLive ? (
+                            <View style={styles.liveBadge}>
+                                <AppText
+                                    fontSize={9}
+                                    fontFamily={Inter.semibold}
+                                    color="#22C983"
+                                >
+                                    LIVE
+                                </AppText>
+                            </View>
+                        ) : (
+                            <AppText
+                                fontSize={9}
+                                fontFamily={Inter.medium}
+                                color="#999999"
+                            >
+                                Recording
+                            </AppText>
+                        )}
+
+                        {!!item?.time && (
+                            <AppText
+                                fontSize={9}
+                                fontFamily={Inter.medium}
+                                color="#888888"
+                            >
+                                {item.time}
+                            </AppText>
+                        )}
+                    </View>
                 </View>
 
                 {/* Play Button */}
                 <TouchableOpacity
                     activeOpacity={0.7}
+                    onPress={() => onPlay?.(item)}
                     style={styles.playButton}
-                    onPress={() => onPlay?.(item)}>
+                >
                     <AppText
-                        fontSize={10}
+                        fontSize={13}
                         fontFamily={Inter.semibold}
                         color="#FFFFFF"
-                        style={styles.playIcon}>
+                        style={{ marginLeft: 2 }}
+                    >
                         ▶
                     </AppText>
                 </TouchableOpacity>
             </TouchableOpacity>
         );
     };
-    const { width } = useWindowDimensions();
+
     return (
         <View style={styles.container}>
-            {/* Header */}
-
-
-            {/* Artists */}
             <FlatList
                 data={artists}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 renderItem={renderArtist}
-                keyExtractor={item => item.id}
+                keyExtractor={(item, index) =>
+                    String(item?.id || index)
+                }
                 contentContainerStyle={styles.listContent}
-                ListEmptyComponent={<View style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    paddingVertical: 20,
-                    width: width - 32,
-                    alignSelf: 'center'
-                }}>
-                    <AppImage
-                        source={Logo.ymusic}
-                        width={20}
-                        height={20}
-                    />
-                    <AppText
-                        color={color.darkthemetext}
-                        fontSize={14}
-                        marginTop={10}
+                ListEmptyComponent={
+                    <View
+                        style={[
+                            styles.emptyContainer,
+                            { width: width - 32 },
+                        ]}
                     >
-                        No recorded songs found
-                    </AppText>
-                </View>}
+                        <AppImage
+                            source={Logo.ymusic}
+                            width={25}
+                            height={25}
+                        />
 
+                        <AppText
+                            color={color.darkthemetext}
+                            fontSize={14}
+                            fontFamily={Inter.medium}
+                            marginTop={10}
+                        >
+                            No recorded songs found
+                        </AppText>
+                    </View>
+                }
             />
         </View>
     );
@@ -182,82 +180,95 @@ export default PeopleWhoSang;
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        marginBottom: 15
-    },
-
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        marginBottom: 12,
-    },
-
-    seeAllContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-
-    arrow: {
-        marginLeft: 3,
-        marginTop: -2,
+        marginBottom: 15,
     },
 
     listContent: {
-
-        gap: 10,
+        gap: 12,
+        paddingRight: 10,
     },
 
+    artistCard: {
+        width: 205,
+        height: 78,
+        backgroundColor: '#111111',
+        borderWidth: 1,
+        borderColor: '#292929',
+        borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 9,
+        paddingVertical: 8,
+    },
+
+    imageContainer: {
+        width: 52,
+        height: 52,
+        borderRadius: 9,
+        position: 'relative',
+    },
 
     artistImage: {
-        width: 34,
-        height: 34,
-        borderRadius: 32,
+        width: 52,
+        height: 52,
+        borderRadius: 9,
+    },
+
+    liveDot: {
+        position: 'absolute',
+        top: -4,
+        right: -4,
+        width: 13,
+        height: 13,
+        borderRadius: 10,
+        backgroundColor: '#111111',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    dot: {
+        width: 7,
+        height: 7,
+        borderRadius: 5,
+        backgroundColor: '#22C983',
     },
 
     artistInfo: {
         flex: 1,
-        marginLeft: 12,
+        marginLeft: 9,
         justifyContent: 'center',
+        overflow: 'hidden',
+    },
+
+    bottomInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 6,
+    },
+
+    liveBadge: {
+        backgroundColor: 'rgba(34,201,131,0.12)',
+        paddingHorizontal: 5,
+        paddingVertical: 2,
+        borderRadius: 4,
     },
 
     playButton: {
-        width: 22,
-        height: 22,
-        borderRadius: 21,
-
+        width: 28,
+        height: 28,
+        borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#383838',
-
+        borderColor: '#494949',
+        backgroundColor: '#202020',
         alignItems: 'center',
         justifyContent: 'center',
-
-        backgroundColor: '#0D0D0D',
+        marginLeft: 5,
     },
 
-    playIcon: {
-        marginLeft: 2,
-    },
-    artistCard: {
-        width: 140,
-        height: 65,
-        borderRadius: 10,
-        backgroundColor: '#111111',
-        borderWidth: 1,
-        borderColor: '#252525',
-        flexDirection: 'row',
+    emptyContainer: {
+        justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 12,
-        position: 'relative',
-    },
-    approvedLabel: {
-        position: 'absolute',
-        top: 3,
-        right: 5,
-        backgroundColor: color.mgyellow,
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 5,
-        zIndex: 10,
+        paddingVertical: 20,
     },
 });

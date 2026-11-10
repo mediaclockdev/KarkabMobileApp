@@ -7,19 +7,28 @@ import {
   Image,
 } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { BottomIcons } from '../share/constants/media';
+import { BottomIcons, Images } from '../share/constants/media';
 import color, { useAppColors } from '../share/constants/color';
+import GradientText from '../share/components/GradientText';
+import AppImageLg from '../share/components/AppImageLg';
 
 const ACTIVE_COLOR = '#E52450';
-const INACTIVE_COLOR = '#D4AF37';
+// const INACTIVE_COLOR = '#D4AF37';
+const INACTIVE_COLOR = '#8E8F94';
 
 const CustomTabBar: React.FC<BottomTabBarProps> = ({
   state,
   descriptors,
   navigation,
 }) => {
-
   const color = useAppColors();
+
+  // Hide the tab bar when '.' screen is focused
+  const currentRouteName = state.routes[state.index]?.name;
+  if (currentRouteName === '.') {
+    return null;
+  }
+
   //  { name: 'Home', component: Home },
   //  { name: 'Library', component: Library },
   // { name: 'Profile', component: Profile },
@@ -30,32 +39,28 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
       case 'Home':
         return focused
           ? BottomIcons.home
-          : BottomIcons.home
-      case 'Search':
+          : BottomIcons.home;
+      case 'PlayListScreen':
         return focused
-          ? BottomIcons.search
-          : BottomIcons.search
+          ? Images.songplay
+          : Images.songplay;
 
       case '.':
         return focused
-          ? BottomIcons.audio
-          : BottomIcons.audio
-
+          ? BottomIcons.singl
+          : BottomIcons.audio;
 
       case 'Profile':
         return focused
           ? BottomIcons.profile
-          : BottomIcons.profile
+          : BottomIcons.profile;
       case 'Library':
         return focused
           ? BottomIcons.library
-          : BottomIcons.library
-
-
-
+          : BottomIcons.library;
 
       default:
-        return BottomIcons.home
+        return BottomIcons.home;
     }
   };
 
@@ -69,7 +74,8 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
           && route.name !== 'SearchSongSecreen'
           && route.name !== 'SelectedArtistScreen'
           && route.name !== 'AllArtistScreen'
-          && route.name !== 'PlayListScreen'
+          && route.name !== 'Search'
+          // && route.name !== 'PlayListScreen'
           && route.name !== 'GenreScreen'
           && route.name !== 'PerformanceScreen'
           && route.name !== 'SettingScreen'
@@ -85,11 +91,8 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
           && route.name !== 'PrivacyPolicyScreen'
           && route.name !== 'AboutKarKabScreen'
           && route.name !== 'ContactUsScreen'
-
-
         )
         .map((route, index) => {
-
           const isFocused =
             state.routes[state.index].name === route.name;
 
@@ -118,38 +121,77 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
                 <Image
                   source={icon}
                   style={[styles.icon, { height: 58, width: 58 }]}
-                  tintColor={isFocused ? ACTIVE_COLOR : INACTIVE_COLOR}
+                  tintColor={isFocused ? undefined : INACTIVE_COLOR}
                   resizeMode="cover"
                 />
               ) : route.name === 'Profile' ? (
-                <Image
-                  source={icon}
-                  style={[styles.icon, { height: 22, width: 14 }]}
-                  tintColor={isFocused ? ACTIVE_COLOR : INACTIVE_COLOR}
-                  resizeMode="cover"
-                />
+                isFocused ? (
+                  <AppImageLg
+                    source={icon}
+                    width={14}
+                    height={22}
+                    style={[styles.icon, { height: 22, width: 15 }]}
+                    colors={['#FA6144', '#D83B7E', '#7E3FF2']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Image
+                    source={icon}
+                    style={[styles.icon, { height: 22, width: 14 }]}
+                    tintColor={isFocused ? ACTIVE_COLOR : INACTIVE_COLOR}
+                    resizeMode="cover"
+                  />
+                )
               ) : (
-                <Image
-                  source={icon}
-                  style={styles.icon}
-                  tintColor={isFocused ? ACTIVE_COLOR : INACTIVE_COLOR}
-                />
+                isFocused ? (
+                  <AppImageLg
+                    source={icon}
+                    width={18}
+                    height={19}
+                    style={styles.icon}
+                    colors={['#FA6144', '#D83B7E', '#7E3FF2']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  />
+                ) : (
+                  <Image
+                    source={icon}
+                    style={styles.icon}
+                    tintColor={INACTIVE_COLOR}
+                    resizeMode="contain"
+                  />
+                )
               )}
 
               {route.name !== '.' && (
-                <Text
-                  style={[
-                    styles.label,
-                    { color: isFocused ? ACTIVE_COLOR : INACTIVE_COLOR },
-                  ]}
-                >
-                  {route.name}
-                </Text>
+                isFocused ? (
+                  // <GradientText style={styles.label}>
+                  //   {route.name === 'PlayListScreen' ? 'Playlist' : route.name}
+                  // </GradientText>
+                  <Text
+                    style={[
+                      styles.label,
+                      { color: '#FA6144' },
+                    ]}
+                  >
+                    {route.name === 'PlayListScreen' ? 'Playlist' : route.name}
+                  </Text>
+                ) : (
+                  <Text
+                    style={[
+                      styles.label,
+                      { color: INACTIVE_COLOR },
+                    ]}
+                  >
+                    {route.name === 'PlayListScreen' ? 'Playlist' : route.name}
+                  </Text>
+                )
               )}
             </TouchableOpacity>
           );
         })}
-
     </View>
   );
 };
@@ -162,7 +204,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     flex: 1,
-
   },
   tabItem: {
     alignItems: 'center',

@@ -118,7 +118,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({
             </AppText>
             <AppText
               fontSize={12}
-              color={color.lgyellow}
+              color={'#FC6101'}
               fontFamily={Inter.regular}
               marginTop={5}
             >
@@ -143,67 +143,71 @@ const MainHeader: React.FC<MainHeaderProps> = ({
           >
 
           </LinearGradient>
-
-          <LinearGradient
-            colors={['#FDCD00', '#FF8300']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{
-              borderRadius: 25,
-            }}
-          >
-            <TouchableOpacity
-              onPress={() => navigation.navigate('NotificationScreen')}
-              activeOpacity={0.8}
+          <View>
+            <LinearGradient
+              colors={['#FDCD00', '#FF8300']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
               style={{
-                width: 34,
-                height: 34,
-                borderRadius: 24,
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: color.darkbackround,
-                margin: 1,
+                borderRadius: 25,
               }}
             >
-              <View>
-                <Image
-                  source={Images.bell}
-                  style={styles.actionIcon}
-                />
+              <TouchableOpacity
+                onPress={() => (navigation as any).navigate('NotificationScreen', { previousScreen: 'Home' })}
+                activeOpacity={0.8}
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 24,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: color.darkbackround,
+                  margin: 1,
+                }}
+              >
+                <View>
+                  <Image
+                    source={Images.bell}
+                    style={styles.actionIcon}
+                  />
 
-                {unreadCount > 0 && (
-                  <View
-                    style={{
-                      position: 'absolute',
-                      top: -14,
-                      right: -15,
-                      minWidth: 16,
-                      height: 16,
-                      borderRadius: 10,
-                      backgroundColor: '#FC6101',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      paddingHorizontal: 3,
-                      borderWidth: 1,
-                      borderColor: color.darkbackround,
-                    }}
-                  >
-                    <AppText
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: 9,
-                        fontWeight: '700',
-                      }}
-                    >
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </AppText>
-                  </View>
-                )}
+
+                </View>
+              </TouchableOpacity>
+            </LinearGradient>
+
+            {unreadCount > 0 && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: -3,
+                  right: -6,
+                  minWidth: 16,
+                  height: 16,
+                  borderRadius: 10,
+                  backgroundColor: '#FC6101',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingHorizontal: 3,
+                  borderWidth: 1,
+                  borderColor: color.darkbackround,
+                }}
+              >
+                <AppText
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={{
+                    color: '#FFFFFF',
+                    fontSize: 9,
+                    fontWeight: '700',
+                  }}
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </AppText>
               </View>
-            </TouchableOpacity>
-          </LinearGradient>
+            )}
+          </View>
+
 
         </View>
 

@@ -15,7 +15,7 @@ import ApiService from '../../services/api';
 import color from '../../share/constants/color';
 import { Inter } from '../../share/constants/fonts';
 import { Images, Logo } from '../../share/constants/media';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import apiUrls from '../../services/apiUrls';
 
 type NotificationItem = {
@@ -101,7 +101,10 @@ const NotificationScreen = () => {
     const navigation = useNavigation();
     const [notificationsEnabled, setNotificationsEnabled] =
         useState(true);
-
+    const route = useRoute();
+    const { previousScreen } = route.params as {
+        previousScreen?: string;
+    };
     const [performanceNotifications, setPerformanceNotifications] =
         useState(true);
 
@@ -429,7 +432,13 @@ const NotificationScreen = () => {
             />
         );
     };
-
+    const handleBack = () => {
+        if (previousScreen) {
+            navigation.navigate(previousScreen);
+        } else {
+            navigation.goBack();
+        }
+    };
     return (
         <SafeAreaView style={styles.safeArea}>
             <FlatList
@@ -447,10 +456,7 @@ const NotificationScreen = () => {
 
 
                                     <TouchableOpacity
-                                        onPress={() => {
-
-                                            (navigation as any).navigate('Home')
-                                        }}
+                                        onPress={handleBack}
                                     >
 
                                         {/* <Text style={styles.back}>←</Text> */}

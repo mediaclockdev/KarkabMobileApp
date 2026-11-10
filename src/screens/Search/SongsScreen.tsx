@@ -224,6 +224,9 @@ export default function SongsScreen() {
     const [loader, setLoader] = useState(false);
     const dispatch = useAppDispatch();
 
+
+
+
     const trandingdata = async () => {
         console.log("popular api called")
         try {
@@ -316,10 +319,17 @@ export default function SongsScreen() {
         categorydata()
         getFavorites()
     }, [])
+
+
+
+
+
     const categoryList = [
         { id: 'all', title: 'All' },
         ...moods,
     ];
+
+
     return (
         <SafeAreaView style={styles.container}>
             {/* <StatusBar

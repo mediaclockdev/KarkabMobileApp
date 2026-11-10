@@ -26,6 +26,9 @@ import { useAppDispatch, useAppSelector } from '../../share/hooks/useAppSelector
 import { isPausesd } from '../../auth/redux/authSlice';
 import TrackPlayer from '@rntp/player';
 import { playSongList, playPlaylistById } from '../../services/player';
+import Librarylist from '../../share/components/Librarylist';
+import LinearGradient from 'react-native-linear-gradient';
+import Header from "../../share/components/Header";
 
 interface Playlist {
     id: string;
@@ -84,8 +87,7 @@ export default function PlayListScreen() {
     const navigation = useNavigation();
     const route = useRoute();
     const [selected, setSelected] = useState('All');
-    const [playlists, setPlaylists] =
-        useState<Playlist[]>(defaultPlaylists);
+    const [playlists, setPlaylists] = useState<Playlist[]>(defaultPlaylists);
     const previousScreen = route?.params?.previousScreen;
     const [songs, setSongs] = useState<Song[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
@@ -138,6 +140,8 @@ export default function PlayListScreen() {
     /**
      * Get all playlists
      */
+
+
     const getPlaylists = async () => {
         try {
             setLoader(true)
@@ -260,13 +264,22 @@ export default function PlayListScreen() {
                             await playPlaylistById(item.id, 0, false);
                         }}
                     >
-                        <AppImage
-                            source={Images.bplay}
-                            width={18}
-                            height={18}
-                            resizeMode="contain"
-                            tintColor="#FFFFFF"
-                        />
+                        <LinearGradient
+                            colors={['#FA6144', '#D83B7E', '#7E3FF2']}
+                            start={{ x: 0.2, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={{ height: '100%', width: '100%', borderRadius: 22, justifyContent: 'center', alignItems: 'center' }}
+                        >
+                            <AppImage
+                                source={Images.bplay}
+                                width={18}
+                                height={18}
+                                resizeMode="contain"
+                                tintColor="#FFFFFF"
+                            />
+                        </LinearGradient>
+
+
                     </TouchableOpacity>
                 </View>
 
@@ -288,38 +301,28 @@ export default function PlayListScreen() {
         <SafeAreaView style={styles.container}>
             {/* HEADER */}
 
-            <View style={styles.header}>
-                <TouchableOpacity
-                    onPress={() => {
-                        if (previousScreen) {
-                            (
-                                navigation as any
-                            ).navigate(
-                                previousScreen
-                            );
-                        } else {
-                            navigation.goBack();
-                        }
-                    }}
-                    style={styles.backButton}
-                >
+            {/* <View style={styles.header}>
+              
+                <View>
                     <AppImage
-                        source={Logo.arrowline}
-                        width={20}
-                        height={20}
-                        tintColor="#FFFFFF"
+                        source={Logo.mainlogo}
+                        height={30}
+                        width={38}
+                        resizeMode='cover'
+
                     />
-                </TouchableOpacity>
 
-                <View style={styles.headerText}>
-                    <AppText style={styles.title}>
-                        Classic Playlists
-                    </AppText>
+                    <View style={styles.headerText}>
+                        <AppText style={styles.title}>
+                            Classic Playlists
+                        </AppText>
 
-                    <AppText style={styles.subtitle}>
-                        Discover timeless Sudanese collections
-                    </AppText>
+                        <AppText style={styles.subtitle}>
+                            Discover timeless Sudanese collections
+                        </AppText>
+                    </View>
                 </View>
+
 
                 <TouchableOpacity style={styles.mic}>
                     <AppImage
@@ -327,10 +330,45 @@ export default function PlayListScreen() {
                         width={16}
                         height={18}
                         resizeMode="contain"
+                        tintColor="#FA6144"
                     />
                 </TouchableOpacity>
-            </View>
+            </View> */}
+            <Header
+                headername={'Classic Playlists'}
+                headertitle={'Discover timeless Sudanese collections'}
+                rightIcon={Images.bell}
+                onRightPress={() => { (navigation as any).navigate('NotificationScreen', { previousScreen: 'PlayListScreen' }) }}
+            // rightView={
+            //     <TouchableOpacity style={{
+            //         width: 40,
+            //         height: 40,
 
+            //         flexDirection: 'row',
+            //         borderWidth: 1,
+            //         borderColor: color.brown,
+
+            //         justifyContent: 'center',
+            //         alignItems: 'center',
+
+            //         borderRadius: 97
+            //     }}
+            //         onPress={() => {
+            //             navigation?.navigate(
+            //                 'SettingScreen',
+            //             );
+            //         }}
+            //     >
+            //         <AppImage
+            //             source={Images.setting}
+            //             width={18}
+            //             height={19}
+
+            //         />
+
+            //     </TouchableOpacity>
+            // }
+            />
             {/* SEARCH */}
 
             <SearchBar
@@ -388,9 +426,19 @@ export default function PlayListScreen() {
 
                     <View style={styles.section}>
                         <View>
-                            <AppText style={styles.sectionTitle}>
-                                🎼 Classic Playlists
-                            </AppText>
+                            <View style={{ flexDirection: 'row', gap: 10 }}>
+                                <AppImage
+                                    source={Images.playlist}
+                                    height={18}
+                                    width={18}
+                                    resizeMode='contain'
+                                    tintColor={'#FC6101'}
+                                />
+                                <AppText style={styles.sectionTitle}>
+                                    Classic Playlists
+                                </AppText>
+                            </View>
+
 
                             <AppText style={styles.sectionSubtitle}>
                                 Explore curated collections
@@ -476,29 +524,51 @@ export default function PlayListScreen() {
                                     activeOpacity={0.8}
                                     onPress={handlePlaySelectedPlaylist}
                                 >
-                                    {isCurrentPlaylistPlaying && !isPaused ? (
-                                        <View style={{ flexDirection: 'row', gap: 3, justifyContent: 'center', alignItems: 'center' }}>
-                                            <View style={{ width: 3, height: 16, backgroundColor: '#FFFFFF', borderRadius: 1 }} />
-                                            <View style={{ width: 3, height: 16, backgroundColor: '#FFFFFF', borderRadius: 1 }} />
-                                        </View>
-                                    ) : (
-                                        <AppImage
-                                            source={Images.playicon}
-                                            width={20}
-                                            height={20}
-                                            resizeMode="contain"
-                                            tintColor="#FFFFFF"
-                                        />
-                                    )}
+                                    <LinearGradient
+                                        colors={['#FA6144', '#D83B7E', '#7E3FF2']}
+                                        start={{ x: 0.2, y: 0 }}
+                                        end={{ x: 1, y: 1 }}
+                                        style={{ height: '100%', width: '100%', borderRadius: 22, justifyContent: 'center', alignItems: 'center' }}
+                                    >
+                                        {isCurrentPlaylistPlaying && !isPaused ? (
+                                            <View style={{ flexDirection: 'row', gap: 3, justifyContent: 'center', alignItems: 'center' }}>
+                                                <View style={{ width: 3, height: 16, backgroundColor: '#FFFFFF', borderRadius: 1 }} />
+                                                <View style={{ width: 3, height: 16, backgroundColor: '#FFFFFF', borderRadius: 1 }} />
+                                            </View>
+                                        ) : (
+                                            <AppImage
+                                                source={Images.playicon}
+                                                width={20}
+                                                height={20}
+                                                resizeMode="contain"
+                                                tintColor="#FFFFFF"
+                                            />
+                                        )}
+
+                                    </LinearGradient>
+
+
                                 </TouchableOpacity>
                             </View>
 
                             {/* SONG HEADER */}
 
                             <View style={styles.songHeader}>
-                                <AppText style={styles.songTitle}>
-                                    🎵 Songs
-                                </AppText>
+                                <View style={{ flexDirection: 'row', gap: 8 }}>
+                                    <AppImage
+                                        source={Images.music}
+                                        height={22}
+                                        width={22}
+                                        resizeMode='contain'
+                                        style={{ marginTop: 2 }}
+                                        tintColor={'#FA6144'}
+
+                                    />
+                                    <AppText style={styles.songTitle}>
+                                        Songs
+                                    </AppText>
+                                </View>
+
 
                                 <TouchableOpacity
                                     onPress={handlePlaySelectedPlaylist}
@@ -519,15 +589,24 @@ export default function PlayListScreen() {
                                     />
                                 </View>
                             ) : songs.length > 0 ? (
-                                songs.map((item, idx) => (
-                                    <ClassicSongItem
-                                        key={item.id}
-                                        item={item}
-                                        songList={songs}
-                                        index={idx}
-                                        onPress={() => (navigation as any).navigate('.', { id: item.id, previousScreen: 'PlayListScreen' })}
-                                    />
-                                ))
+                                // songs.map((item, idx) => (
+                                //     <ClassicSongItem
+                                //         key={item.id}
+                                //         item={item}
+                                //         songList={songs}
+                                //         index={idx}
+                                //         onPress={() => (navigation as any).navigate('.', { id: item.id, previousScreen: 'PlayListScreen' })}
+                                //     />
+                                // ))
+                                <Librarylist
+                                    musicData={
+                                        songs
+                                    }
+                                    loading={
+                                        songsLoading
+                                    }
+                                // type={type}
+                                />
                             ) : (
                                 <View
                                     style={
@@ -575,8 +654,14 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 8,
+        marginTop: 20,
         marginBottom: 14,
+        flex: 1,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        // backgroundColor: 'red',
+        justifyContent: 'space-between'
+
     },
 
     backButton: {
@@ -587,8 +672,9 @@ const styles = StyleSheet.create({
     },
 
     headerText: {
-        flex: 1,
-        marginHorizontal: 12,
+        marginVertical: 10
+        // flex: 1,
+        //  marginHorizontal: 12,
     },
 
     title: {
@@ -598,7 +684,7 @@ const styles = StyleSheet.create({
     },
 
     subtitle: {
-        color: '#D5A83F',
+        color: '#FA6144',
         fontSize: 12,
         marginTop: 2,
         fontFamily: Inter.regular,
@@ -609,13 +695,13 @@ const styles = StyleSheet.create({
         height: 32,
         borderRadius: 21,
         borderWidth: 1,
-        borderColor: '#F4A000',
+        borderColor: '#FA6144',
         justifyContent: 'center',
         alignItems: 'center',
     },
 
     section: {
-        marginTop: 18,
+        marginTop: 25,
         marginBottom: 16,
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -624,13 +710,13 @@ const styles = StyleSheet.create({
 
     sectionTitle: {
         color: '#FFFFFF',
-        fontSize: 17,
+        fontSize: 18,
         fontFamily: Inter.semiBold,
     },
 
     sectionSubtitle: {
         color: '#858585',
-        fontSize: 11,
+        fontSize: 12,
         fontFamily: Inter.regular,
         marginTop: 4,
     },
@@ -734,13 +820,13 @@ const styles = StyleSheet.create({
 
     songTitle: {
         color: '#FFFFFF',
-        fontSize: 15,
-        fontFamily: Inter.semiBold,
+        fontSize: 18,
+        fontFamily: Inter.semibold,
     },
 
     view: {
-        color: '#F4A000',
-        fontSize: 12,
+        color: '#FA6144',
+        fontSize: 14,
         fontFamily: Inter.medium,
     },
 

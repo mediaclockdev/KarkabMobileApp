@@ -141,7 +141,8 @@ const HomeBanner = ({ data }: { data: any[] }) => {
 
   return (
     <View style={{
-      marginBottom: 15
+      marginBottom: 15,
+      marginTop: 20
     }}>
       <FlatList
         ref={flatListRef}
@@ -283,7 +284,7 @@ const HomeBanner = ({ data }: { data: any[] }) => {
                   (navigation as any).navigate('Recording', { prevScreen: 'Home' });
                 }}>
                   <LinearGradient
-                    colors={['#FF9A01', '#CF7D00', '#A96600']}
+                    colors={['#FA6144', '#D83B7E', '#7E3FF2']}
                     start={{ x: 0.2, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={{
@@ -396,7 +397,7 @@ const styles = StyleSheet.create({
   activeDot: {
     width: 22,
     opacity: 1,
-    backgroundColor: '#EF323B',
+    backgroundColor: '#D83B7E',
   },
 
 })

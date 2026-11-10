@@ -30,6 +30,7 @@ import {
     restoreLastPlayedSong,
 } from '../../services/player';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
 
 interface MiniPlayerProps {
     onNext?: () => void;
@@ -458,8 +459,17 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
             {/* Live Progress Line */}
             <TouchableWithoutFeedback onPress={openFullPlayer}>
                 <View style={styles.bottomProgressTrack}>
-                    <View
+                    {/* <View
                         style={[styles.bottomProgressFill, { width: `${progressPercent}%` }]}
+                    /> */}
+                    <LinearGradient
+                        colors={['#FA6144', '#D83B7E', '#7E3FF2']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={[
+                            styles.bottomProgressFill,
+                            { width: `${progressPercent}%` },
+                        ]}
                     />
                 </View>
             </TouchableWithoutFeedback>
@@ -556,7 +566,7 @@ const styles = StyleSheet.create({
     },
     bottomProgressFill: {
         height: 3,
-        backgroundColor: '#FF2D55',
+        //   backgroundColor: '#FF2D55',
     },
     closeButton: {
         width: 30,

@@ -41,6 +41,7 @@ export const Tabs = () => {
     const screens = [
         { name: 'Home', component: Home },
         { name: 'Search', component: Search },
+        { name: 'PlayListScreen', component: PlayListScreen },
         { name: '.', component: AudioRec },
         { name: 'Library', component: Library },
         { name: 'Profile', component: Profile },
@@ -53,7 +54,7 @@ export const Tabs = () => {
         { name: 'SearchSongSecreen', component: SearchSongSecreen },
         { name: 'SelectedArtistScreen', component: SelectedArtistScreen },
         { name: 'AllArtistScreen', component: AllArtistScreen },
-        { name: 'PlayListScreen', component: PlayListScreen },
+
         { name: 'GenreScreen', component: GenreScreen },
         { name: 'PerformanceScreen', component: PerformanceScreen },
         { name: 'SettingScreen', component: SettingScreen },

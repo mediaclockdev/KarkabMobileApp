@@ -46,6 +46,7 @@ const Profile = () => {
         created_at?: string;
     } | null>(null);
     const [recdata, setRecdata] = useState(null);
+    const [recentlyPlayed, setRecentlyPlayed] = useState(null);
     const [playingId, setPlayingId] = useState<string | null>(null);
     const [loader, setLoader] = useState(false);
     const [favorites, setFavorites] = useState<string | null>(null);
@@ -78,6 +79,7 @@ const Profile = () => {
             fetchProfileData()
             getRecording()
             getFavorites()
+            getRecentlyPlayed()
         }, [])
     )
 
@@ -315,6 +317,28 @@ const Profile = () => {
     }
 
 
+    const getRecentlyPlayed = async () => {
+        try {
+
+            const response = await ApiService.get(apiUrls.recentlypalyed)
+
+            const data = (response as any).data
+            console.log(data.success, "getrecentlyplayed API RESPONSE")
+
+            if (data?.success) {
+                console.log(data.songs, "inside API RESPONSE")
+                setRecentlyPlayed(data.songs)
+            }
+
+        } catch (error) {
+            console.log("getrecentlyplayed ERROR:", error)
+        }
+        finally {
+
+        }
+    }
+
+
 
     const pickImage = () => {
         launchImageLibrary(
@@ -521,846 +545,374 @@ const Profile = () => {
 
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: color.darkbackround }]}>
-            <Header
-                headername={'Profile'}
-                headertitle={'Your journey , your voice'}
-                rightIcon={Images.bell}
-                onRightPress={() => { navigation.navigate('NotificationScreen') }}
-                rightView={
-                    <TouchableOpacity style={{
-                        width: 40,
-                        height: 40,
+        <SafeAreaView
+            style={[
+                styles.container,
+                { backgroundColor: color.darkbackround },
+            ]}
+        >
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+            >
 
-                        flexDirection: 'row',
-                        borderWidth: 1,
-                        borderColor: color.brown,
-
-                        justifyContent: 'center',
-                        alignItems: 'center',
-
-                        borderRadius: 97
-                    }}
-                        onPress={() => {
-                            navigation?.navigate(
-                                'SettingScreen',
-                            );
-                        }}
+                {/* <View style={styles.topHeader}>
+                    <AppText
+                        color="#FFFFFF"
+                        fontSize={18}
+                        fontWeight="600"
+                        fontFamily={Inter.medium}
                     >
+                        Karkab
+                    </AppText>
 
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('SettingScreen' as never)}
+                    >
                         <AppImage
                             source={Images.setting}
-                            width={18}
-                            height={19}
-
+                            width={20}
+                            height={20}
                         />
-
                     </TouchableOpacity>
-                }
-            />
-
-            {
-                loader ?
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                        <ActivityIndicator size="large" color="#EFCB61" />
-                    </View> :
-                    <ScrollView nestedScrollEnabled={true} showsVerticalScrollIndicator={false} style={{ gap: 20 }} contentContainerStyle={{
-                        rowGap: 20,
-                    }}>
-                        <View style={{ flexDirection: 'row', gap: 20, justifyContent: 'flex-start', alignItems: 'center', }}>
-                            <View style={{
-                                width: 120,
-                                height: 120,
-                                alignSelf: 'center',
-                                overflow: 'visible',
-                            }}>
+                </View> */}
 
 
+                <Header
+                    headername={'Profile'}
+                    headertitle={'Your journey , your voice'}
+                    rightIcon={Images.bell}
+                    onRightPress={() => { (navigation as any).navigate('NotificationScreen', { previousScreen: 'Profile' }) }}
+                    rightView={
+                        <TouchableOpacity style={{
+                            width: 40,
+                            height: 40,
+
+                            flexDirection: 'row',
+                            borderWidth: 1,
+                            borderColor: color.brown,
+
+                            justifyContent: 'center',
+                            alignItems: 'center',
+
+                            borderRadius: 97
+                        }}
+                            onPress={() => {
+                                navigation?.navigate(
+                                    'SettingScreen',
+                                );
+                            }}
+                        >
+                            <AppImage
+                                source={Images.setting}
+                                width={18}
+                                height={19}
+
+                            />
+
+                        </TouchableOpacity>
+                    }
+                />
+
+                {loader ? (
+                    <View style={styles.loaderContainer}>
+                        <ActivityIndicator size="large" color="#D07113" />
+                    </View>
+                ) : (
+                    <>
+                        {/* Profile Information */}
+                        <View style={styles.profileHeader}>
+                            <View style={styles.avatarWrapper}>
                                 <LinearGradient
-                                    colors={['#EB2C78', '#F8B953']}
-                                    start={{ x: 0.2, y: 0 }}
-                                    end={{ x: 1, y: 1 }}
-                                    style={{
-                                        width: 120,
-                                        height: 120,
-                                        borderRadius: 60,
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        position: 'relative',
-                                    }}
+                                    colors={['#A83DDA', '#F04A85']}
+                                    style={styles.avatarGradient}
                                 >
                                     {profiledetail?.avatar_url ? (
                                         <AppImage
                                             source={GlobalImage(profiledetail.avatar_url)}
-                                            width={118}
-                                            height={118}
-                                            radius={58}
+                                            width={68}
+                                            height={68}
+                                            radius={34}
                                             resizeMode="cover"
                                         />
                                     ) : (
                                         <AppText
-                                            style={{
-                                                fontSize: 42,
-                                                fontWeight: '700',
-                                                color: '#FFFFFF',
-                                            }}
+                                            color="#FFFFFF"
+                                            fontSize={26}
+                                            fontWeight="700"
                                         >
                                             {getInitials(profiledetail?.name)}
                                         </AppText>
                                     )}
                                 </LinearGradient>
-                                <TouchableOpacity
-                                    onPress={pickImage}
-                                    style={{
-                                        borderWidth: 1,
-                                        borderColor: '#D07113',
-                                        position: 'absolute',
-                                        bottom: 4,
-                                        right: 2,
-                                        height: 32,
-                                        width: 32,
-                                        borderRadius: 16,
-                                        backgroundColor: '#000',
-
-                                        zIndex: 9999,
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                    }}
-                                >
-                                    <AppImage
-                                        source={Logo.camera}
-                                        height={11}
-                                        width={13}
-                                    />
-                                </TouchableOpacity>
                             </View>
-                            <View style={{ gap: 1 }}>
-                                <AppText width={'80%'} lineHeight={22} color={color.darkthemetext} fontSize={20} fontWeight="500" fontFamily={Inter.regular}>
 
+                            <View style={styles.profileInfo}>
+                                <AppText
+                                    color="#FFFFFF"
+                                    fontSize={18}
+
+                                    fontFamily={Inter.bold}
+                                    numberOfLines={1}
+                                >
                                     {profiledetail?.name
+                                        ? profiledetail.name.charAt(0).toUpperCase() +
+                                        profiledetail.name.slice(1)
+                                        : 'User'}
+                                </AppText>
 
-
-                                        ? profiledetail?.name?.charAt(0).toUpperCase() + profiledetail.name.slice(1).toLowerCase()
-                                        : ''
-
-
+                                <TouchableOpacity
+                                    activeOpacity={0.8}
+                                    onPress={() =>
+                                        navigation.navigate('SettingScreen' as never)
                                     }
-                                </AppText>
-
-                                <AppText width={'90%'} lineHeight={22} color={color.darkthemetext} fontSize={12} fontWeight="500"
-                                    style={{ flex: 1 }}
-                                    fontFamily={Inter.regular}>
-
-                                    {profiledetail?.email}
-
-
-
-
-
-
-                                </AppText>
-                                {/* <View style={styles.vipview}>
-                                    <AppImage
-                                        source={Images.rivip}
-                                        width={15}
-                                        height={15}
-
-                                    />
-                                    <AppText color={"#FEDF66"} fontSize={10} fontWeight="500" fontFamily={Inter.regular}>
-
-                                        {t('Library.VIPpremium')}
-                                    </AppText>
-
-                                </View> */}
-                                <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
-                                    <AppImage
-                                        source={Images.star}
-                                        width={15}
-                                        height={15}
-                                        tintColor={"#D07113"}
-
-                                    />
-                                    <AppText color={"#D07113"} fontSize={11} fontWeight="500" fontFamily={Inter.regular}>
-
-
-                                        {t('Library.risingstar')}
-                                    </AppText>
-
-                                </View>
-
-                                <View style={{ flex: 1, width: '100%', }}>
-                                    {
-                                        profiledetail?.bio ?
-                                            <View style={{ flex: 1, width: 200, flexWrap: 'wrap' }}>
-
-
-                                                <AppText
-                                                    color="#CECECE"
-                                                    fontSize={10}
-                                                    lineHeight={18}
-                                                    numberOfLines={3}
-                                                    fontFamily={Inter.regular}
-                                                    style={{
-                                                        flexShrink: 1,
-                                                        width: '100%',
-                                                        flexWrap: 'wrap'
-
-                                                    }}
-                                                >
-                                                    {profiledetail?.bio || ''}
-                                                </AppText>
-                                            </View> : null}
-
-                                    <View
-                                        style={{
-                                            flexDirection: 'row',
-                                            gap: 5,
-                                            alignItems: 'center',
-                                            marginTop: 10,
-                                        }}
-                                    >
-                                        <AppImage
-                                            source={Logo.calander}
-                                            width={15}
-                                            height={15}
-                                        />
-
-                                        <AppText
-                                            color="#D07113"
-                                            fontSize={10}
-                                            fontWeight="400"
-                                            fontFamily={Inter.light}
-                                        >
-                                            {formatMemberSince(profiledetail?.created_at)}
-                                        </AppText>
-                                    </View>
-                                </View>
-
-
-
-                            </View>
-
-                        </View>
-
-
-
-                        <View style={styles.dashboardview}>
-                            {
-                                features.map((item, index) => {
-                                    return (
-                                        <View key={index} style={{
-                                            gap: 5,
-                                            justifyContent: 'center',
-                                            alignItems: 'center'
-                                        }}>
-                                            <AppImage
-                                                source={item.image}
-                                                width={30}
-                                                height={30}
-                                                resizeMode="contain"
-                                                tintColor={item.tintColor}
-                                                style={{
-                                                    alignSelf: 'center',
-                                                }}
-                                            />
-                                            <AppText color={color.darkthemetext}
-                                                fontSize={20}
-                                                fontWeight="500"
-                                                fontFamily={Inter.regular}>
-                                                {item.number}
-                                            </AppText>
-                                            <AppText
-                                                color={color.darkthemetext}
-                                                fontSize={12}
-                                                fontWeight="500"
-                                                fontFamily={Inter.regular}>
-                                                {item.title}
-                                            </AppText>
-
-                                        </View>
-                                    )
-                                })
-                            }
-                        </View>
-
-                        <View style={{ borderColor: '#121212', borderWidth: 1, borderRadius: 12, width: '100%', padding: 10 }} >
-
-                            <View style={[styles.titles, { width: '100%' }]}>
-                                <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-
-                                    {t('Library.Achievments')}
-                                </AppText>
-                                {/* <TouchableOpacity
-
-                                    style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
-                                    <AppText color={color.mgred} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-                                        View all
-                                    </AppText>
-                                    <AppImage
-                                        source={Images.arrow}
-                                        width={5}
-                                        height={8}
-                                    />
-                                </TouchableOpacity> */}
-
-
-                            </View>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', gap: 8, flexWrap: 'wrap', paddingVertical: 10 }}>
-                                {achievmentdata.map((item, index) => (
-                                    <TouchableOpacity
-                                        onPress={() => { handleachevmentfun(item, index) }}
-                                        // onPress={() => navigation.navigate('Recording', { prevScreen: '.', data: songdetail })}
-                                        key={index}
-                                        style={{
-                                            width: '45.3%',
-                                            borderWidth: 1,
-                                            borderColor: '#121212',
-                                            flexDirection: 'row',
-                                            justifyContent: 'space-between',
-
-                                            gap: 5,
-                                            padding: 11,
-                                            borderRadius: 9,
-                                            paddingHorizontal: 15,
-
-                                        }}
-                                    >
-                                        <ImageBackground
-                                            source={Images.hexagon}
-                                            height={45}
-                                            width={22}
-                                            resizeMode="conatin"
-                                            style={{ justifyContent: 'center', alignItems: 'center', padding: 11 }}
-                                            imageStyle={{
-                                                tintColor: item.tintcolor,
-                                            }}
-                                        >
-                                            <AppImage
-                                                source={item.image}
-                                                width={12}
-                                                height={19}
-                                                resizeMode="contain"
-                                            />
-
-                                        </ImageBackground>
-                                        <View>
-                                            <AppText color={color.darkthemetext} fontSize={10}
-                                                fontWeight="500"
-                                                fontFamily={Inter.regular}>
-                                                {item.title}
-                                            </AppText>
-                                            <AppText color={color.darkthemetext} fontSize={9}
-                                                fontWeight="500"
-                                                marginTop={5}
-                                                fontFamily={Inter.regular}>
-                                                {item.title1}
-                                            </AppText>
-                                        </View>
-
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-
-                        </View>
-
-
-
-                        <View style={[styles.titles]}>
-                            <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-
-                                {t('Library.recentperfomance')}
-                            </AppText>
-                            <TouchableOpacity
-                                onPress={() => {
-                                    (navigation as any).navigate('RecordingList', {
-                                        recordings: recdata,
-                                        previousScreen: 'Profile',
-                                        isRecordings: true,
-                                    });
-                                }}
-                                style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
-                                <AppText color={color.mgred} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-
-                                    {t('Home.Seeall')}
-                                </AppText>
-                                <AppImage
-                                    source={Images.arrow}
-                                    width={5}
-                                    height={8}
-                                />
-                            </TouchableOpacity>
-
-
-                        </View>
-
-                        {
-                            recdata?.length > 0 ?
-
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: 10 }}>
-                                    {recdata?.slice(0, 3).map((item, index) => (
-                                        <View key={index} style={{
-                                            height: 111,
-                                            width: '30%',
-                                            borderWidth: 1,
-                                            borderColor: '#121212',
-                                            flexDirection: 'row',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-
-                                            borderRadius: 9,
-                                            overflow: 'hidden'
-
-                                        }}>
-                                            <ImageBackground
-                                                source={GlobalImage(item?.album_picture_url)}
-                                                resizeMode="cover"
-                                                style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    padding: 10,
-                                                    gap: 10,
-                                                    justifyContent: 'space-between',
-                                                }}
-                                                imageStyle={{
-                                                    width: '170%',
-                                                    height: 111
-                                                }}
-                                            >
-                                                {/* Play Button */}
-                                                <TouchableOpacity
-                                                    onPress={() => {
-                                                        // playingId === item.id
-                                                        //     ? stopRecording()
-                                                        //     : playRecording(item)
-
-                                                        (navigation as any).navigate('.', { id: item.id, type: 'recordings', previousScreen: 'Profile' });
-                                                    }}
-                                                    style={{
-                                                        borderWidth: 2,
-                                                        borderColor: '#F3870C',
-                                                        justifyContent: 'center',
-                                                        alignItems: 'center',
-                                                        backgroundColor: 'black',
-                                                        height: 24,
-                                                        width: 24,
-                                                        borderRadius: 15,
-                                                        alignSelf: 'center',
-                                                    }}
-                                                >
-                                                    {
-                                                        playingId == item.id ?
-                                                            <View style={styles.pauseContainer}>
-                                                                <View style={styles.pauseLine} />
-                                                                <View style={styles.pauseLine} />
-                                                            </View> :
-                                                            <AppImage
-                                                                source={Images.playicon}
-                                                                width={7}
-                                                                height={7}
-                                                                resizeMode="contain"
-                                                            />}
-                                                </TouchableOpacity>
-
-                                                {/* Bottom Content */}
-                                                <View>
-                                                    <AppText
-                                                        color={color.darkthemetext}
-                                                        fontSize={12}
-                                                        fontWeight="500"
-                                                        fontFamily={Inter.regular}
-                                                        numberOfLines={1}
-                                                    >
-                                                        {item.title}
-                                                    </AppText>
-
-                                                    <View
-                                                        style={{
-                                                            flexDirection: 'row',
-                                                            gap: 5,
-                                                            alignItems: 'center',
-                                                            justifyContent: 'space-between',
-                                                        }}
-                                                    >
-                                                        <AppText
-                                                            color={color.darkthemetext}
-                                                            fontSize={10}
-
-                                                            fontFamily={Inter.bold}
-                                                        >
-                                                            {getTimeAgo(item.updated_at)}
-                                                        </AppText>
-
-                                                        <View
-                                                            style={{
-                                                                flexDirection: 'row',
-                                                                gap: 5,
-                                                                alignItems: 'center',
-                                                                borderWidth: 2,
-                                                                borderColor: '#D07113',
-                                                                padding: 2,
-                                                                borderRadius: 5,
-                                                            }}
-                                                        >
-                                                            {/* <AppImage
-                                                                source={Images.star}
-                                                                width={10}
-                                                                height={10}
-                                                                tintColor={'#D07113'}
-                                                            /> */}
-                                                            <AppText
-                                                                color={color.darkthemetext}
-                                                                fontSize={10}
-
-                                                                fontFamily={Inter.medium}
-                                                            >
-                                                                {item.duration}
-                                                            </AppText>
-                                                        </View>
-                                                    </View>
-                                                </View>
-                                            </ImageBackground>
-                                        </View>
-                                    ))}
-                                </View>
-                                :
-                                <View style={{
-                                    flex: 1,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    paddingVertical: 40,
-                                }}>
-                                    <AppImage
-                                        source={Logo.ymusic}
-                                        width={20}
-                                        height={20}
-                                    />
+                                    style={styles.editProfileButton}
+                                >
                                     <AppText
-                                        color={color.darkthemetext}
-                                        fontSize={14}
-                                        marginTop={10}
+                                        color="#D5D5D5"
+                                        fontSize={10}
+                                        fontFamily={Inter.regular}
                                     >
-                                        {t('Library.nosongsfound')}
-
+                                        Edit profile
                                     </AppText>
-                                </View>
-                        }
-
-
-
-                        {/* <View style={[styles.titles]}>
-                            <AppText color={color.darkthemetext} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-
-
-                                {t('Library.recentactivity')}
-                            </AppText>
-                            <TouchableOpacity style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
-                                <AppText color={color.mgred} fontSize={14} fontWeight="500" fontFamily={Inter.regular}>
-                                    See all
-                                </AppText>
+                                </TouchableOpacity>
+                            </View>
+                            {/* 
+                            <TouchableOpacity
+                                onPress={pickImage}
+                                style={styles.cameraButton}
+                            >
                                 <AppImage
-                                    source={Images.arrow}
-                                    width={5}
-                                    height={8}
+                                    source={Logo.camera}
+                                    width={13}
+                                    height={13}
                                 />
-                            </TouchableOpacity>
+                            </TouchableOpacity> */}
+                        </View>
 
-
-                        </View> */}
-
-
-                        {/* 
-                        <TouchableOpacity
-                            activeOpacity={0.8}
-                            style={[styles.card, { borderColor: color.searhbarbordercolor }]}
-                        >
-                           
-                            <AppImage
-                                source={Images.profile}
-                                width={62}
-                                height={64}
-                                radius={8}
-                            />
-
-                          
-                            <View style={styles.content}>
-                                <AppText
-                                    fontSize={10}
-                                    fontWeight="700"
-                                    color={color.darkthemetext}
-                                    fontFamily={Inter.medium}
-                                >
-                                    {"Ya Leil"}
-                                </AppText>
-
-                                <AppText
-                                    fontSize={10}
-                                    color={color.darkthemetext}
-                                    marginTop={4}
-                                    fontFamily={Inter.regular}
-                                >
-                                    Hozan Yosif
-                                </AppText>
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                                    <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
-                                      
-                                        <AppText
-                                            fontSize={8}
-                                            color={color.darkthemetext}
-                                            marginTop={4}
-                                            fontFamily={Inter.light}
-                                        >
-                                            {"Performed 2 h ago"}
-                                        </AppText>
-                                    </View>
-
-
-
-                                </View>
-
-
-                            </View>
-
-                          
-                            <View style={styles.right}>
-
-
-                             
-
-                                <View style={{ gap: 2, alignItems: 'center' }}>
-                                    <AppImage
-                                        source={Images.like}
-                                        height={16}
-                                        width={16}
-                                    />
-                                    <AppText color={color.darkthemetext} fontSize={10} fontFamily={Inter.regular}>
-                                        {"45"}
-                                    </AppText>
-                                    <AppText color={color.darkthemetext} fontSize={8} fontFamily={Inter.regular}>
-                                        {"Likes"}
-                                    </AppText>
-                                </View>
-
-                                <View style={{ gap: 2, alignItems: 'center' }}>
-                                    <AppImage
-                                        source={Logo.eye}
-                                        height={16}
-                                        width={16}
-                                        tintColor={"#9FB9DA"}
-                                        resizeMode="contain"
-                                    />
-                                    <AppText color={color.darkthemetext} fontSize={10} fontFamily={Inter.regular}>
-                                        {"45"}
-                                    </AppText>
-                                    <AppText color={color.darkthemetext} fontSize={8} fontFamily={Inter.regular}>
-                                        {"Views"}
-                                    </AppText>
-                                </View>
-                                <View style={{ gap: 2, alignItems: 'center' }}>
-                                    <AppImage
-                                        source={Logo.mshare}
-                                        height={16}
-                                        width={16}
-                                    />
-                                    <AppText color={color.darkthemetext} fontSize={10} fontFamily={Inter.regular}>
-                                        {"45"}
-                                    </AppText>
-                                    <AppText color={color.darkthemetext} fontSize={8} fontFamily={Inter.regular}>
-                                        {"Likes"}
-                                    </AppText>
-                                </View>
-
-
-
-                              
-                                <TouchableOpacity style={styles.menu}>
-                                    <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
-                                    <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
-                                    <View style={[styles.dot, { backgroundColor: color.darkthemetext }]} />
-                                </TouchableOpacity>
-                            </View>
-                        </TouchableOpacity> */}
-
-                        {/* <LinearGradient
-                            colors={['#620D33', '#3B1230', '#220A20', '#3A120F', '#5B1B01']}
-                            locations={[0, 0.3, 0.5, 0.75, 1]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.addview}
-                        >
-                            <View style={{ width: '99%', flexDirection: 'row', height: '99%', paddingHorizontal: 10, justifyContent: 'space-between', alignSelf: 'center', alignItems: 'center' }}>
-                                <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'center', alignItems: 'center' }}>
-                                  
-                                    <ImageBackground
-                                        source={Images.lvipview}
-                                        resizeMode="cover"
-                                        style={{ height: 54, width: 54, justifyContent: 'center', alignItems: 'center' }}
-                                        imageStyle={{}}
-                                    >
-                                        <AppImage
-                                            source={Images.rivip}
-                                            width={25}
-                                            height={21}
-
-                                        />
-                                    </ImageBackground>
-
-
-
-                                    
-                                    <View>
-                                        <AppText color={"#FFFF"}
-                                            fontSize={15}
-                                            fontWeight="500"
-                                            fontFamily={Inter.regular}>
-
-
-                                            {t('Library.You’repremium')}
-                                        </AppText>
-
-                                        <AppText color={"#F8CF36"}
-                                            fontSize={12}
-                                            fontWeight="500"
-                                            fontFamily={Inter.regular}>
-
-                                            {t('Library.enjoyallpremiumfeatures')}
-
-                                        </AppText>
-                                        <AppText color={"#F8CF36"} fontSize={12} fontWeight="500" fontFamily={Inter.regular}>
-
-                                            {t('Library.andunlimitedsinging.')}
-
-                                        </AppText>
-                                    </View>
-                                </View>
-
-
-                                <TouchableOpacity style={{
-                                    borderWidth: 1,
-                                    borderColor: '#902C27',
-                                    flexDirection: 'row',
-                                    gap: 8,
-                                    backgroundColor: '#571815',
-                                    borderRadius: 29,
-                                    height: 36,
-                                    width: 96,
-                                    justifyContent: 'center',
-                                    alignItems: 'center'
-                                }}>
-                                    <AppText color={"#ffff"} fontSize={10} fontWeight="400" fontFamily={Inter.light}>
-
-                                        {t('Library.Manageplan')}
-                                    </AppText>
-                                    <AppImage
-                                        source={Images.arrow}
-                                        width={5}
-                                        height={8}
-                                        tintColor={"#E3B86E"}
-
-                                    />
-                                </TouchableOpacity>
-
-                               
-                            </View>
-
-
-
-                        </LinearGradient> */}
-
-
-                        <View
-                            style={[
-                                styles.featureview,
+                        {/* Profile Menu */}
+                        <View style={styles.menuCard}>
+                            {[
                                 {
-                                    flexDirection: 'row',
-                                    flexWrap: 'wrap',
-                                    justifyContent: 'space-between',
+                                    title: 'My recordings',
+                                    image: Images.mic,
+                                    onPress: () =>
+                                        (navigation as any).navigate('RecordingList' as never, {
+                                            recordings: recdata,
+                                            previousScreen: 'Profile',
+                                            isRecordings: true,
+                                        } as never),
                                 },
-                            ]}
-                        >
-                            {featuritem.map((item, index) => (
-                                <View
-                                    key={index}
-                                    style={{
-                                        width: '48%',
-                                        marginVertical: 8,
+                                {
+                                    title: 'My playlists',
+                                    image: Images.playlist,
+                                    onPress: () =>
+                                        (navigation as any).navigate('CreatePlaylist' as never),
+                                },
+                                {
+                                    title: 'Favorites',
+                                    image: Images.like,
+                                    onPress: () =>
+                                        (navigation as any).navigate('SongsListScreen' as never, {
+                                            songs: favorites,
+                                            previousScreen: 'Profile',
+                                        } as never),
+                                },
+                                {
+                                    title: 'Recently played',
+                                    image: Images.history,
+                                    onPress: () =>
 
-                                    }}
+                                        (navigation as any).navigate('SongsListScreen' as never, {
+                                            songs: recentlyPlayed,
+                                            previousScreen: 'Profile',
+                                        } as never),
+                                },
+                            ].map((item, index) => (
+                                <TouchableOpacity
+                                    key={item.title}
+                                    activeOpacity={0.7}
+                                    onPress={item.onPress}
+                                    style={[
+                                        styles.menuItem,
+                                        index !== 3 && styles.menuItemBorder,
+                                    ]}
                                 >
-                                    <TouchableOpacity
-                                        onPress={() => handlefeaturefun(item, index)}
-                                        style={{
-                                            flexDirection: 'row',
-                                            alignItems: 'center',
-                                            // gap: 15,
-
-
-                                            justifyContent: 'space-between'
-                                        }}
-                                    >
-                                        <View style={{
-                                            flexDirection: 'row',
-                                            alignItems: 'center',
-                                            gap: 10,
-                                        }}>
-                                            <AppImage
-                                                source={item.image}
-                                                width={25}
-                                                height={25}
-                                                resizeMode="contain"
-                                                tintColor={item.color}
-                                                style={{
-                                                    transform: [
-                                                        {
-                                                            rotate: item.title === "Logout" ? "-90deg" : "0deg",
-                                                        },
-                                                    ],
-                                                }}
-                                            />
-
-                                            <AppText
-                                                color={color.darkthemetext}
-                                                fontSize={15}
-                                                fontWeight="400"
-                                            >
-                                                {item.title}
-                                            </AppText>
-                                        </View>
-
-
+                                    <View style={styles.menuLeft}>
                                         <AppImage
-                                            source={Images.arrow}
-                                            width={7}
-                                            height={9}
-                                            //   style={{alignSelf:'flex-end'}}
-                                            tintColor={"#D6D7D5"}
-
+                                            source={item.image}
+                                            width={20}
+                                            height={20}
+                                            resizeMode="contain"
+                                            tintColor="#E7E7E7"
                                         />
-                                    </TouchableOpacity>
 
-                                    {/* <View
-        style={{
-          height: 1,
-          width: '100%',
-          marginVertical: 8,
-          backgroundColor: '#350C00',
-        }}
-      /> */}
-                                </View>
+                                        <AppText
+                                            color="#E8E8E8"
+                                            fontSize={13}
+                                            fontFamily={Inter.regular}
+                                        >
+                                            {item.title}
+                                        </AppText>
+                                    </View>
+
+                                    <AppText color="#929292" fontSize={23}>
+                                        ›
+                                    </AppText>
+                                </TouchableOpacity>
                             ))}
                         </View>
 
+                        {/* Recent Recordings */}
+                        <View style={styles.recentHeader}>
+                            <AppText
+                                color="#FFFFFF"
+                                fontSize={15}
+                                fontWeight="600"
+                                fontFamily={Inter.medium}
+                            >
+                                Recent recordings
+                            </AppText>
 
+                            <TouchableOpacity
+                                onPress={() =>
+                                    navigation.navigate('RecordingList' as never, {
+                                        recordings: recdata,
+                                        previousScreen: 'Profile',
+                                        isRecordings: true,
+                                    } as never)
+                                }
+                                style={styles.seeAllButton}
+                            >
+                                <AppText
+                                    color="#B84CFF"
+                                    fontSize={12}
+                                    fontFamily={Inter.medium}
+                                >
+                                    See all
+                                </AppText>
 
-                        <View style={{ height: 80 }} />
-                    </ScrollView>
-            }
+                                <AppText color="#B84CFF" fontSize={18}>
+                                    ›
+                                </AppText>
+                            </TouchableOpacity>
+                        </View>
 
+                        {recdata?.length > 0 ? (
+                            <View style={styles.recordingCard}>
+                                {recdata.slice(0, 3).map((item, index) => (
+                                    <View
+                                        key={item.id?.toString() || index.toString()}
+                                        style={styles.recordingItem}
+                                    >
+                                        <AppImage
+                                            source={GlobalImage(item?.album_picture_url)}
+                                            width={48}
+                                            height={48}
+                                            radius={8}
+                                            resizeMode="cover"
+                                        />
 
+                                        <View style={styles.recordingInfo}>
+                                            <AppText
+                                                color="#FFFFFF"
+                                                fontSize={12}
+                                                fontFamily={Inter.medium}
+                                                numberOfLines={1}
+                                            >
+                                                {item.title || 'Practice recording'}
+                                            </AppText>
 
+                                            <AppText
+                                                color="#999999"
+                                                fontSize={10}
+                                                fontFamily={Inter.regular}
+                                                style={{ marginTop: 4 }}
+                                            >
+                                                {item.duration || '00:00'} · {getTimeAgo(item.updated_at)}
+                                            </AppText>
+                                        </View>
 
+                                        <TouchableOpacity
+                                            activeOpacity={0.8}
+                                            onPress={() => {
+                                                navigation.navigate('.' as never, {
+                                                    id: item.id,
+                                                    type: 'recordings',
+                                                    previousScreen: 'Profile',
+                                                } as never);
+                                            }}
+                                            style={styles.recordingPlayButton}
+                                        >
+                                            <AppImage
+                                                source={Images.playicon}
+                                                width={10}
+                                                height={10}
+                                                resizeMode="contain"
+                                            />
+                                        </TouchableOpacity>
 
+                                        <TouchableOpacity
+                                            style={styles.moreButton}
+                                            onPress={() => {
+                                                // Add recording options here if required.
+                                            }}
+                                        >
+                                            <AppText color="#FFFFFF" fontSize={20}>
+                                                ⋮
+                                            </AppText>
+                                        </TouchableOpacity>
+                                    </View>
+                                ))}
+                            </View>
+                        ) : (
+                            <View style={styles.emptyRecordings}>
+                                <AppText color="#999999" fontSize={12}>
+                                    No recordings found
+                                </AppText>
+                            </View>
+                        )}
+
+                        {/* Create Playlist */}
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={() =>
+                                navigation.navigate('CreatePlaylist' as never)
+                            }
+                            style={styles.createPlaylistGradient}
+                        >
+                            <LinearGradient
+                                colors={['#F28B36', '#A53DDB']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.createPlaylistBorder}
+                            >
+                                <View style={styles.createPlaylistInner}>
+                                    <AppText
+                                        color="#B84CFF"
+                                        fontSize={20}
+                                        fontWeight="400"
+                                    >
+                                        +
+                                    </AppText>
+
+                                    <AppText
+                                        color="#B84CFF"
+                                        fontSize={13}
+                                        fontFamily={Inter.medium}
+                                    >
+                                        Create playlist
+                                    </AppText>
+                                </View>
+                            </LinearGradient>
+                        </TouchableOpacity>
+
+                        <View style={{ height: 30 }} />
+                    </>
+                )}
+            </ScrollView>
         </SafeAreaView>
-    )
+    );
 }
 
 
@@ -1369,142 +921,186 @@ const Profile = () => {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: color.darkbackround,
         flex: 1,
-        paddingHorizontal: 10
+        paddingHorizontal: 15,
     },
-    vipview: {
-        borderWidth: 1,
-        borderColor: '#311C13',
-        backgroundColor: '#1E120F',
+
+    scrollContent: {
+        paddingBottom: 20,
+    },
+
+    loaderContainer: {
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 16.5,
-        paddingVertical: 6,
-        marginVertical: 5,
-        // paddingHorizontal:2,
-        flexDirection: 'row',
-        width: 96,
-        gap: 4
     },
-    dashboardview: {
-        marginTop: 15,
+
+    topHeader: {
+        height: 45,
         flexDirection: 'row',
-        // justifyContent:'space-between',
         alignItems: 'center',
-        alignSelf: 'center',
-        gap: 55
+        justifyContent: 'space-between',
+        marginBottom: 16,
     },
-    addview: {
-        width: '100%',
-        height: 89,
+
+    profileHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 20,
+        gap: 12,
+    },
+
+    avatarWrapper: {
+        width: 68,
+        height: 68,
+        borderRadius: 34,
+        overflow: 'hidden',
+    },
+
+    avatarGradient: {
+        width: 68,
+        height: 68,
+        borderRadius: 34,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    profileInfo: {
+        flex: 1,
+        justifyContent: 'center',
+        gap: 5,
+    },
+
+    editProfileButton: {
+        borderWidth: 1,
+        borderColor: '#555555',
+        borderRadius: 20,
+        paddingHorizontal: 15,
+        paddingVertical: 5,
+        alignSelf: 'flex-start',
+    },
+
+    cameraButton: {
+        position: 'absolute',
+        left: 43,
+        bottom: 0,
+        height: 21,
+        width: 21,
+        borderRadius: 11,
+        backgroundColor: '#252525',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    menuCard: {
+        backgroundColor: '#191A1E',
+        borderRadius: 14,
+        overflow: 'hidden',
+        marginBottom: 20,
+    },
+
+    menuItem: {
+        height: 49,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 15,
+    },
+
+    menuItemBorder: {
+        borderBottomWidth: 1,
+        borderBottomColor: '#292A2E',
+    },
+
+    menuLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 15,
+    },
+
+    recentHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+    },
+
+    seeAllButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+    },
+
+    recordingCard: {
+        backgroundColor: '#191A1E',
+        borderRadius: 13,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+    },
+
+    recordingItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 8,
+        gap: 10,
+    },
+
+    recordingInfo: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+
+    recordingPlayButton: {
+        width: 32,
+        height: 32,
         borderRadius: 16,
-        // paddingHorizontal: 10,
-        overflow: 'hidden',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexDirection: 'row',
-        backgroundColor: 'red',
-
-    },
-    vipiconview: {
-        height: 54,
-        width: 54,
-        borderRadius: 70,
+        backgroundColor: '#292A2E',
         justifyContent: 'center',
-        overflow: 'hidden',
-        alignItems: 'center'
+        alignItems: 'center',
     },
-    featureview: {
-        borderWidth: 1,
-        borderColor: '#3D2B22',
-        borderRadius: 18,
-        overflow: 'hidden',
-        // gap:10,
-        padding: 15
+
+    moreButton: {
+        width: 20,
+        height: 35,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    card: {
-        //  backgroundColor: '#07080A',
-        borderRadius: 10,
-        padding: 12,
-        marginBottom: 5,
+
+    emptyRecordings: {
+        height: 90,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#191A1E',
+        borderRadius: 13,
+    },
+
+    createPlaylistGradient: {
         width: '100%',
-        flexDirection: 'row',
-        alignItems: 'center',
-        // marginVertical:5,
-        borderWidth: 1,
-        borderColor: '#38190A',
+        height: 42,
+        borderRadius: 11,
+        overflow: 'hidden',
+        marginTop: 12,
+
     },
 
-    content: {
+    createPlaylistBorder: {
         flex: 1,
-        marginLeft: 12,
+        //  padding: 1,
+
+        borderRadius: 11,
     },
 
-    waveContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 10,
-    },
-
-    wave: {
-        width: 2,
+    createPlaylistInner: {
+        flex: 1,
         borderRadius: 10,
-        backgroundColor: '#FF003C',
-        marginRight: 3,
-    },
-
-    right: {
+        backgroundColor: '#111216',
         flexDirection: 'row',
         alignItems: 'center',
-        marginLeft: 12,
-        gap: 15
-    },
-
-    playButton: {
-        width: 30,
-        height: 30,
-        borderRadius: 100,
-        borderWidth: 1.5,
-        borderColor: '#38190A',
-
         justifyContent: 'center',
-        alignItems: 'center',
+        gap: 8,
+        margin: 1,
     },
-
-    pauseContainer: {
-        flexDirection: 'row',
-        gap: 4,
-    },
-
-    pauseLine: {
-        width: 3,
-        height: 14,
-        backgroundColor: '#FFF',
-        borderRadius: 10,
-    },
-
-    menu: {
-        marginLeft: 14,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-
-    dot: {
-        width: 2.4,
-        height: 2.4,
-        borderRadius: 100,
-        backgroundColor: '#FFF',
-        marginVertical: 1.5,
-    },
-    titles: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        // marginVertical:10,
-    }
-
-
-})
+});
 
 
 export default Profile;

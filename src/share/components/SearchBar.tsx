@@ -39,8 +39,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
       style={[
         styles.searchContainer,
         {
-          backgroundColor: color.darkbackround,
-          borderColor: color.searhbarbordercolor,
+          backgroundColor: '#181620',
+          borderColor: '#333',
         },
       ]}
     >
@@ -48,7 +48,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         source={BottomIcons.search}
         width={18}
         height={18}
-        tintColor="#EEA75E"
+        tintColor="#777"
       />
 
       {IsPressable ? (

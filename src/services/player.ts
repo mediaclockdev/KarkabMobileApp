@@ -34,9 +34,9 @@ export const getMediaAudioUrl = (url?: string | null): string => {
         !clean.startsWith('file://')
     ) {
         if (clean.includes('uploads/recordings/')) {
-            const s3Base = 'https://karkab-media-storage.s3.ap-southeast-2.amazonaws.com';
+            const cfBase = 'https://d2ycnbqrkk31pf.cloudfront.net';
             const path = clean.replace(/^\//, '');
-            fullUrl = `${s3Base}/${path}`;
+            fullUrl = `${cfBase}/${path}`;
         } else {
             const base = BASE_URL.replace(/\/$/, '');
             const path = clean.replace(/^\//, '');
@@ -170,12 +170,12 @@ export const formatSongToMediaItem = (
     const durationSec = parseDurationToSeconds(song.duration);
     const artwork = getArtworkUrl(
         song.cover_image_url ||
-            song.cover_image ||
-            song.image_url ||
-            song.artwork ||
-            song.album_picture_url ||
-            song.album_picture ||
-            (typeof song.image === 'string' ? song.image : undefined),
+        song.cover_image ||
+        song.image_url ||
+        song.artwork ||
+        song.album_picture_url ||
+        song.album_picture ||
+        (typeof song.image === 'string' ? song.image : undefined),
     );
 
     return {
@@ -386,7 +386,6 @@ export const playSongList = async (
         }
 
         // Locate the target song by ID to avoid index shifting if any preceding item was filtered out
-        const requestedSong = songs[initialIndex] || songs[0];
         let targetIndex = validSongs.findIndex(
             (s) => s.id?.toString() === requestedSong?.id?.toString(),
         );
@@ -619,7 +618,7 @@ export const skipToPreviousTrack = async (dispatch?: Dispatch) => {
                 await TrackPlayer.seekTo(0);
                 return;
             }
-        } catch (e) {}
+        } catch (e) { }
 
         // 1. Check native TrackPlayer queue
         const queue = await TrackPlayer.getQueue();
@@ -738,7 +737,7 @@ export const playAdjacentSong = async (
             if (activeTrack?.mediaId) {
                 currentId = activeTrack.mediaId;
             }
-        } catch (e) {}
+        } catch (e) { }
 
         const currentAuthState = (store.getState() as any)?.auth;
         if (!currentId) {

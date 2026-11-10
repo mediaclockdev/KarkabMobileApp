@@ -41,7 +41,7 @@ const Header: React.FC<HeaderProps> = ({
     <View style={{ paddingHorizontal: 5, paddingVertical: 14, }}>
 
 
-      {headername == 'Search' || headername == 'Library' || headername == 'Profile' ?
+      {headername == 'Search' || headername == 'Library' || headername == 'Profile' || headername == 'Classic Playlists' ?
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
           <AppImage
             source={Logo.mainlogo}
@@ -123,7 +123,7 @@ const Header: React.FC<HeaderProps> = ({
                     width={16}
                     resizeMode='contain'
                     style={{
-                      marginTop: 5,
+                      marginTop: 3,
                     }}
                   />
 
@@ -135,8 +135,8 @@ const Header: React.FC<HeaderProps> = ({
 
           <AppText
             fontSize={14}
-            color={headername == 'Search' ? '#FFF195' : '#FFF195'}
-            marginTop={1}
+            color={headername == 'Search' ? '#FFF195' : '#FC6101'}
+            marginTop={5}
             fontFamily={Inter.regular}
             style={{ alignItems: 'flex-start', alignSelf: 'flex-start' }}
           >
@@ -271,67 +271,70 @@ const Header: React.FC<HeaderProps> = ({
                     </Text>
                   </View>
                 </View> :
-
-                <LinearGradient
-                  colors={['#FDCD00', '#FF8300']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{
-                    borderRadius: 25,
-                  }}
-                >
-                  <TouchableOpacity
-                    onPress={onRightPress}
-                    activeOpacity={0.8}
+                <View>
+                  <LinearGradient
+                    colors={['#FDCD00', '#FF8300']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
                     style={{
-                      width: 39,
-                      height: 39,
-                      borderRadius: 24,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      backgroundColor: color.darkbackround,
-                      margin: 1,
+                      borderRadius: 25,
                     }}
                   >
-                    <Image
-                      source={rightIcon}
+                    <TouchableOpacity
+                      onPress={onRightPress}
+                      activeOpacity={0.8}
                       style={{
-                        width: 14,
-                        height: 19,
-                        resizeMode: 'contain',
+                        width: 39,
+                        height: 39,
+                        borderRadius: 24,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        backgroundColor: color.darkbackround,
+                        margin: 1,
                       }}
-                    />
-
-                    {unreadCount > 0 && (
-                      <View
+                    >
+                      <Image
+                        source={rightIcon}
                         style={{
-                          position: 'absolute',
-                          top: -5,
-                          right: -5,
-                          minWidth: 17,
-                          height: 17,
-                          borderRadius: 10,
-                          backgroundColor: '#FC6101',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          paddingHorizontal: 3,
-                          borderWidth: 1,
-                          borderColor: color.darkbackround,
+                          width: 14,
+                          height: 19,
+                          resizeMode: 'contain',
+                        }}
+                      />
+
+
+                    </TouchableOpacity>
+                  </LinearGradient>
+                  {unreadCount > 0 && (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: -5,
+                        right: -5,
+                        minWidth: 17,
+                        height: 17,
+                        borderRadius: 10,
+                        backgroundColor: '#FC6101',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        paddingHorizontal: 3,
+                        borderWidth: 1,
+                        borderColor: color.darkbackround,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: '#FFFFFF',
+                          fontSize: 9,
+                          fontWeight: 'bold',
                         }}
                       >
-                        <Text
-                          style={{
-                            color: '#FFFFFF',
-                            fontSize: 9,
-                            fontWeight: 'bold',
-                          }}
-                        >
-                          {unreadCount > 99 ? '99+' : unreadCount}
-                        </Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                </LinearGradient>
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
           }
           {/* <TouchableOpacity
         onPress={onRightPress}

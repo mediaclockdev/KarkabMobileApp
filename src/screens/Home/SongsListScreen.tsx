@@ -44,12 +44,14 @@ export default function SongsListScreen() {
         filter = false,
         artist,
         type,
+        feature
     } = route.params as {
         songs?: any;
         previousScreen?: string;
         filter?: boolean;
         artist?: any;
         type?: string;
+        feature?: string;
     };
 
     const [songdata, setSongdata] = useState<any[]>([]);
@@ -115,6 +117,108 @@ export default function SongsListScreen() {
         }
     };
 
+
+
+    const fetchPlaylistSongs = async (
+        artistId: number | string
+    ) => {
+        setIsLoading(true);
+
+        try {
+            console.log(
+                'getplaylistsongs SONGS APIjjjj:',
+                apiUrls.getplaylistsongs(artistId)
+            );
+
+            const response = await ApiService.get(
+                apiUrls.getplaylistsongs(artistId)
+            );
+
+            const data = (response as any)?.data;
+
+            console.log(
+                'getplaylistsongs SONGS RESPONSEhhh:',
+                data
+            );
+
+            if (data?.success) {
+                console.log(data?.playlist.songs, "jjjj")
+                const songsList = Array.isArray(data?.playlist?.songs)
+                    ? data?.playlist?.songs
+                    : [];
+
+                setSongdata(songsList);
+
+                setNumberofsong(
+                    data?.total_songs ?? songsList.length
+                );
+            } else {
+                setSongdata([]);
+                setNumberofsong(0);
+            }
+        } catch (error) {
+            console.log(
+                'ARTIST SONGS API ERROR:',
+                error
+            );
+
+            setSongdata([]);
+            setNumberofsong(0);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
+    const fetchCategorySongs = async (
+        artistId: number | string
+    ) => {
+        setIsLoading(true);
+
+        try {
+            console.log(
+                'getsongcategorieslist SONGS APIjjjj:',
+                apiUrls.getsongcategorieslist(artistId)
+            );
+
+            const response = await ApiService.get(
+                apiUrls.getsongcategorieslist(artistId)
+            );
+
+            const data = (response as any)?.data;
+
+            console.log(
+                'getsongcategorieslist SONGS RESPONSEhhh:',
+                data
+            );
+
+            if (data?.success) {
+                console.log(data?.songs, "jjjj")
+                const songsList = Array.isArray(data?.songs)
+                    ? data?.songs
+                    : [];
+
+                setSongdata(songsList);
+
+                setNumberofsong(
+                    data?.total_songs ?? songsList.length
+                );
+            } else {
+                setSongdata([]);
+                setNumberofsong(0);
+            }
+        } catch (error) {
+            console.log(
+                'ARTIST SONGS API ERROR:',
+                error
+            );
+
+            setSongdata([]);
+            setNumberofsong(0);
+        } finally {
+            setIsLoading(false);
+        }
+    };
     /**
      * -----------------------------------------
      * FETCH CATEGORY SONGS
@@ -130,7 +234,7 @@ export default function SongsListScreen() {
         setIsLoading(true);
 
         try {
-            console.log(
+            console.log(songs,
                 'getsongcategorieslist API called'
             );
 
@@ -199,6 +303,20 @@ export default function SongsListScreen() {
                  * Artist songs
                  */
 
+                if (feature == 'playlist') {
+                    await fetchPlaylistSongs(
+                        songs.id
+                    );
+
+                    return;
+                }
+                if (feature == 'category') {
+                    await fetchCategorySongs(
+                        songs.id
+                    );
+
+                    return;
+                }
 
                 if (artist?.id) {
                     await fetchArtistSongs(
@@ -425,7 +543,7 @@ export default function SongsListScreen() {
                                     <Text
                                         style={{
                                             color:
-                                                '#D4AF37',
+                                                '#FF741D',
                                         }}
                                     >
                                         {' '}{t('Home.Sudanesesongs')}
@@ -626,7 +744,7 @@ const styles = StyleSheet.create({
     },
 
     subtitle: {
-        color: '#999',
+        color: '#FF741D',
         marginTop: 2,
         fontSize: 12,
         fontFamily:

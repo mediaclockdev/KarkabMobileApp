@@ -8,8 +8,9 @@ import {
   FlatList,
   Dimensions,
   ImageBackground,
+  Text,
 } from 'react-native';
-import { useAppColors } from '../share/constants/color';
+import color, { useAppColors } from '../share/constants/color';
 import AppText from '../share/components/AppText';
 import MainHeader from '../share/components/MainHeader';
 import HomeBanner from '../share/components/HomeBanner';
@@ -32,13 +33,23 @@ import PeopleWhoSang from '../share/components/PeopleWhoSang';
 import PopularSongs from '../share/components/PopularSongs';
 import ArtistRow from '../share/components/ArtistRow';
 import LinearGradient from 'react-native-linear-gradient';
-import { addsong, loaderstate, setLoginState } from '../auth/redux/authSlice';
+import { addsong, loaderstate, setAuthenticated, setLoginState, showToast } from '../auth/redux/authSlice';
 import { getLastPlayed } from '../services/lastPlayed';
 import { GlobalImage } from '../share/utils/GlobalImage';
 import { useTranslation } from 'react-i18next';
 import HomeSkeleton from '../share/components/HomeSkeleton';
+import { SvgUri } from 'react-native-svg';
+import { storage } from '../share/storage/mmkv';
+import TrackPlayer from '@rntp/player';
 
 const { width } = Dimensions.get('window');
+
+
+
+
+
+
+
 
 const Home = () => {
   const navigation = useNavigation<any>();
@@ -159,7 +170,7 @@ const Home = () => {
 
 
   const bannerfun = async () => {
-    console.log("popular api called")
+    console.log("bannerfun api called")
     try {
       //dispatch(loaderstate(true));
 
@@ -173,7 +184,8 @@ const Home = () => {
         )
       }
     } catch (error) {
-      console.log('trandingdata ERROR:', error);
+      console.log('bannerfun ERROR:', error);
+
     } finally {
       // dispatch(loaderstate(false));
     }
@@ -267,7 +279,7 @@ const Home = () => {
         setPopulardatas(data.songs);
       }
     } catch (error) {
-      console.log('populardata ERROR:', error);
+      console.log('populardatnnnnna ERROR:', error);
     } finally {
       setLoader(false);
     }
@@ -302,17 +314,28 @@ const Home = () => {
   const artistmixedsongfun = async () => {
     try {
       setLoader(true);
-      const response = await ApiService.get(apiUrls.artistmixsong);
+      const response = await ApiService.get(apiUrls.recentlypalyed);
       const data = (response as any).data;
       if (data?.success) {
         setArtistmixsongdata(data.songs);
       }
     } catch (error) {
-      console.log('populardata ERROR:', error);
+      console.log('popularaaaaadata ERROR:', error);
     } finally {
       setLoader(false);
     }
   };
+
+  const logout = async () => {
+    storage.set('userToken', '');
+    const token = storage.getString('userToken');
+    console.log(token, "fkfckfv")
+    await TrackPlayer.stop();
+    dispatch(
+      addsong(''),)
+    dispatch(setAuthenticated(false));
+
+  }
 
   const recommendedsongfun = async () => {
     try {
@@ -323,7 +346,11 @@ const Home = () => {
         setRecommendedsongdata(data.songs);
       }
     } catch (error) {
-      console.log('populardata ERROR:', error);
+      console.log('popularrrrrrdata ERROR:', error);
+      if (error?.message == 'Access denied. Invalid or expired token.') {
+        dispatch(showToast({ visible: true, message: 'Session expire', type: 'error' }));
+        logout()
+      }
     } finally {
       setLoader(false);
     }
@@ -409,33 +436,37 @@ const Home = () => {
           <HomeBanner data={bannerdata} />
 
           {/* Selected Artists - Mix Song */}
-          <View style={styles.titles}>
-            <AppText
-              color={color.darkthemetext}
-              fontSize={14}
-              fontWeight="500"
-              fontFamily={Inter.medium}
-            >
-              {t('Home.ArtistsMixSong')}
 
-            </AppText>
+          {
+            artistmixsongdata.length > 0 ? (
+              <>
+                <View style={[styles.titles, { marginTop: 20, marginBottom: 20 }]}>
+                  <AppText
+                    color={color.darkthemetext}
+                    fontSize={18}
 
-            <TouchableOpacity
-              onPress={() => {
-                navigation.navigate('SongsListScreen', {
-                  songs: artistmixsongdata,
-                  previousScreen: 'Home',
-                });
-              }}
-              activeOpacity={0.4}
-              style={{
-                flexDirection: 'row',
-                gap: 5,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              <AppText
+                    fontFamily={Inter.extrabold}
+                  >
+                    {/* {t('Home.ArtistsMixSong')} */}
+                    Recently Played
+                  </AppText>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      navigation.navigate('SongsListScreen', {
+                        songs: artistmixsongdata,
+                        previousScreen: 'Home',
+                      });
+                    }}
+                    activeOpacity={0.4}
+                    style={{
+                      flexDirection: 'row',
+                      gap: 5,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {/* <AppText
                 color={color.mgred}
                 fontSize={14}
                 fontWeight="500"
@@ -444,23 +475,27 @@ const Home = () => {
 
                 {t('Home.Seeall')}
 
-              </AppText>
-              <AppImage source={Images.arrow} width={5} height={8} />
-            </TouchableOpacity>
-          </View>
+              </AppText> */}
+                    <AppImage source={Images.arrow} tintColor={color.graycolor} width={10} height={15} />
+                  </TouchableOpacity>
+                </View>
 
-          <SelectedArtistMix
-            data={artistmixsongdata}
-            onPress={(artist) => {
-              console.log('Artist selected:', artist);
-            }}
-            onPlay={(artist) => {
-              openPlayer(artist.id);
-            }}
-          />
+                <SelectedArtistMix
+                  data={artistmixsongdata}
+                  onPress={(artist) => {
+                    console.log('Artist selected:', artist);
+                  }}
+                  onPlay={(artist) => {
+                    openPlayer(artist.id);
+                  }}
+                />
+              </>)
+              : null
+          }
+
 
           {/* Recommended Songs */}
-          <View style={styles.titles}>
+          {/* <View style={styles.titles}>
             <AppText
               color={color.darkthemetext}
               fontSize={14}
@@ -507,10 +542,71 @@ const Home = () => {
             onMore={(song) => {
               console.log('More:', song);
             }}
-          />
+          /> */}
 
-          {/* Browse Moods */}
           <View style={styles.titles}>
+            <AppText
+              color={color.darkthemetext}
+              fontSize={18}
+
+              fontFamily={Inter.extrabold}
+            >
+              {/* {t('Home.ArtistsMixSong')} */}
+              Browse Collections
+            </AppText>
+
+            <TouchableOpacity
+              onPress={() => {
+                navigation.navigate('Browsemood');
+              }}
+              activeOpacity={0.4}
+              style={{
+                flexDirection: 'row',
+                gap: 5,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              {/* <AppText
+                color={color.mgred}
+                fontSize={14}
+                fontWeight="500"
+                fontFamily={Inter.medium}
+              >
+
+                {t('Home.Seeall')}
+
+              </AppText> */}
+              <AppImage source={Images.arrow} tintColor={color.graycolor} width={10} height={15} />
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.moodGrid, {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'flex-start',
+            gap: 12,
+          }]}>
+
+
+            {categories.slice(0, 4).map(item => (
+              <MoodCard
+                key={item.id}
+                item={item}
+                onpress={() => {
+
+
+                  (navigation as any).navigate('SongsListScreen', {
+                    songs: item,
+                    previousScreen: 'Home',
+                    filter: true
+                  })
+                }
+                }
+              />
+            ))}
+          </View>
+          {/* Browse Moods */}
+          {/* <View style={styles.titles}>
             <AppText
               color={color.darkthemetext}
               fontSize={14}
@@ -544,18 +640,18 @@ const Home = () => {
               <AppImage source={Images.arrow} width={5} height={8} />
             </TouchableOpacity>
           </View>
-          <MusicType data={categories} />
+          <MusicType data={categories} /> */}
 
           {/* Selected Artists */}
-          <View style={styles.titles}>
+          <View style={[styles.titles, { marginTop: 20 }]}>
             <AppText
               color={color.darkthemetext}
-              fontSize={14}
-              fontWeight="500"
-              fontFamily={Inter.medium}
-            >
-              {t('Home.selectedartists')}
+              fontSize={18}
 
+              fontFamily={Inter.extrabold}
+            >
+              {/* {t('Home.selectedartists')} */}
+              {'Artists'}
 
             </AppText>
 
@@ -571,15 +667,15 @@ const Home = () => {
                 alignItems: 'center',
               }}
             >
-              <AppText
+              {/* <AppText
                 color={color.mgred}
                 fontSize={14}
                 fontWeight="500"
                 fontFamily={Inter.medium}
               >
                 {t('Home.Seeall')}
-              </AppText>
-              <AppImage source={Images.arrow} width={5} height={8} />
+              </AppText> */}
+              <AppImage source={Images.arrow} tintColor={color.graycolor} width={10} height={15} />
             </TouchableOpacity>
           </View>
 
@@ -601,12 +697,12 @@ const Home = () => {
 
 
 
-          <View style={styles.titles}>
+          <View style={[styles.titles, { marginBottom: 20 }]}>
 
             <AppText color={color.darkthemetext}
-              fontSize={14}
-              fontWeight="500"
-              fontFamily={Inter.medium}>
+              fontSize={18}
+
+              fontFamily={Inter.extrabold}>
               {t('Home.newreleases')}
 
 
@@ -619,14 +715,12 @@ const Home = () => {
                 });
               }}
               activeOpacity={0.4} style={{ flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
-              <AppText color={'#FFB300'} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
+              {/* <AppText color={'#FFB300'} fontSize={12} fontWeight="500" fontFamily={Inter.medium}>
                 {t('Home.Seeall')}
-              </AppText>
+              </AppText> */}
               <AppImage
                 source={Images.arrow}
-                width={5}
-                height={8}
-                tintColor={'#FFB300'}
+                tintColor={color.graycolor} width={10} height={15}
 
               />
             </TouchableOpacity>
@@ -704,9 +798,9 @@ const Home = () => {
           <View style={styles.titles}>
             <AppText
               color={color.darkthemetext}
-              fontSize={14}
-              fontWeight="500"
-              fontFamily={Inter.medium}
+              fontSize={18}
+
+              fontFamily={Inter.extrabold}
             >
               {t('Home.selectedartistallsongs')}
 
@@ -727,15 +821,15 @@ const Home = () => {
                 alignItems: 'center',
               }}
             >
-              <AppText
+              {/* <AppText
                 color={color.mgred}
                 fontSize={14}
                 fontWeight="500"
                 fontFamily={Inter.medium}
               >
                 {t('Home.Seeall')}
-              </AppText>
-              <AppImage source={Images.arrow} width={5} height={8} />
+              </AppText> */}
+              <AppImage source={Images.arrow} tintColor={color.graycolor} width={10} height={15} />
             </TouchableOpacity>
           </View>
 
@@ -819,7 +913,7 @@ const Home = () => {
           <MusicList data={songsartistdata} loading={songsArtistLoading} />
 
           {/* Recorded Songs */}
-          <View style={styles.titles}>
+          {/* <View style={styles.titles}>
             <AppText
               color={color.darkthemetext}
               fontSize={14}
@@ -866,15 +960,63 @@ const Home = () => {
               navigation.navigate('.', { id: artist.id, type: 'recordings', previousScreen: 'Home' });
             }}
             onSeeAll={() => { }}
-          />
+          /> */}
 
 
-          <View style={styles.titles}>
+          {/* Popular Songs */}
+          <View style={[styles.titles, { marginBottom: 20 }]}>
             <AppText
               color={color.darkthemetext}
-              fontSize={14}
-              fontWeight="500"
-              fontFamily={Inter.medium}
+              fontSize={18}
+
+              fontFamily={Inter.extrabold}
+            >
+              {t('Home.popularsongs')}
+
+
+            </AppText>
+
+            <TouchableOpacity
+              onPress={() => {
+                navigation.navigate('SongsListScreen', {
+                  songs: populardatas,
+                  previousScreen: 'Home',
+                });
+              }}
+              activeOpacity={0.4}
+              style={{
+                flexDirection: 'row',
+                gap: 5,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              {/* <AppText
+                color={color.mgred}
+                fontSize={14}
+                fontWeight="500"
+                fontFamily={Inter.medium}
+              >
+                {t('Home.Seeall')}
+              </AppText> */}
+              <AppImage source={Images.arrow} tintColor={color.graycolor} width={10} height={15} />
+            </TouchableOpacity>
+          </View>
+
+          <PopularSongs
+            songs={populardatas}
+            onSeeAll={() => { }}
+            onPlay={(song) => {
+              openPlayer(song.id); // 👈 Fixed
+            }}
+          />
+
+          <View style={[styles.titles, { marginBottom: 20 }]}>
+            <AppText
+              color={color.darkthemetext}
+              fontSize={18}
+
+              fontFamily={Inter.extrabold}
             >
               {t('Home.publicommunityfeed')}
 
@@ -899,15 +1041,15 @@ const Home = () => {
                 alignItems: 'center',
               }}
             >
-              <AppText
+              {/* <AppText
                 color={color.mgred}
                 fontSize={14}
                 fontWeight="500"
                 fontFamily={Inter.medium}
               >
                 {t('Home.Seeall')}
-              </AppText>
-              <AppImage source={Images.arrow} width={5} height={8} />
+              </AppText> */}
+              <AppImage source={Images.arrow} tintColor={color.graycolor} width={10} height={15} />
             </TouchableOpacity>
           </View>
 
@@ -926,53 +1068,7 @@ const Home = () => {
 
 
 
-          {/* Popular Songs */}
-          <View style={styles.titles}>
-            <AppText
-              color={color.darkthemetext}
-              fontSize={14}
-              fontWeight="500"
-              fontFamily={Inter.medium}
-            >
-              {t('Home.popularsongs')}
 
-
-            </AppText>
-
-            <TouchableOpacity
-              onPress={() => {
-                navigation.navigate('SongsListScreen', {
-                  songs: populardatas,
-                  previousScreen: 'Home',
-                });
-              }}
-              activeOpacity={0.4}
-              style={{
-                flexDirection: 'row',
-                gap: 5,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              <AppText
-                color={color.mgred}
-                fontSize={14}
-                fontWeight="500"
-                fontFamily={Inter.medium}
-              >
-                {t('Home.Seeall')}
-              </AppText>
-              <AppImage source={Images.arrow} width={5} height={8} />
-            </TouchableOpacity>
-          </View>
-
-          <PopularSongs
-            songs={populardatas}
-            onSeeAll={() => { }}
-            onPlay={(song) => {
-              openPlayer(song.id); // 👈 Fixed
-            }}
-          />
 
           <View style={{ height: 100 }} />
         </ScrollView>
@@ -1070,7 +1166,72 @@ const SongCard = ({
     </TouchableOpacity>
   );
 };
+const MoodCard = ({ item, onpress }: any) => (
+  <TouchableOpacity
+    onPress={onpress}
+    style={styles.moodCard}>
 
+
+    <View style={{ flexDirection: 'row', alignItems: 'center', }}>
+
+      {/* <Text
+
+                style={[
+                    styles.moodTitle,
+                    {
+                        // letterSpacing: 1,
+                        fontSize: 14,
+
+                    },
+                ]}
+            >
+                {item.title.match(/\p{Emoji}/u)?.[0] || '🎵'}
+            </Text> */}
+      <SvgUri
+        uri={item.category_icon}
+        width={38}
+        height={38}
+      />
+      {/* <AppImage
+        source={{
+          uri: item.category_icon,
+        }}
+        style={{
+          width: 24,
+          height: 24,
+          resizeMode: 'contain',
+        }} /> */}
+      <View style={{ marginLeft: 5, flex: 1 }}>
+        <Text
+          numberOfLines={2}
+          style={[
+            styles.moodTitle,
+            {
+              //  letterSpacing: 1,
+
+            },
+          ]}
+        >
+          {item.title.replace(/\p{Emoji}/gu, '').trim()}
+        </Text>
+
+        {/* <Text
+          numberOfLines={1}
+          style={styles.moodSubtitle}>
+          {item.description}
+        </Text> */}
+      </View>
+      <AppImage
+        source={Images.arrow}
+        style={{
+          width: 16,
+          height: 16,
+          resizeMode: 'contain',
+          tintColor: '#888',
+        }} />
+    </View>
+  </TouchableOpacity>
+);
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -1203,6 +1364,44 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     //  paddingHorizontal: 15,
+  },
+  moodCard: {
+    width: '48%',
+    backgroundColor: '#141414',
+    borderRadius: 14,
+    padding: 8,
+    marginBottom: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#252525',
+    height: 50,
+
+  },
+
+  moodEmoji: {
+    fontSize: 10,
+  },
+
+  moodTitle: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 10,
+    marginRight: 5,
+    marginLeft: 5,
+  },
+
+  moodSubtitle: {
+    color: '#888',
+    fontSize: 8,
+    marginTop: 2,
+  },
+  moodGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    // paddingHorizontal: 15,
+    marginTop: 5,
   },
 });
 

@@ -4,6 +4,7 @@ export const BottomIcons = {
     library: require('../../../assets/bottomIcons/library.png'),
     profile: require('../../../assets/bottomIcons/profile.png'),
     search: require('../../../assets/bottomIcons/search.png'),
+    singl: require('../../../assets/bottomIcons/singl.png'),
 }
 
 
@@ -68,7 +69,9 @@ export const Images = {
     singericon: require('../../../assets/Logoes/singericonff.png'),
     hmic: require('../../../assets/bottomIcons/Vector.png'),
     bstar: require('../../../assets/Logoes/Vector3775.png'),
-    bin: '../../../assets/Logoes/dustbin.png'
+    bin: '../../../assets/Logoes/dustbin.png',
+    playlistl: require('../../../assets/Logoes/lplaylist.png'),
+    songplay: require('../../../assets/Logoes/lmusic.png'),
 
 }
 
@@ -117,6 +120,9 @@ export const Logo = {
     dustbin: require('../../../assets/HomeScreen/dustbin.png'),
     copy: require('../../../assets/Logoes/copy.png'),
     download1: require('../../../assets/Logoes/dodownload.png'),
+    reportfile: require('../../../assets/Logoes/reportfile.png'),
+    chatbox: require('../../../assets/Logoes/chatbox.png'),
+    logout: require('../../../assets/Logoes/logout.png'),
 
 }
 
