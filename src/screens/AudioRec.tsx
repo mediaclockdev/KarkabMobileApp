@@ -19,7 +19,7 @@ import TrackPlayer, {
   usePlaybackState,
   PlaybackState,
 } from '@rntp/player';
-
+import { useTranslation } from 'react-i18next';
 import { useAppColors } from '../share/constants/color';
 import { Images } from '../share/constants/media';
 import AppImage from '../share/components/AppImage';
@@ -49,6 +49,7 @@ type RepeatMode = 'off' | 'one' | 'all';
 const AudioRec = () => {
   const color = useAppColors();
   const route = useRoute();
+  const { t } = useTranslation();
   const previousScreen = (route?.params as any)?.previousScreen;
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
@@ -1304,7 +1305,8 @@ const AudioRec = () => {
             fontWeight="600"
             fontFamily={Inter.semibold}
           >
-            Now playing
+
+            {t('Player.Nowplaying')}
           </AppText>
 
           <TouchableOpacity
@@ -1483,7 +1485,8 @@ const AudioRec = () => {
                         fontWeight="600"
                         fontFamily={Inter.semibold}
                       >
-                        Full lyrics
+
+                        {t('Player.Fulllyrics')}
                       </AppText>
                     </TouchableOpacity>
 
@@ -1498,15 +1501,16 @@ const AudioRec = () => {
                         fontWeight="800"
                         fontFamily={Inter.bold}
                       >
-                        AA
+                        {t('Player.AA')}
+
                       </AppText>
                       <AppText
                         color="#FFFFFF"
                         fontSize={12}
                         fontWeight="600"
                         fontFamily={Inter.semibold}
-                      >
-                        Text size
+                      > {t('Player.Textsize')}
+
                       </AppText>
                     </TouchableOpacity>
                   </View>
@@ -1537,7 +1541,9 @@ const AudioRec = () => {
                       fontFamily={Inter.semibold}
                       style={{ marginLeft: 4 }}
                     >
-                      Now playing
+
+                      {t('Player.Nowplaying')}
+
                     </AppText>
                   </TouchableOpacity>
 
@@ -1548,7 +1554,8 @@ const AudioRec = () => {
                     fontFamily={Inter.bold}
                     style={{ letterSpacing: 1 }}
                   >
-                    LYRICS
+                    {t('Player.LYRICS')}
+
                   </AppText>
 
                   <TouchableOpacity
@@ -1562,7 +1569,8 @@ const AudioRec = () => {
                       fontWeight="800"
                       fontFamily={Inter.bold}
                     >
-                      AA
+                      {t('Player.AA')}
+
                     </AppText>
                   </TouchableOpacity>
                 </View>
@@ -1670,8 +1678,8 @@ const AudioRec = () => {
                   <View style={styles.centerContainer}>
                     <AppText color="rgba(255,255,255,0.5)" fontSize={14}>
                       {type === 'recordings'
-                        ? 'Lyrics are not available for the recorded song.'
-                        : 'Lyrics not available for this song.'}
+                        ? t('Player.Lyricsarenotavailablefortherecordedsong')
+                        : t('Player.Lyricsnotavailableforthissong')}
                     </AppText>
                   </View>
                 )}
@@ -1900,7 +1908,8 @@ const AudioRec = () => {
                         fontFamily={Inter.bold}
                         style={{ marginLeft: 8 }}
                       >
-                        Sing this song
+                        {t('Player.Singthissong')}
+
                       </AppText>
                     </View>
 
@@ -1913,8 +1922,11 @@ const AudioRec = () => {
                   fontFamily={Inter.regular}
                   textAlign="center"
                   style={{ marginTop: 8 }}
-                >
-                  Prepare instrumental and lyrics
+                >{t('Player.Prepareinstrumentalandlyrics')}
+
+
+
+
                 </AppText>
               </View>
             </View>

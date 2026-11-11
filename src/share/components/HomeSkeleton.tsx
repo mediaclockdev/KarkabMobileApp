@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import {
     Animated,
@@ -14,10 +15,9 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const COLORS = {
     background: '#050505',
-    base: '#151515',
-    highlight: '#242424',
-    border: '#33200B',
-    accent: '#F28A00',
+    base: '#171717',
+    highlight: '#292929',
+    border: '#292929',
 };
 
 type BlockProps = {
@@ -27,7 +27,12 @@ type BlockProps = {
     style?: any;
 };
 
-const SkeletonBlock = ({ width = '100%', height, radius = 10, style }: BlockProps) => {
+const SkeletonBlock = ({
+    width = '100%',
+    height,
+    radius = 10,
+    style,
+}: BlockProps) => {
     const shimmer = useRef(new Animated.Value(-1)).current;
 
     useEffect(() => {
@@ -39,6 +44,7 @@ const SkeletonBlock = ({ width = '100%', height, radius = 10, style }: BlockProp
                 useNativeDriver: true,
             }),
         );
+
         animation.start();
 
         return () => {
@@ -69,7 +75,11 @@ const SkeletonBlock = ({ width = '100%', height, radius = 10, style }: BlockProp
                 ]}
             >
                 <LinearGradient
-                    colors={[COLORS.base, COLORS.highlight, COLORS.base]}
+                    colors={[
+                        COLORS.base,
+                        COLORS.highlight,
+                        COLORS.base,
+                    ]}
                     locations={[0.25, 0.5, 0.75]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
@@ -80,58 +90,67 @@ const SkeletonBlock = ({ width = '100%', height, radius = 10, style }: BlockProp
     );
 };
 
+// Section heading
 const SectionHeadingSkeleton = () => (
     <View style={styles.sectionHeading}>
-        <SkeletonBlock width="53%" height={17} radius={5} />
-        <SkeletonBlock width={48} height={16} radius={5} />
+        <SkeletonBlock width="43%" height={25} radius={4} />
+        <SkeletonBlock width={18} height={24} radius={4} />
     </View>
 );
 
-const HorizontalCardSkeleton = ({
-    width,
-    height,
-    imageHeight,
-    rounded = 12,
-}: {
-    width: number;
-    height: number;
-    imageHeight?: number;
-    rounded?: number;
-}) => (
-    <View style={[styles.horizontalCard, { width, height, borderRadius: rounded }]}>
-        <SkeletonBlock height={imageHeight ?? height - 48} radius={rounded - 2} />
-        <View style={styles.cardText}>
-            <SkeletonBlock width="82%" height={10} radius={4} />
-            <SkeletonBlock width="55%" height={8} radius={4} style={styles.smallGap} />
+// Recently Played card
+const RecentlyPlayedSkeleton = ({ width }: { width: number }) => (
+    <View style={[styles.recentCard, { width }]}>
+        <SkeletonBlock
+            width="100%"
+            height="100%"
+            radius={12}
+        />
+
+        <View style={styles.mixLabel}>
+            <SkeletonBlock width={25} height={11} radius={3} />
+        </View>
+
+        <View style={styles.playButton}>
+            <SkeletonBlock
+                width={38}
+                height={38}
+                radius={19}
+            />
         </View>
     </View>
 );
 
-const SongRowSkeleton = ({ compact = false }: { compact?: boolean }) => (
-    <View style={[styles.songRow, compact && styles.compactSongRow]}>
-        <SkeletonBlock width={compact ? 52 : 56} height={compact ? 52 : 56} radius={10} />
-        <View style={styles.songInfo}>
-            <SkeletonBlock width={compact ? '78%' : '82%'} height={12} radius={4} />
-            <SkeletonBlock width="52%" height={9} radius={4} style={styles.smallGap} />
-        </View>
-        {!compact && <SkeletonBlock width="24%" height={10} radius={4} />}
-        <SkeletonBlock width={compact ? 27 : 34} height={compact ? 27 : 34} radius={compact ? 14 : 17} />
-        {!compact && <SkeletonBlock width={5} height={25} radius={3} />}
-    </View>
-);
+// Browse Collections card
+const CollectionSkeleton = () => (
+    <View style={styles.collectionCard}>
+        <SkeletonBlock
+            width={38}
+            height={38}
+            radius={10}
+        />
 
-const ArtistCircleSkeleton = () => (
-    <View style={styles.artistItem}>
-        <SkeletonBlock width={84} height={84} radius={42} style={styles.artistCircle} />
-        <SkeletonBlock width={76} height={9} radius={4} />
+        <View style={styles.collectionInfo}>
+            <SkeletonBlock width="90%" height={11} radius={4} />
+            <SkeletonBlock
+                width="70%"
+                height={10}
+                radius={4}
+                style={{ marginTop: 5 }}
+            />
+        </View>
+
+        <SkeletonBlock
+            width={13}
+            height={20}
+            radius={4}
+        />
     </View>
 );
 
 const HomeSkeleton = () => {
-    const sidePadding = 5;
-    const mixCardWidth = Math.min(158, SCREEN_WIDTH * 0.42);
-    const moodCardWidth = Math.min(118, SCREEN_WIDTH * 0.31);
-    const releaseCardWidth = Math.min(145, SCREEN_WIDTH * 0.39);
+    const bannerHeight = SCREEN_WIDTH * 0.56;
+    const recentCardWidth = Math.min(172, SCREEN_WIDTH * 0.27);
 
     return (
         <ScrollView
@@ -140,145 +159,72 @@ const HomeSkeleton = () => {
             showsVerticalScrollIndicator={false}
             scrollEnabled={false}
         >
-            {/* Hero/banner block */}
-            <SkeletonBlock
-                width="100%"
-                height={184}
-                radius={22}
-                style={styles.banner}
-            />
+            {/* Hero Banner */}
+            <View style={[styles.banner, { height: bannerHeight }]}>
+                <SkeletonBlock
+                    width="100%"
+                    height="100%"
+                    radius={25}
+                />
 
-            {/* Artists - Mix Song */}
-            <SectionHeadingSkeleton />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} scrollEnabled={false}>
-                <View style={styles.horizontalRow}>
-                    {[0, 1, 2, 3].map(item => (
-                        <HorizontalCardSkeleton
-                            key={`mix-${item}`}
-                            width={mixCardWidth}
-                            height={136}
-                            imageHeight={136}
-                            rounded={13}
-                        />
-                    ))}
+                <View style={styles.bannerContent}>
+                    <SkeletonBlock
+                        width="55%"
+                        height={17}
+                        radius={4}
+                    />
+
+                    <SkeletonBlock
+                        width={135}
+                        height={53}
+                        radius={28}
+                        style={styles.bannerButton}
+                    />
                 </View>
-            </ScrollView>
 
-            {/* Recommended songs */}
-            <SectionHeadingSkeleton />
-            <View style={styles.recommendedRow}>
-                {[0, 1].map(item => (
-                    <View key={`recommended-${item}`} style={styles.recommendedCard}>
-                        <SkeletonBlock width={48} height={48} radius={9} />
-                        <View style={styles.recommendedInfo}>
-                            <SkeletonBlock width="90%" height={11} radius={4} />
-                            <SkeletonBlock width="64%" height={9} radius={4} style={styles.smallGap} />
-                        </View>
-                        <SkeletonBlock width={25} height={25} radius={13} />
+                {/* Pagination */}
+                <View style={styles.pagination}>
+                    <SkeletonBlock width={16} height={5} radius={3} />
+                    <SkeletonBlock width={16} height={5} radius={3} />
+                    <SkeletonBlock width={36} height={5} radius={3} />
+                </View>
+            </View>
+
+            {/* Recently Played */}
+            <View style={styles.section}>
+                <SectionHeadingSkeleton />
+
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    scrollEnabled={false}
+                >
+                    <View style={styles.recentRow}>
+                        {[0, 1, 2, 3].map(item => (
+                            <RecentlyPlayedSkeleton
+                                key={`recent-${item}`}
+                                width={recentCardWidth}
+                            />
+                        ))}
                     </View>
-                ))}
+                </ScrollView>
             </View>
 
-            {/* Browse moods */}
-            <SectionHeadingSkeleton />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} scrollEnabled={false}>
-                <View style={styles.horizontalRow}>
-                    {[0, 1, 2, 3].map(item => (
-                        <View key={`mood-${item}`} style={[styles.moodCard, { width: moodCardWidth }]}>
-                            <SkeletonBlock width="100%" height={150} radius={17} />
+            {/* Browse Collections */}
+            <View style={styles.collectionSection}>
+                <SectionHeadingSkeleton />
+
+                <View style={styles.collectionGrid}>
+                    {[0, 1, 2, 3, 4, 5].map(item => (
+                        <View
+                            key={`collection-${item}`}
+                            style={styles.collectionItem}
+                        >
+                            <CollectionSkeleton />
                         </View>
                     ))}
                 </View>
-            </ScrollView>
-
-            {/* Selected artists */}
-            <SectionHeadingSkeleton />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} scrollEnabled={false}>
-                <View style={styles.artistRow}>
-                    {[0, 1, 2, 3].map(item => <ArtistCircleSkeleton key={`artist-${item}`} />)}
-                </View>
-            </ScrollView>
-
-            {/* New releases */}
-            <SectionHeadingSkeleton />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} scrollEnabled={false}>
-                <View style={styles.horizontalRow}>
-                    {[0, 1, 2].map(item => (
-                        <HorizontalCardSkeleton
-                            key={`release-${item}`}
-                            width={releaseCardWidth}
-                            height={214}
-                            imageHeight={214}
-                            rounded={15}
-                        />
-                    ))}
-                </View>
-            </ScrollView>
-
-            {/* Selected artist - all songs */}
-            <SectionHeadingSkeleton />
-            <View style={styles.filters}>
-                <SkeletonBlock width={78} height={32} radius={18} />
-                <SkeletonBlock width={88} height={32} radius={18} />
-                <SkeletonBlock width={58} height={32} radius={18} />
             </View>
-            <View style={styles.songList}>
-                {[0, 1, 2, 3, 4, 5].map(item => (
-                    <SongRowSkeleton key={`artist-song-${item}`} />
-                ))}
-            </View>
-
-            {/* Recorded performances */}
-            <SectionHeadingSkeleton />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} scrollEnabled={false}>
-                <View style={styles.horizontalRow}>
-                    {[0, 1, 2].map(item => (
-                        <View key={`recording-${item}`} style={styles.smallTile}>
-                            <SkeletonBlock width={42} height={42} radius={22} />
-                            <View style={styles.smallTileText}>
-                                <SkeletonBlock width={72} height={10} radius={4} />
-                                <SkeletonBlock width={48} height={8} radius={4} style={styles.smallGap} />
-                            </View>
-                            <SkeletonBlock width={24} height={24} radius={12} />
-                        </View>
-                    ))}
-                </View>
-            </ScrollView>
-
-            {/* Public community feed */}
-            <SectionHeadingSkeleton />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} scrollEnabled={false}>
-                <View style={styles.horizontalRow}>
-                    {[0, 1, 2].map(item => (
-                        <View key={`community-${item}`} style={styles.smallTile}>
-                            <SkeletonBlock width={42} height={42} radius={22} />
-                            <View style={styles.smallTileText}>
-                                <SkeletonBlock width={70} height={10} radius={4} />
-                                <SkeletonBlock width={48} height={8} radius={4} style={styles.smallGap} />
-                            </View>
-                            <SkeletonBlock width={24} height={24} radius={12} />
-                        </View>
-                    ))}
-                </View>
-            </ScrollView>
-
-            {/* Popular songs */}
-            <SectionHeadingSkeleton />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} scrollEnabled={false}>
-                <View style={styles.horizontalRow}>
-                    {[0, 1, 2].map(item => (
-                        <View key={`popular-${item}`} style={styles.popularCard}>
-                            <SkeletonBlock width={24} height={23} radius={4} />
-                            <SkeletonBlock width={54} height={54} radius={9} />
-                            <View style={styles.popularText}>
-                                <SkeletonBlock width={100} height={10} radius={4} />
-                                <SkeletonBlock width={72} height={8} radius={4} style={styles.smallGap} />
-                            </View>
-                            <SkeletonBlock width={28} height={28} radius={14} />
-                        </View>
-                    ))}
-                </View>
-            </ScrollView>
 
             <View style={{ height: 100 }} />
         </ScrollView>
@@ -290,158 +236,130 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.background,
     },
+
     content: {
-        paddingHorizontal: 5,
+        paddingHorizontal: 14,
         paddingTop: 18,
         paddingBottom: 20,
     },
+
     block: {
         backgroundColor: COLORS.base,
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: COLORS.border,
     },
+
     shimmerGradient: {
         width: SCREEN_WIDTH * 1.5,
         height: '100%',
         opacity: 0.95,
     },
+
+    // Hero banner
     banner: {
-        marginBottom: 19,
+        width: '100%',
+        borderRadius: 25,
+        overflow: 'hidden',
+        marginBottom: 55,
+        position: 'relative',
     },
+
+    bannerContent: {
+        position: 'absolute',
+        top: '16%',
+        left: '6%',
+        right: '6%',
+        alignItems: 'flex-start',
+    },
+
+    bannerButton: {
+        marginTop: 15,
+    },
+
+    pagination: {
+        position: 'absolute',
+        bottom: 40,
+        alignSelf: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+
+    // Sections
+    section: {
+        marginBottom: 42,
+    },
+
     sectionHeading: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: 5,
-        marginBottom: 13,
-        paddingHorizontal: 5,
+        marginBottom: 30,
     },
-    horizontalRow: {
+
+    // Recently played
+    recentRow: {
         flexDirection: 'row',
-        paddingHorizontal: 5,
+        gap: 20,
         paddingBottom: 3,
     },
-    horizontalCard: {
-        backgroundColor: COLORS.base,
-        borderWidth: 1,
-        borderColor: '#242424',
+
+    recentCard: {
+        height: 170,
+        borderRadius: 14,
         overflow: 'hidden',
-        marginRight: 10,
-        justifyContent: 'flex-start',
-    },
-    cardText: {
-        paddingHorizontal: 8,
-        paddingTop: 8,
-    },
-    smallGap: {
-        marginTop: 7,
-    },
-    recommendedRow: {
-        flexDirection: 'row',
-        gap: 10,
-        paddingHorizontal: 5,
-    },
-    recommendedCard: {
-        flex: 1,
-        minWidth: 0,
-        height: 84,
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 9,
-        gap: 8,
-        borderRadius: 14,
-        backgroundColor: '#111111',
         borderWidth: 1,
-        borderColor: '#202020',
+        borderColor: '#49301A',
+        position: 'relative',
     },
-    recommendedInfo: {
-        flex: 1,
-        gap: 1,
+
+    mixLabel: {
+        position: 'absolute',
+        bottom: 15,
+        left: 15,
     },
-    moodCard: {
-        marginRight: 10,
-        padding: 2,
-        borderRadius: 19,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-    },
-    artistRow: {
-        flexDirection: 'row',
-        paddingHorizontal: 4,
-    },
-    artistItem: {
+
+    playButton: {
+        position: 'absolute',
+        right: 10,
+        bottom: 9,
+        justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 18,
-        width: 88,
-        gap: 10,
     },
-    artistCircle: {
-        borderColor: COLORS.border,
-        borderWidth: 2,
+
+    // Browse collections
+    collectionSection: {
+        marginTop: 0,
     },
-    filters: {
+
+    collectionGrid: {
         flexDirection: 'row',
-        gap: 8,
-        marginHorizontal: 5,
-        marginTop: 1,
-        marginBottom: 12,
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        rowGap: 27,
     },
-    songList: {
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        borderRadius: 19,
-        paddingHorizontal: 11,
-        paddingVertical: 5,
+
+    collectionItem: {
+        width: '49%',
     },
-    songRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        minHeight: 86,
-        borderBottomWidth: 1,
-        borderBottomColor: '#171717',
-    },
-    compactSongRow: {
-        minHeight: 70,
-    },
-    songInfo: {
-        flex: 1,
-        gap: 1,
-    },
-    smallTile: {
-        width: Math.min(220, SCREEN_WIDTH * 0.61),
-        height: 80,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-        paddingHorizontal: 10,
-        marginRight: 10,
-        borderRadius: 14,
-        backgroundColor: '#111111',
-        borderWidth: 1,
-        borderColor: '#242424',
-    },
-    smallTileText: {
-        flex: 1,
-        gap: 1,
-    },
-    popularCard: {
-        width: Math.min(310, SCREEN_WIDTH * 0.82),
+
+    collectionCard: {
         height: 82,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
         paddingHorizontal: 10,
-        marginRight: 10,
-        borderRadius: 12,
-        backgroundColor: '#080808',
+        gap: 9,
+        borderRadius: 21,
+        backgroundColor: '#111111',
         borderWidth: 1,
-        borderColor: '#242424',
+        borderColor: '#272727',
     },
-    popularText: {
+
+    collectionInfo: {
         flex: 1,
-        gap: 1,
+        justifyContent: 'center',
+        minWidth: 0,
     },
 });
 

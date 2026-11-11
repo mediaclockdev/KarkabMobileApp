@@ -627,17 +627,42 @@ const SongActionSheet = ({
     const handleShare = async () => {
         closeSheet();
         try {
-            const songTitle = song?.title || song?.name || 'Unknown Song';
-            const songId = song?.id;
-            const songUrl = songId
-                ? `https://karkab.com/song/${songId}`
-                : 'https://karkab.com';
+            const type = song?.recording_url ? 'recording' : 'song'
 
-            await Share.share({
-                title: songTitle,
-                message: `${songTitle}\n${songUrl}`,
-                url: songUrl,
-            });
+            try {
+                const response =
+                    await ApiService.post(apiUrls.sharesong(song.id, type));
+
+                const data = (response as any)?.data;
+                console.log(data, "kkkkkkkknrnkrnk")
+                if (data?.success) {
+
+                    const songTitle = song?.title || song?.name || 'Unknown Song';
+                    const songId = song?.id;
+                    const songUrl = song?.recording_url ?
+                        data.recording_song_url : data.song_url
+                    console.log(songUrl, "llll")
+                    await Share.share({
+                        title: songTitle,
+                        message: `${songTitle}\n${songUrl}`,
+                        url: songUrl,
+                    });
+                }
+
+
+
+            } catch (error: any) {
+                dispatch(
+                    showToast({
+                        visible: true,
+                        message: error?.response?.data?.message || 'Unable to share.',
+                        type: 'error',
+                    }),
+                );
+            }
+
+
+
         } catch (error: any) {
             console.log('Share error:', error);
         }

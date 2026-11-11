@@ -447,8 +447,8 @@ const Home = () => {
 
                     fontFamily={Inter.extrabold}
                   >
-                    {/* {t('Home.ArtistsMixSong')} */}
-                    Recently Played
+                    {t('Home.RecentlyPlayed')}
+
                   </AppText>
 
                   <TouchableOpacity
@@ -650,8 +650,8 @@ const Home = () => {
 
               fontFamily={Inter.extrabold}
             >
-              {/* {t('Home.selectedartists')} */}
-              {'Artists'}
+              {t('Home.Artists')}
+
 
             </AppText>
 

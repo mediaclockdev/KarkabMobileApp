@@ -71,6 +71,8 @@ const apiUrls = {
   notificationcount: `/api/notifications/count?language=${getLanguage()}`,
   recentlypalyed: `/api/songs/recently-played?language=${getLanguage()}`,
   searchapi: `/api/search?language=${getLanguage()}`,
+  sharesong: (id: string | number, type: string | number) => `/api/recordings/${id}/share?language=${getLanguage()}&type=${type}`,
+
 };
 
 export default apiUrls;

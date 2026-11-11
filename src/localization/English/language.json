@@ -7,7 +7,8 @@
     "change": "Change",
     "error": "Error",
     "somethingWentWrong": "Something went wrong",
-    "restartManually": "Please close and reopen the app to apply the new language."
+    "restartManually": "Please close and reopen the app to apply the new language.",
+    "Confirm": "Confirm"
   },
   "auth": {
     "login": {
@@ -144,7 +145,9 @@
     "Songs": "Songs",
     "Discoverthousandsof": "Discover thousands of",
     "Sudanesesongs": "Sudanese songs",
-    "Yourrecordedshowhere": "Your recorded performance show here"
+    "Yourrecordedshowhere": "Your recorded performance show here",
+    "RecentlyPlayed": "Recently Played",
+    "Artists": "Artists"
   },
   "Search": {
     "whatwouldtosingtoday?": "What would you like to sing today?",
@@ -154,7 +157,15 @@
     "TrendingNow": "Trending Now",
     "NoTrendingSongs": "No Trending Songs",
     "Trendingwilappeasoon.": "Trending songs will appear here soon.",
-    "Songcategory": "Song Category"
+    "Songcategory": "Song Category",
+    "DiscovertimelessSudanesecollections": "Discover timeless Sudanese collections",
+    "ClassicPlaylists": "Classic Playlists",
+    "Explorecuratedcollections": "Explore curated collections",
+    "NoPlaylistsFound": "No Playlists Found",
+    "Thereplaylistsavailable": "There are no playlists available.",
+    "AbeautifuollectionoftimelessSudanesemusic": "A beautiful collection of timeless Sudanese music.",
+    "NoSongsFound": "No Songs Found",
+    "Thisplaylisoesnthaveanysongsyet": "This playlist doesn't have any songs yet."
   },
   "Library": {
     "Rooms": "Rooms",
@@ -187,6 +198,55 @@
     "Yourjourneyyourvoice": "Your journey , your voice",
     "Yourmusiccollection": "Your music collection",
     "SingItYourOwn": "Sing It Your Own",
-    "MyPlaylists": "My Playlists"
+    "MyPlaylists": "My Playlists",
+    "Sort": "Sort",
+    "Loadingmorsongs": "Loading more songs...",
+    "Sing": "Sing"
+  },
+  "Player": {
+    "Nowplaying": "Now playing",
+    "AA": "AA",
+    "Textsize": "Text size",
+    "Fulllyrics": "Full lyrics",
+    "LYRICS": "LYRICS",
+    "Lyricsarenotavailablefortherecordedsong.": "Lyrics are not available for the recorded song.",
+    "Lyricsnotavailableforthissong": "Lyrics not available for this song.",
+    "Singthissong": "Sing this song",
+    "Prepareinstrumentalandlyrics": "Prepare instrumental and lyrics",
+    "Editprofile": "Edit profile"
+  },
+  "Profile": {
+    "Myrecordings": "My recordings",
+    "Myplaylists": "My playlists",
+    "Recentrecordings": "Recent recordings",
+    "Norecordingsfound": "No recordings found",
+    "Createplaylist": "Create playlist",
+    "Settings": "Settings",
+    "Preferences": "Preferences",
+    "Notifications": "Notifications",
+    "Accountsettings": "Account settings",
+    "Permissions": "Permissions",
+    "AboutKarkab": "About Karkab",
+    "Termsprivacy": "Terms & privacy",
+    "Logout": "Log out",
+    "Weareheretohelpyou": "We are here to help you",
+    "Howcanwehelp": "How can we help?",
+    "ContactUs": "Contact Us",
+    "HavingtroublewithKarKab?assistyou": "Having trouble with KarKab? Tell us what happened, and our team will do its best to assist you.",
+    "Sendusamessage": "Send us a message",
+    "Subject": "Subject",
+    "Audioplaybackissue": "e.g. Audio playback issue",
+    "Description": "Description",
+    "Pleaseexplainyourissue": "Please explain your issue in detail...",
+    "SubmitRequest": "Submit Request",
+    "Yourmatterstous": "Your music matters to us",
+    "Thankhelpingusimproveyourexperience": "Thank you for helping us improve your KarKab experience.",
+    "Chooseyourpreferredlanguage": "Choose your preferred language",
+    "AppLanguage": "App Language",
+    "Languagepreference": "Language preference",
+    "Yourlanguagepreferencethroughapp": "Your language preference will be used throughout the app.",
+    "ChangeLanguage": "Change Language",
+    "Areyouwanttochangetheapplanguage": "Are you sure you want to change the app language?",
+    "Theapplicationreloadtoapplythechangesproperly": "The application will reload to apply the changes properly."
   }
 }

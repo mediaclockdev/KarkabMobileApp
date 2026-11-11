@@ -30,6 +30,7 @@ import LinearGradient from 'react-native-linear-gradient';
 const LanguageScreen = () => {
     const navigation = useNavigation();
     const { i18n } = useTranslation();
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const activeCode = i18n.language.split('-')[0] as AppLanguage;
 
@@ -134,11 +135,12 @@ const LanguageScreen = () => {
 
                     <View style={styles.headerText}>
                         <AppText style={styles.title}>
-                            Language
+                            {t('language.label')}
                         </AppText>
 
                         <AppText style={styles.subtitle}>
-                            Choose your preferred language
+                            {t('Profile.Chooseyourpreferredlanguage')}
+
                         </AppText>
                     </View>
                 </View>
@@ -146,7 +148,9 @@ const LanguageScreen = () => {
                 {/* Section */}
                 <View style={styles.sectionHeader}>
                     <AppText style={styles.sectionTitle}>
-                        App Language
+
+                        {t('Profile.AppLanguage')}
+
                     </AppText>
                 </View>
 
@@ -223,12 +227,13 @@ const LanguageScreen = () => {
 
                     <View style={styles.infoContent}>
                         <AppText style={styles.infoTitle}>
-                            Language preference
+                            {t('Profile.Languagepreference')}
+
                         </AppText>
 
                         <AppText style={styles.infoText}>
-                            Your language preference will be used throughout
-                            the app.
+                            {t('Profile.Yourlanguagepreferencethroughapp')}
+
                         </AppText>
                     </View>
                 </View>
@@ -265,7 +270,8 @@ const LanguageScreen = () => {
                             fontFamily={Inter.medium}
                             style={styles.modalTitle}
                         >
-                            Change Language?
+
+                            {t('Profile.ChangeLanguage')}?
                         </AppText>
 
                         <AppText
@@ -273,8 +279,10 @@ const LanguageScreen = () => {
                             fontSize={13}
                             style={styles.modalDescription}
                         >
-                            Are you sure you want to change the app language?
-                            The application will reload to apply the changes properly.
+                            {t('Profile.Areyouwanttochangetheapplanguage')}?
+                            {t('Profile.Theapplicationreloadtoapplythechangesproperly')}?
+
+
                         </AppText>
 
                         <View style={styles.modalButtons}>
@@ -289,7 +297,8 @@ const LanguageScreen = () => {
                                     fontSize={13}
                                     fontFamily={Inter.medium}
                                 >
-                                    Cancel
+                                    {t('common.cancel')}?
+
                                 </AppText>
                             </TouchableOpacity>
 

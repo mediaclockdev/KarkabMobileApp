@@ -818,7 +818,7 @@ import TrackPlayer from '@rntp/player'
 import { playSongList, playTrackSong } from '../../services/player'
 
 import LinearGradient from 'react-native-linear-gradient';
-
+import { useTranslation } from "react-i18next";
 // ---- UI tokens ----
 
 const BRAND_GRADIENT = ['#FF741D', '#C2361B', '#8A1FA8'];
@@ -938,7 +938,7 @@ const Librarylist = ({
 }: LibrarylistProps) => {
 
   const navigation = useNavigation();
-
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
 
   const playsong = useAppSelector((state: any) => state.auth.playsong);
@@ -1216,7 +1216,7 @@ const Librarylist = ({
         <ActivityIndicator size="small" color={color.mgyellow || '#BC4402'} />
         <AppText fontSize={12} color={color.darkthemetext} marginTop={6}>
 
-          Loading more songs...
+          {t('Library.Loadingmorsongs')}
         </AppText>
       </View>
 
@@ -1505,8 +1505,8 @@ const Librarylist = ({
 
                     {/* swap with your i18n key, e.g. t('sing') */}
                     <AppText fontSize={12} fontWeight="700" fontFamily={Inter.bold} color="#FFFFFF">
+                      {t('Library.Sing')}
 
-                      Sing
                     </AppText>
                   </>
 

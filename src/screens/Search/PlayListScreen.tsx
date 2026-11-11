@@ -15,7 +15,7 @@ import AppImage from '../../share/components/AppImage';
 import SearchBar from '../../share/components/SearchBar';
 import CategoryChip from '../../share/components/CategoryChip';
 import ClassicSongItem from '../../share/components/ClassicSongItem';
-
+import { useTranslation } from 'react-i18next';
 import color from '../../share/constants/color';
 import { Images, Logo } from '../../share/constants/media';
 import { Inter } from '../../share/constants/fonts';
@@ -97,7 +97,7 @@ export default function PlayListScreen() {
     const dispatch = useAppDispatch();
     const playsong = useAppSelector((state: any) => state.auth.playsong);
     const isPaused = useAppSelector((state: any) => state.auth.isPaused);
-
+    const { t } = useTranslation();
     const isCurrentPlaylistPlaying =
         songs.length > 0 &&
         playsong?.id &&
@@ -124,6 +124,7 @@ export default function PlayListScreen() {
     /**
      * Get playlist categories
      */
+
     const getPlaylistCategories = async () => {
         try {
             // Replace this API if your backend has a playlist category API
@@ -180,6 +181,8 @@ export default function PlayListScreen() {
     /**
      * Get songs from selected playlist
      */
+
+
     const getPlaylistSongs = async (playlistId: string) => {
         try {
             setSongsLoading(true);
@@ -336,7 +339,7 @@ export default function PlayListScreen() {
             </View> */}
             <Header
                 headername={'Classic Playlists'}
-                headertitle={'Discover timeless Sudanese collections'}
+                headertitle={t('Search.DiscovertimelessSudanesecollections')}
                 rightIcon={Images.bell}
                 onRightPress={() => { (navigation as any).navigate('NotificationScreen', { previousScreen: 'PlayListScreen' }) }}
             // rightView={
@@ -435,13 +438,13 @@ export default function PlayListScreen() {
                                     tintColor={'#FC6101'}
                                 />
                                 <AppText style={styles.sectionTitle}>
-                                    Classic Playlists
+                                    {t('Search.ClassicPlaylists')}
                                 </AppText>
                             </View>
 
 
                             <AppText style={styles.sectionSubtitle}>
-                                Explore curated collections
+                                {t('Search.Explorecuratedcollections')}
                             </AppText>
                         </View>
                     </View>
@@ -474,11 +477,14 @@ export default function PlayListScreen() {
                             />
 
                             <AppText style={styles.emptyTitle}>
-                                No Playlists Found
+
+                                {t('Search.NoPlaylistsFound')}
                             </AppText>
 
                             <AppText style={styles.emptySubtitle}>
-                                There are no playlists available.
+
+                                {t('Search.Thereplaylistsavailable')}
+
                             </AppText>
                         </View>
                     )}
@@ -510,7 +516,7 @@ export default function PlayListScreen() {
                                         numberOfLines={2}
                                     >
                                         {selectedPlaylist.description ||
-                                            'A beautiful collection of timeless Sudanese music.'}
+                                            t('Search.AbeautifuollectionoftimelessSudanesemusic')}
                                     </AppText>
 
                                     <AppText style={styles.selectedCount}>
@@ -565,7 +571,7 @@ export default function PlayListScreen() {
 
                                     />
                                     <AppText style={styles.songTitle}>
-                                        Songs
+                                        {t('Home.Songs')}
                                     </AppText>
                                 </View>
 
@@ -622,8 +628,9 @@ export default function PlayListScreen() {
 
                                     <AppText
                                         style={styles.emptyTitle}
-                                    >
-                                        No Songs Found
+                                    > {t('Search.NoSongsFound')}
+
+
                                     </AppText>
 
                                     <AppText
@@ -631,8 +638,9 @@ export default function PlayListScreen() {
                                             styles.emptySubtitle
                                         }
                                     >
-                                        This playlist doesn't have
-                                        any songs yet.
+                                        {t('Search.Thisplaylisoesnthaveanysongsyet')}
+
+
                                     </AppText>
                                 </View>
                             )}

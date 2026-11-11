@@ -22,9 +22,11 @@ import Toast from 'react-native-toast-message';
 import apiUrls from '../../services/apiUrls';
 import ApiService from '../../services/api';
 import TrackPlayer from '@rntp/player';
+import { useTranslation } from "react-i18next";
 
 const SettingScreen = () => {
     const navigation = useNavigation();
+    const { t } = useTranslation();
     const [notifications, setNotifications] = useState(true);
     const [autoPlay, setAutoPlay] = useState(true);
     const [darkMode, setDarkMode] = useState(true);
@@ -191,20 +193,20 @@ const SettingScreen = () => {
                         />
                     </TouchableOpacity>
 
-                    <AppText style={styles.title}>Settings</AppText>
+                    <AppText style={styles.title}>{t('Profile.Settings')}</AppText>
 
                     <View style={styles.headerRight} />
                 </View>
 
                 {/* Preferences */}
                 <View style={styles.sectionHeader}>
-                    <AppText style={styles.sectionTitle}>Preferences</AppText>
+                    <AppText style={styles.sectionTitle}>{t('Profile.Preferences')}</AppText>
                 </View>
 
                 <View style={styles.settingsCard}>
                     {renderSettingRow({
                         icon: Logo.language,
-                        title: 'Language',
+                        title: t('language.label'),
                         subtitle: 'العربية / English',
                         onPress: () => {
                             Toast.show({
@@ -228,7 +230,7 @@ const SettingScreen = () => {
 
                     {renderSettingRow({
                         icon: Images.bell,
-                        title: 'Notifications',
+                        title: t('Profile.Notifications'),
                         right: <AppText style={styles.arrow}>›</AppText>,
                         onPress: () => {
                             // Navigate to notification settings when available
@@ -246,7 +248,7 @@ const SettingScreen = () => {
                 <View style={styles.settingsCard}>
                     {renderSettingRow({
                         icon: Logo.person,
-                        title: 'Account settings',
+                        title: t('Profile.Accountsettings'),
                         onPress: () =>
                             (navigation as any).navigate('ManageProfileScreen'),
                     })}
@@ -271,7 +273,7 @@ const SettingScreen = () => {
 
                     {renderSettingRow({
                         icon: Logo.secure,
-                        title: 'Permissions',
+                        title: t('Profile.Permissions'),
                         onPress: () => {
                             Toast.show({
                                 type: 'info',
@@ -300,7 +302,7 @@ const SettingScreen = () => {
 
                     {renderSettingRow({
                         icon: Logo.Bluetick,
-                        title: 'About Karkab',
+                        title: t('Profile.AboutKarkab'),
                         onPress: () =>
                             (navigation as any).navigate(
                                 'AboutKarKabScreen',
@@ -312,7 +314,7 @@ const SettingScreen = () => {
 
                     {renderSettingRow({
                         icon: Logo.reportfile,
-                        title: 'Terms & privacy',
+                        title: t('Profile.AboutKarkab'),
                         onPress: () => {
                             Alert.alert(
                                 'Terms & privacy',
@@ -357,7 +359,7 @@ const SettingScreen = () => {
                         resizeMode='contain'
                     />
 
-                    <AppText style={styles.logoutText}>Log out</AppText>
+                    <AppText style={styles.logoutText}>{t('Profile.Logout')}</AppText>
 
                     <View style={{ flex: 1 }} />
 

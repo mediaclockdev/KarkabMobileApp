@@ -748,7 +748,7 @@ const Library = () => {
                   <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
                     <AppImage source={Images.music} tintColor="white" height={10} width={10} />
                     <AppText color="white" fontSize={8} fontWeight="500" fontFamily={Inter.medium}>
-                      All Songs
+                      {t('Library.allsongs')}
                     </AppText>
                   </View>
                 </LinearGradient>
@@ -780,7 +780,7 @@ const Library = () => {
                       fontWeight="500"
                       fontFamily={Inter.medium}
                     >
-                      All Songs
+                      {t('Library.allsongs')}
                     </AppText>
                   </View>
                 </View>
@@ -835,7 +835,7 @@ const Library = () => {
                       fontWeight="500"
                       fontFamily={Inter.medium}
                     >
-                      Favorites
+                      {t('Library.Favorites')}
                     </AppText>
                   </View>
                 </LinearGradient>
@@ -861,7 +861,7 @@ const Library = () => {
                     fontWeight="500"
                     fontFamily={Inter.medium}
                   >
-                    Favorites
+                    {t('Library.Favorites')}
                   </AppText>
                 </View>
               )}
@@ -897,7 +897,7 @@ const Library = () => {
                 <AppImage source={Logo.sort} height={10} width={10} tintColor="white" />
 
                 <AppText color="white" fontSize={8} fontFamily={Inter.medium}>
-                  Sort {sortOrder === 'asc' ? '▲' : '▼'}
+                  {t('Library.Sort')} {sortOrder === 'asc' ? '▲' : '▼'}
                 </AppText>
               </View>
             </LinearGradient>

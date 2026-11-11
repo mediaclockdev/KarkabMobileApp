@@ -7,7 +7,8 @@
     "change": "تغيير",
     "error": "خطأ",
     "somethingWentWrong": "حدث خطأ ما",
-    "restartManually": "يرجى إغلاق التطبيق وإعادة فتحه لتطبيق اللغة الجديدة."
+    "restartManually": "يرجى إغلاق التطبيق وإعادة فتحه لتطبيق اللغة الجديدة.",
+    "Confirm": "تأكيد"
   },
   "auth": {
     "login": {
@@ -145,7 +146,12 @@
     "Discoverthousandsof": "اكتشف الآلاف من",
     "Sudanesesongs": "الأغاني السودانية",
     "Yourrecorded": "تسجيلاتك",
-    "Yourrecordedshowhere": "سيظهر أداؤك المُسجَّل هنا"
+    "Yourrecordedshowhere": "سيظهر أداؤك المُسجَّل هنا",
+    "RecentlyPlayed": "تم تشغيلها مؤخرًا",
+    "Artists": "الفنانون",
+    "DiscovertimelessSudanesecollections": "اكتشف مجموعات سودانية خالدة",
+    "NoSongsFound": "لم يتم العثور على أغا",
+    "Thisplaylisoesnthaveanysongsyet": "لا تحتوي قائمة التشغيل هذه على أي أغانٍ حتى الآن."
   },
   "Search": {
     "whatwouldtosingtoday?": "ما الأغنية التي ترغب في غنائها اليوم؟",
@@ -153,7 +159,12 @@
     "Recordings": "التسجيلات",
     "TrendingNow": "الرائج الآن",
     "Trendingwilappeasoon": "ستظهر الأغاني الرائجة هنا قريبًا.",
-    "Songcategory": "فئة الأغاني"
+    "Songcategory": "فئة الأغاني",
+    "ClassicPlaylists": "قوائم التشغيل الكلاسيكية",
+    "Explorecuratedcollections": "استكشف المجموعات المختارة",
+    "NoPlaylistsFound": "لم يتم العثور على قوائم تشغيل",
+    "Thereplaylistsavailable": "لا توجد قوائم تشغيل متاحة",
+    "AbeautifuollectionoftimelessSudanesemusic": "مجموعة رائعة من الموسيقى السودانية الخالدة"
   },
   "Library": {
     "Rooms": "الغرف",
@@ -184,6 +195,55 @@
     "Yourjourneyyourvoice": "رحلتك، صوتك",
     "Yourmusiccollection": "مجموعتك الموسيقية",
     "SingItYourOwn": "غَنِّها بأسلوبك الخاص",
-    "MyPlaylists": "قوائمي الموسيقية"
+    "MyPlaylists": "قوائمي الموسيقية",
+    "Sort": "ترتيب",
+    "Loadingmorsongs": "...جارٍ تحميل المزيد من الأغاني",
+    "Sing": "غنِّ"
+  },
+  "Player": {
+    "Nowplaying": "يُشغَّل الآن",
+    "AA": "أأ",
+    "Textsize": "حجم النص",
+    "Fulllyrics": "كلمات الأغنية كاملة",
+    "LYRICS": "كلمات الأغنية",
+    "Lyricsarenotavailablefortherecordedsong": "كلمات الأغنية المسجلة غير متاحة",
+    "Lyricsnotavailableforthissong": "كلمات هذه الأغنية غير متاحة",
+    "Singthissong": "غنِّ هذه الأغنية",
+    "Prepareinstrumentalandlyrics": "تجهيز الموسيقى وكلمات الأغنية",
+    "Editprofile": "تعديل الملف الشخصي"
+  },
+  "Profile": {
+    "Myrecordings": "تسجيلاتي",
+    "Myplaylists": "قوائم التشغيل الخاصة بي",
+    "Recentrecordings": "التسجيلات الأخيرة",
+    "Norecordingsfound": "لم يتم العثور على تسجيلات",
+    "Createplaylist": "إنشاء قائمة تشغيل",
+    "Settings": "الإعدادات",
+    "Preferences": "التفضيلات",
+    "Notifications": "الإشعارات",
+    "Accountsettings": "إعدادات الحساب",
+    "Permissions": "الأذونات",
+    "AboutKarkab": "حول كركاب",
+    "Termsprivacy": "الشروط والخصوصية",
+    "Logout": "تسجيل الخروج",
+    "Weareheretohelpyou": "نحن هنا لمساعدتك",
+    "Howcanwehelp": "كيف يمكننا مساعدتك؟",
+    "ContactUs": "اتصل بنا",
+    "HavingtroublewithKarKab?assistyou": "هل تواجه مشكلة في كركاب؟ أخبرنا بما حدث، وسيبذل فريقنا قصارى جهده لمساعدتك.",
+    "Sendusamessage": "أرسل لنا رسالة",
+    "Subject": "الموضوع",
+    "Audioplaybackissue": "مثال: مشكلة في تشغيل الصوت",
+    "Description": "الوصف",
+    "Pleaseexplainyourissue": "يرجى شرح مشكلتك بالتفصيل...",
+    "SubmitRequest": "إرسال الطلب",
+    "Yourmatterstous": "موسيقاك تهمنا",
+    "Thankhelpingusimproveyourexperience": "شكرًا لمساعدتنا في تحسين تجربتك مع كركاب.",
+    "Chooseyourpreferredlanguage": "اختر لغتك المفضلة",
+    "AppLanguage": "لغة التطبيق",
+    "Languagepreference": "تفضيلات اللغة",
+    "Yourlanguagepreferencethroughapp": "سيتم استخدام اللغة التي تفضلها في جميع أنحاء التطبيق.",
+    "ChangeLanguage": "تغيير اللغة",
+    "Areyouwanttochangetheapplanguage": "هل أنت متأكد أنك تريد تغيير لغة التطبيق؟",
+    "Theapplicationreloadtoapplythechangesproperly": "سيتم إعادة تشغيل التطبيق لتطبيق التغييرات بشكل صحيح."
   }
 }

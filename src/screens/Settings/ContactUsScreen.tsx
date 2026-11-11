@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
-
+import { useTranslation } from "react-i18next";
 import AppText from '../../share/components/AppText';
 import AppImage from '../../share/components/AppImage';
 import color from '../../share/constants/color';
@@ -24,7 +24,7 @@ import LinearGradient from 'react-native-linear-gradient';
 
 const ContactUsScreen = () => {
     const navigation = useNavigation();
-
+    const { t } = useTranslation();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [loading, setLoading] = useState(false);
@@ -128,9 +128,9 @@ const ContactUsScreen = () => {
                         </TouchableOpacity>
 
                         <View style={styles.headerText}>
-                            <AppText style={styles.headerTitle}>Contact Us</AppText>
+                            <AppText style={styles.headerTitle}>{t('Profile.ContactUs')}</AppText>
                             <AppText style={styles.headerSubtitle}>
-                                We are here to help you
+                                {t('Profile.Weareheretohelpyou')}
                             </AppText>
                         </View>
                     </View>
@@ -142,29 +142,31 @@ const ContactUsScreen = () => {
                         </View>
 
                         <AppText style={styles.introTitle}>
-                            How can we help?
+                            {t('Profile.Howcanwehelp')}
                         </AppText>
 
                         <AppText style={styles.introDescription}>
-                            Having trouble with KarKab? Tell us what happened, and our team
-                            will do its best to assist you.
+
+                            {t('Profile.HavingtroublewithKarKab?assistyou')}
+
                         </AppText>
                     </View>
 
                     {/* Contact form */}
                     <View style={styles.formCard}>
                         <AppText style={styles.sectionTitle}>
-                            Send us a message
+                            Sendusamessage
+                            {t('Profile.Sendusamessage')}
                         </AppText>
 
                         <AppText style={styles.fieldLabel}>
-                            Subject <AppText style={styles.required}>*</AppText>
+                            {t('Profile.Subject')}    <AppText style={styles.required}>*</AppText>
                         </AppText>
 
                         <TextInput
                             value={title}
                             onChangeText={setTitle}
-                            placeholder="e.g. Audio playback issue"
+                            placeholder={t('Profile.Audioplaybackissue')}
                             placeholderTextColor="#777777"
                             style={styles.input}
                             maxLength={120}
@@ -173,13 +175,13 @@ const ContactUsScreen = () => {
                         />
 
                         <AppText style={styles.fieldLabel}>
-                            Description <AppText style={styles.required}>*</AppText>
+                            {t('Profile.Description')} <AppText style={styles.required}>*</AppText>
                         </AppText>
 
                         <TextInput
                             value={description}
                             onChangeText={setDescription}
-                            placeholder="Please explain your issue in detail..."
+                            placeholder={t('Profile.Pleaseexplainyourissue')}
                             placeholderTextColor="#777777"
                             style={[styles.input, styles.descriptionInput]}
                             multiline
@@ -214,7 +216,7 @@ const ContactUsScreen = () => {
                                 ) : (
                                     <>
                                         <AppText style={styles.submitButtonText}>
-                                            Submit Request
+                                            {t('Profile.SubmitRequest')}
                                         </AppText>
                                         <AppText style={styles.submitIcon}>➤</AppText>
                                     </>
@@ -229,11 +231,12 @@ const ContactUsScreen = () => {
 
                         <View style={styles.footerContent}>
                             <AppText style={styles.footerTitle}>
-                                Your music matters to us
+                                {t('Profile.Yourmatterstous')}
                             </AppText>
 
                             <AppText style={styles.footerDescription}>
-                                Thank you for helping us improve your KarKab experience.
+                                {t('Profile.Thankhelpingusimproveyourexperience')}
+
                             </AppText>
                         </View>
                     </View>

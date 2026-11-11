@@ -580,7 +580,7 @@ const Profile = () => {
 
                 <Header
                     headername={'Profile'}
-                    headertitle={'Your journey , your voice'}
+                    headertitle={t('Library.Yourjourneyyourvoice')}
                     rightIcon={Images.bell}
                     onRightPress={() => { (navigation as any).navigate('NotificationScreen', { previousScreen: 'Profile' }) }}
                     rightView={
@@ -598,7 +598,7 @@ const Profile = () => {
                             borderRadius: 97
                         }}
                             onPress={() => {
-                                navigation?.navigate(
+                                (navigation as any)?.navigate(
                                     'SettingScreen',
                                 );
                             }}
@@ -673,7 +673,8 @@ const Profile = () => {
                                         fontSize={10}
                                         fontFamily={Inter.regular}
                                     >
-                                        Edit profile
+                                        {t('Player.Editprofile')}
+
                                     </AppText>
                                 </TouchableOpacity>
                             </View>
@@ -694,7 +695,7 @@ const Profile = () => {
                         <View style={styles.menuCard}>
                             {[
                                 {
-                                    title: 'My recordings',
+                                    title: t('Profile.Myrecordings'),
                                     image: Images.mic,
                                     onPress: () =>
                                         (navigation as any).navigate('RecordingList' as never, {
@@ -704,13 +705,13 @@ const Profile = () => {
                                         } as never),
                                 },
                                 {
-                                    title: 'My playlists',
+                                    title: t('Profile.Myplaylists'),
                                     image: Images.playlist,
                                     onPress: () =>
                                         (navigation as any).navigate('CreatePlaylist' as never),
                                 },
                                 {
-                                    title: 'Favorites',
+                                    title: t('Library.Myplaylists'),
                                     image: Images.like,
                                     onPress: () =>
                                         (navigation as any).navigate('SongsListScreen' as never, {
@@ -719,7 +720,7 @@ const Profile = () => {
                                         } as never),
                                 },
                                 {
-                                    title: 'Recently played',
+                                    title: t('Home.RecentlyPlayed'),
                                     image: Images.history,
                                     onPress: () =>
 
@@ -771,12 +772,13 @@ const Profile = () => {
                                 fontWeight="600"
                                 fontFamily={Inter.medium}
                             >
-                                Recent recordings
+                                {t('Profile.Recentrecordings')}
+
                             </AppText>
 
                             <TouchableOpacity
                                 onPress={() =>
-                                    navigation.navigate('RecordingList' as never, {
+                                    (navigation as any).navigate('RecordingList' as never, {
                                         recordings: recdata,
                                         previousScreen: 'Profile',
                                         isRecordings: true,
@@ -789,7 +791,8 @@ const Profile = () => {
                                     fontSize={12}
                                     fontFamily={Inter.medium}
                                 >
-                                    See all
+                                    {t('Home.Seeall')}
+
                                 </AppText>
 
                                 <AppText color="#B84CFF" fontSize={18}>
@@ -836,7 +839,7 @@ const Profile = () => {
                                         <TouchableOpacity
                                             activeOpacity={0.8}
                                             onPress={() => {
-                                                navigation.navigate('.' as never, {
+                                                (navigation as any).navigate('.' as never, {
                                                     id: item.id,
                                                     type: 'recordings',
                                                     previousScreen: 'Profile',
@@ -868,7 +871,8 @@ const Profile = () => {
                         ) : (
                             <View style={styles.emptyRecordings}>
                                 <AppText color="#999999" fontSize={12}>
-                                    No recordings found
+
+                                    {t('Profile.Norecordingsfound')}
                                 </AppText>
                             </View>
                         )}
@@ -901,7 +905,9 @@ const Profile = () => {
                                         fontSize={13}
                                         fontFamily={Inter.medium}
                                     >
-                                        Create playlist
+
+                                        {t('Profile.Createplaylist')}
+
                                     </AppText>
                                 </View>
                             </LinearGradient>
