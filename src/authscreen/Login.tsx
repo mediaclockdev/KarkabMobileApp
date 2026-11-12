@@ -602,6 +602,7 @@ import { useDirection } from "../share/hooks/useDirection";
 import { useLogin } from "../share/hooks/uselogin";
 import { FieldError } from '../share/hooks/Loginvalidation';
 import LanguageSelector from "../share/components/Languageselector";
+import GradientText from "../share/components/GradientText";
 
 export default function LoginScreen() {
   const navigation = useNavigation<any>();
@@ -655,9 +656,9 @@ export default function LoginScreen() {
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
         >
-          {/* <View style={styles.header}>
+          <View style={styles.header}>
             <LanguageSelector />
-          </View> */}
+          </View>
 
           <AppImage
             source={Logo.loginlogo}
@@ -674,12 +675,20 @@ export default function LoginScreen() {
             >
               {`${t('auth.login.headline')} `}
             </AppText>
-            <AppImage
+            <GradientText
+              style={{ fontSize: 28, fontFamily: Inter.semibold }}
+
+
+            >
+              {`${t('auth.login.encore')} `}
+            </GradientText>
+
+            {/* <AppImage
               resizeMode="contain"
               source={Logo.logintext2}
               width={111}
               height={34}
-            />
+            /> */}
           </View>
 
           <AppText

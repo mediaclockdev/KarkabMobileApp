@@ -6,20 +6,11 @@ import {
     getInitialNotification,
 } from '@react-native-firebase/messaging';
 import { handleNotificationTap, parseMetadata } from './navigation';
-import { getCurrentRouteName, getCurrentRouteParams } from '../navigation/NavigationService';
+import { getCurrentRouteName } from '../navigation/NavigationService';
 import { ensureFcmToken, listenToTokenRefresh } from './fcmToken';
+import { createChannels } from './channels';
 
-const CHANNEL_ID = 'karkab_default_channel';
-
-export async function ensureChannel() {
-    return notifee.createChannel({
-        id: CHANNEL_ID,
-        name: 'Default Notifications',
-        importance: AndroidImportance.HIGH,
-        sound: 'default',
-        vibration: true,
-    });
-}
+export { createChannels };
 
 /**
  * Checks if the user is currently viewing the active conversation/screen.
@@ -45,7 +36,7 @@ export async function displayNotification(remoteMessage: any) {
             return;
         }
 
-        const channelId = await ensureChannel();
+        const channelId = data.channelId || 'default';
 
         await notifee.displayNotification({
             title: title || 'KarKab',
@@ -59,6 +50,7 @@ export async function displayNotification(remoteMessage: any) {
             },
             ios: {
                 foregroundPresentationOptions: {
+                    alert: true,
                     banner: true,
                     list: true,
                     sound: true,
@@ -86,9 +78,13 @@ export async function firebaseBackgroundMessageHandler(remoteMessage: any) {
 /**
  * Initializes notification listeners and handlers during app runtime.
  */
-export function initNotificationHandlers() {
+export function initNotificationHandlers(params?: {
+    dispatch?: any;
+    serviceProvider?: any;
+}) {
+    const { dispatch, serviceProvider } = params ?? {};
     const messaging = getMessaging();
-    ensureChannel();
+    createChannels();
 
     // 1. Foreground FCM message received
     const unsubOnMessage = onMessage(messaging, async remoteMessage => {
@@ -111,14 +107,22 @@ export function initNotificationHandlers() {
     // 2. Notification opened from background (FCM)
     const unsubOpened = onNotificationOpenedApp(messaging, remoteMessage => {
         console.log('📲 Notification opened from background (FCM):', remoteMessage);
-        handleNotificationTap({ notification: remoteMessage });
+        handleNotificationTap({
+            notification: remoteMessage,
+            dispatch,
+            serviceProvider,
+        });
     });
 
     // 3. App launched from quit state (cold start via FCM notification)
     getInitialNotification(messaging).then(remoteMessage => {
         if (remoteMessage) {
             console.log('🚀 App launched from quit state via notification:', remoteMessage);
-            handleNotificationTap({ notification: remoteMessage });
+            handleNotificationTap({
+                notification: remoteMessage,
+                dispatch,
+                serviceProvider,
+            });
         }
     });
 
@@ -126,7 +130,11 @@ export function initNotificationHandlers() {
     const unsubFg = notifee.onForegroundEvent(({ type, detail }) => {
         if (type === EventType.PRESS) {
             console.log('👆 Notifee foreground banner pressed:', detail.notification);
-            handleNotificationTap({ notification: detail.notification });
+            handleNotificationTap({
+                notification: detail.notification,
+                dispatch,
+                serviceProvider,
+            });
         }
     });
 

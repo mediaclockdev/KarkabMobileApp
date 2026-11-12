@@ -1,25 +1,23 @@
-
 import React, { useEffect, useRef } from 'react';
 import {
     Animated,
-    Easing,
     Dimensions,
+    Easing,
     StyleSheet,
     View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } =
-    Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const COLORS = {
-    background: '#0D0D12',
-    base: '#19191F',
-    highlight: '#292932',
-    border: '#292932',
+    background: '#0D0D11',
+    base: '#191920',
+    highlight: '#2A2A35',
+    border: '#2A2A35',
 };
 
-const ARTWORK_SIZE = Math.min(SCREEN_WIDTH * 0.58, 380);
+const ARTWORK_SIZE = Math.min(SCREEN_WIDTH * 0.58, 230);
 
 const SkeletonBlock = ({
     width = '100%',
@@ -27,7 +25,7 @@ const SkeletonBlock = ({
     radius = 10,
     style,
 }: {
-    width?: number | `${number}%`;
+    width?: number | `${number}%` | '100%';
     height: number;
     radius?: number;
     style?: any;
@@ -54,7 +52,7 @@ const SkeletonBlock = ({
 
     const translateX = shimmer.interpolate({
         inputRange: [-1, 1],
-        outputRange: [-SCREEN_WIDTH * 0.8, SCREEN_WIDTH * 0.8],
+        outputRange: [-SCREEN_WIDTH * 0.85, SCREEN_WIDTH * 0.85],
     });
 
     return (
@@ -89,100 +87,80 @@ const SkeletonBlock = ({
     );
 };
 
-// Header
-const HeaderSkeleton = () => (
-    <View style={styles.header}>
-        <View style={styles.headerLeft}>
-            <SkeletonBlock width={9} height={16} radius={3} />
-            <SkeletonBlock width={75} height={20} radius={4} />
-        </View>
-
-        <SkeletonBlock width={125} height={23} radius={5} />
-
-        <SkeletonBlock width={35} height={12} radius={5} />
-    </View>
-);
-
-// Lyrics card
+// Lyrics preview card
 const LyricsSkeleton = () => (
     <View style={styles.lyricsContainer}>
-        <SkeletonBlock width="35%" height={22} radius={5} />
+        <SkeletonBlock width="72%" height={20} radius={5} />
 
         <SkeletonBlock
-            width="72%"
-            height={21}
-            radius={5}
+            width="46%"
+            height={15}
+            radius={4}
             style={styles.lyricSecondLine}
         />
 
         <View style={styles.lyricsActions}>
-            <View style={styles.lyricsButton}>
-                <SkeletonBlock width={17} height={19} radius={3} />
-                <SkeletonBlock width={85} height={15} radius={4} />
-            </View>
-
-            <View style={styles.lyricsButton}>
-                <SkeletonBlock width={27} height={17} radius={4} />
-                <SkeletonBlock width={75} height={15} radius={4} />
-            </View>
+            <SkeletonBlock width={106} height={32} radius={16} />
+            <SkeletonBlock width={96} height={32} radius={16} />
         </View>
     </View>
 );
 
-// Progress bar
+// Progress scrubber
 const ProgressSkeleton = () => (
     <View style={styles.progressContainer}>
-        <View style={styles.progressTrack}>
+        <View style={styles.progressHitArea}>
+            <View style={styles.progressTrack} />
             <View style={styles.progressDot}>
-                <SkeletonBlock width={16} height={16} radius={8} />
+                <SkeletonBlock width={10} height={10} radius={5} />
             </View>
         </View>
 
         <View style={styles.progressLabels}>
-            <SkeletonBlock width={38} height={13} radius={4} />
-            <SkeletonBlock width={38} height={13} radius={4} />
+            <SkeletonBlock width={32} height={11} radius={3} />
+            <SkeletonBlock width={32} height={11} radius={3} />
         </View>
     </View>
 );
 
-// Playback controls
+// Playback controls (matching AudioRec.tsx)
 const PlaybackControlsSkeleton = () => (
     <View style={styles.controls}>
         {/* Shuffle */}
-        <SkeletonBlock width={25} height={13} radius={3} />
+        <SkeletonBlock width={38} height={38} radius={19} />
 
         {/* Previous */}
-        <SkeletonBlock width={29} height={30} radius={4} />
+        <SkeletonBlock width={36} height={36} radius={18} />
 
-        {/* Play */}
+        {/* Hero Play Button (66x66) */}
         <SkeletonBlock
-            width={108}
-            height={108}
-            radius={54}
+            width={66}
+            height={66}
+            radius={33}
             style={styles.playButton}
         />
 
         {/* Next */}
-        <SkeletonBlock width={29} height={30} radius={4} />
+        <SkeletonBlock width={36} height={36} radius={18} />
 
         {/* Repeat */}
-        <SkeletonBlock width={25} height={25} radius={13} />
+        <SkeletonBlock width={38} height={38} radius={19} />
     </View>
 );
 
-// Bottom sing button
+// Sing This Song CTA Button
 const SingButtonSkeleton = () => (
     <View style={styles.bottomSection}>
         <SkeletonBlock
-            width="100%"
-            height={84}
-            radius={50}
+            width={SCREEN_WIDTH - 25}
+            height={52}
+            radius={27}
         />
 
         <SkeletonBlock
-            width={205}
-            height={16}
-            radius={5}
+            width={200}
+            height={12}
+            radius={3}
             style={styles.bottomSubtitle}
         />
     </View>
@@ -191,50 +169,49 @@ const SingButtonSkeleton = () => (
 const AudioRecSkeleton = () => {
     return (
         <View style={styles.container}>
+            {/* Content Area */}
+            <View style={styles.contentArea}>
+                {/* Artwork */}
+                <View style={styles.artworkContainer}>
+                    <SkeletonBlock
+                        width={ARTWORK_SIZE}
+                        height={ARTWORK_SIZE}
+                        radius={22}
+                        style={styles.artwork}
+                    />
+                </View>
 
-            {/* Header */}
-            <HeaderSkeleton />
+                {/* Song Meta Title & Artist */}
+                <View style={styles.songInfo}>
+                    <SkeletonBlock
+                        width="58%"
+                        height={20}
+                        radius={5}
+                    />
 
-            {/* Song Artwork */}
-            <View style={styles.artworkContainer}>
-                <SkeletonBlock
-                    width={ARTWORK_SIZE}
-                    height={ARTWORK_SIZE}
-                    radius={37}
-                    style={styles.artwork}
-                />
+                    <SkeletonBlock
+                        width="38%"
+                        height={14}
+                        radius={4}
+                        style={styles.artist}
+                    />
+                </View>
+
+                {/* Lyric Card */}
+                <LyricsSkeleton />
             </View>
 
-            {/* Song Information */}
-            <View style={styles.songInfo}>
-                <SkeletonBlock
-                    width="35%"
-                    height={24}
-                    radius={5}
-                />
-
-                <SkeletonBlock
-                    width="55%"
-                    height={20}
-                    radius={5}
-                    style={styles.artist}
-                />
-            </View>
-
-            {/* Lyrics Card */}
-            <LyricsSkeleton />
-
-            {/* Progress */}
+            {/* Bottom Player Section */}
             <View style={styles.playerBottom}>
+                {/* Scrubber */}
                 <ProgressSkeleton />
 
-                {/* Playback Controls */}
+                {/* Controls */}
                 <PlaybackControlsSkeleton />
 
-                {/* Sing This Song */}
+                {/* Sing This Song CTA */}
                 <SingButtonSkeleton />
             </View>
-
         </View>
     );
 };
@@ -243,8 +220,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,
-        paddingHorizontal: 16,
-        paddingTop: 10,
+        justifyContent: 'space-between',
     },
 
     block: {
@@ -255,124 +231,105 @@ const styles = StyleSheet.create({
     },
 
     shimmerGradient: {
-        width: SCREEN_WIDTH * 1.6,
+        width: SCREEN_WIDTH * 1.8,
         height: '100%',
         opacity: 0.95,
     },
 
-    // Header
-    header: {
-        height: 48,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-
-    headerLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
+    contentArea: {
+        flex: 1,
+        justifyContent: 'center',
     },
 
     // Artwork
     artworkContainer: {
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: Math.max(35, SCREEN_HEIGHT * 0.065),
+        marginTop: 6,
+        marginBottom: 12,
     },
 
     artwork: {
-        borderColor: '#34343A',
+        borderColor: '#2A2A35',
         borderWidth: 1,
     },
 
     // Song information
     songInfo: {
         alignItems: 'center',
-        marginTop: 22,
-        gap: 12,
+        paddingHorizontal: 28,
+        marginBottom: 12,
+        gap: 6,
     },
 
     artist: {
-        marginTop: 1,
+        marginTop: 2,
     },
 
     // Lyrics card
     lyricsContainer: {
-        width: '100%',
-        minHeight: 217,
-        marginTop: 25,
+        backgroundColor: '#17171F',
+        borderRadius: 22,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        paddingVertical: 14,
         paddingHorizontal: 18,
-        paddingVertical: 27,
-        borderRadius: 34,
-        backgroundColor: '#191920',
-        borderWidth: 1.5,
-        borderColor: '#303039',
+        marginHorizontal: 22,
+        marginBottom: 6,
         alignItems: 'center',
         justifyContent: 'center',
     },
 
     lyricSecondLine: {
-        marginTop: 17,
+        marginTop: 8,
     },
 
     lyricsActions: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 16,
-        marginTop: 24,
-    },
-
-    lyricsButton: {
-        height: 50,
-        paddingHorizontal: 15,
-        borderRadius: 30,
-        backgroundColor: '#25252D',
-        borderWidth: 1,
-        borderColor: '#35353F',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 9,
+        gap: 12,
+        marginTop: 12,
     },
 
     // Bottom player
     playerBottom: {
-        marginTop: 'auto',
-        paddingBottom: 55,
+        paddingTop: 2,
+        paddingBottom: 20,
     },
 
     // Progress
     progressContainer: {
-        marginBottom: 22,
+        paddingHorizontal: 24,
+        marginTop: 6,
+        marginBottom: 4,
+    },
+
+    progressHitArea: {
+        height: 24,
+        justifyContent: 'center',
+        position: 'relative',
     },
 
     progressTrack: {
-        height: 5,
-        backgroundColor: '#29292E',
-        borderRadius: 5,
-        justifyContent: 'center',
+        height: 3,
+        borderRadius: 1.5,
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        position: 'absolute',
+        left: 0,
+        right: 0,
     },
 
     progressDot: {
         position: 'absolute',
-        left: 0,
-        top: -6,
-        width: 17,
-        height: 17,
-        borderRadius: 9,
-        backgroundColor: COLORS.background,
-        borderWidth: 2,
-        borderColor: '#C33FEA',
-        alignItems: 'center',
-        justifyContent: 'center',
+        left: '35%',
+        top: 7,
     },
 
     progressLabels: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 20,
+        marginTop: 2,
     },
 
     // Playback controls
@@ -380,25 +337,26 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 35,
-        marginTop: 0,
-        marginBottom: 30,
+        paddingHorizontal: 26,
+        marginVertical: 8,
     },
 
     playButton: {
-        backgroundColor: '#24242D',
-        borderColor: '#383842',
-        borderWidth: 2,
+        backgroundColor: '#24232C',
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        borderWidth: 1,
     },
 
-    // Bottom button
+    // Bottom CTA button
     bottomSection: {
         width: '100%',
         alignItems: 'center',
+        paddingHorizontal: 24,
+        marginTop: 10,
     },
 
     bottomSubtitle: {
-        marginTop: 17,
+        marginTop: 8,
     },
 });
 

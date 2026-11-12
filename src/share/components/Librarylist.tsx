@@ -819,6 +819,7 @@ import { playSongList, playTrackSong } from '../../services/player'
 
 import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from "react-i18next";
+import { LibrarySkeleton } from './ScreenSkeletons';
 // ---- UI tokens ----
 
 const BRAND_GRADIENT = ['#FF741D', '#C2361B', '#8A1FA8'];
@@ -1588,23 +1589,16 @@ const Librarylist = ({
       ListFooterComponent={renderFooter}
 
       ListEmptyComponent={() =>
-
         loading ? (
-          <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color={color.mgyellow || '#BC4402'} />
-          </View>
-
+          <LibrarySkeleton count={6} />
         ) : (
           <View style={styles.centerContainer}>
             <AppImage source={Logo.ymusic} width={20} height={20} />
             <AppText color={color.darkthemetext} fontSize={14} marginTop={10}>
-
               No songs found
             </AppText>
           </View>
-
         )
-
       }
 
     />

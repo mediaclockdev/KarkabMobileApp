@@ -685,7 +685,7 @@ const Library = () => {
           value={''}
           onFilterPress={() => console.log('filter')}
           onPress={() => {
-            navigation.navigate('SearchSongSecreen', { previousScreen: 'Home' });
+            (navigation as any).navigate('SearchSongSecreen', { previousScreen: 'Home' });
           }}
         />
 

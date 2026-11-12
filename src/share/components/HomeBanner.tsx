@@ -295,7 +295,7 @@ const HomeBanner = ({ data }: { data: any[] }) => {
                       alignItems: 'center',
                       flexDirection: 'row',
                       gap: 8,
-                      marginTop: 10
+                      marginTop: 15
                     }}
                   >
 

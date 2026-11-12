@@ -27,7 +27,8 @@
       "terms": "Terms of Service",
       "and": "and",
       "privacy": "Privacy Policy",
-      "loginFailed": "Login Failed"
+      "loginFailed": "Login Failed",
+      "encore": "encore?"
     },
     "signup": {
       "title": "Create Account",
@@ -147,7 +148,8 @@
     "Sudanesesongs": "Sudanese songs",
     "Yourrecordedshowhere": "Your recorded performance show here",
     "RecentlyPlayed": "Recently Played",
-    "Artists": "Artists"
+    "Artists": "Artists",
+    "BrowseCollections": "Browse Collections"
   },
   "Search": {
     "whatwouldtosingtoday?": "What would you like to sing today?",

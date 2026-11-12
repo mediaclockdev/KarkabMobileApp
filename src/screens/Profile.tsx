@@ -28,6 +28,7 @@ import { storage } from "../share/storage/mmkv";
 import { useTranslation } from "react-i18next";
 import { prefetchNextSongForQueue } from "../services/player";
 import TrackPlayer from "@rntp/player";
+import { ProfileSkeleton } from "../share/components/ScreenSkeletons";
 
 const Profile = () => {
     const navigation = useNavigation();
@@ -616,7 +617,8 @@ const Profile = () => {
 
                 {loader ? (
                     <View style={styles.loaderContainer}>
-                        <ActivityIndicator size="large" color="#D07113" />
+                        {/* <ActivityIndicator size="large" color="#D07113" /> */}
+                        <ProfileSkeleton />
                     </View>
                 ) : (
                     <>
@@ -640,6 +642,7 @@ const Profile = () => {
                                             color="#FFFFFF"
                                             fontSize={26}
                                             fontWeight="700"
+                                        // style={{ alignItems: 'flex-start', alignSelf: 'flex-start', }}
                                         >
                                             {getInitials(profiledetail?.name)}
                                         </AppText>
@@ -654,6 +657,7 @@ const Profile = () => {
 
                                     fontFamily={Inter.bold}
                                     numberOfLines={1}
+                                    style={{ alignItems: 'flex-start', alignSelf: 'flex-start', }}
                                 >
                                     {profiledetail?.name
                                         ? profiledetail.name.charAt(0).toUpperCase() +
@@ -937,8 +941,7 @@ const styles = StyleSheet.create({
 
     loaderContainer: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        width: '100%',
     },
 
     topHeader: {

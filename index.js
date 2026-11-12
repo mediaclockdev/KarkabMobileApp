@@ -6,6 +6,7 @@ import notifee, { EventType } from '@notifee/react-native';
 import { setupAudioPlayer } from './src/services/player';
 import { bootstrapLayoutDirection } from './src/localization/i18n';
 import { firebaseBackgroundMessageHandler } from './src/services/notificationService';
+import { handleNotificationTap } from './src/services/navigation';
 import App from './App';
 import { name as appName } from './app.json';
 import playbackService from './service';
@@ -15,8 +16,9 @@ setBackgroundMessageHandler(getMessaging(), firebaseBackgroundMessageHandler);
 
 // 2. Register Notifee background event handler
 notifee.onBackgroundEvent(async ({ type, detail }) => {
-  if (type === EventType.PRESS) {
+  if (type === EventType.PRESS && detail.notification) {
     console.log('🔔 Notifee background event press:', detail.notification);
+    handleNotificationTap({ notification: detail.notification });
   }
 });
 

@@ -209,12 +209,13 @@ const SettingScreen = () => {
                         title: t('language.label'),
                         subtitle: 'العربية / English',
                         onPress: () => {
-                            Toast.show({
-                                type: 'info',
-                                position: 'bottom',
-                                bottomOffset: 80,
-                                text1: 'Coming soon!',
-                            });
+                            // Toast.show({
+                            //     type: 'info',
+                            //     position: 'bottom',
+                            //     bottomOffset: 80,
+                            //     text1: 'Coming soon!',
+                            // });
+                            (navigation as any).navigate('LanguageScreen')
                         },
                     })}
 

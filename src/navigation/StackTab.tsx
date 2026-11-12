@@ -9,6 +9,8 @@ import ResetPassword from "../authscreen/ResetPassword";
 import Recording from "../screens/Recording";
 import { HideableBottomTabs } from "./HideableBottomTabs";
 import { Tabs } from "./Tabs";
+import Privacy from "../authscreen/Privacy";
+import Terms from "../authscreen/Terms";
 
 
 const Stack = createNativeStackNavigator();
@@ -18,11 +20,13 @@ export default function StackTab() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Signup" component={SignUp} />
-        <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-        <Stack.Screen name="OtpVerification" component={OtpVerification} />
-        <Stack.Screen name="ResetPassword" component={ResetPassword} />
-        
-        {/* <Stack.Screen
+      <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+      <Stack.Screen name="OtpVerification" component={OtpVerification} />
+      <Stack.Screen name="ResetPassword" component={ResetPassword} />
+      <Stack.Screen name="Privacy" component={Privacy} />
+      <Stack.Screen name="Terms" component={Terms} />
+
+      {/* <Stack.Screen
   name="Tabs"
   component={Tabs}
 />

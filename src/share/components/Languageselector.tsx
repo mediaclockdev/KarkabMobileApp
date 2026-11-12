@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Modal, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import AppImage from './AppImage';
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   wrapper: {
     alignSelf: 'flex-end',
     zIndex: 999,
-    marginTop: 15
+    marginTop: Platform.OS == 'ios' ? 15 : 25
   },
   trigger: {
     borderWidth: 1,

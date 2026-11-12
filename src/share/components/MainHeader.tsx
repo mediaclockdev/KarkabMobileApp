@@ -88,6 +88,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({
                     fontSize={18}
                     color="#FFFFFF"
                     fontFamily={Inter.regular}
+
                   >
                     {getInitials(user?.name)}
                   </AppText>
@@ -109,7 +110,8 @@ const MainHeader: React.FC<MainHeaderProps> = ({
               fontFamily={Inter.bold}
               numberOfLines={2}
               ellipsizeMode="tail"
-              style={{ flexShrink: 1, width: 135, flexWrap: 'wrap', }}
+
+              style={{ flexShrink: 1, maxWidth: 135, flexWrap: 'wrap', alignItems: 'flex-start', alignSelf: 'flex-start', }}
             >
               {user?.name
                 ? user.name.charAt(0).toUpperCase() +
@@ -121,6 +123,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({
               color={'#FC6101'}
               fontFamily={Inter.regular}
               marginTop={5}
+              style={{ alignItems: 'flex-start', alignSelf: 'flex-start' }}
             >
               {t("Home.Readysingtoday")}
             </AppText>

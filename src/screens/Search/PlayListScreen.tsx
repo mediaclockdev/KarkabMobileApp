@@ -29,6 +29,7 @@ import { playSongList, playPlaylistById } from '../../services/player';
 import Librarylist from '../../share/components/Librarylist';
 import LinearGradient from 'react-native-linear-gradient';
 import Header from "../../share/components/Header";
+import { PlaylistSkeleton } from '../../share/components/ScreenSkeletons';
 
 interface Playlist {
     id: string;
@@ -387,8 +388,8 @@ export default function PlayListScreen() {
             />
 
             {loader ? (
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <ActivityIndicator size="large" color="#EFCB61" />
+                <View style={{ flex: 1, width: '100%' }}>
+                    <PlaylistSkeleton />
                 </View>
             ) : (
 

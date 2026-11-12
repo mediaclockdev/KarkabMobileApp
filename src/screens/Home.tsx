@@ -23,7 +23,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Inter } from '../share/constants/fonts';
 import apiUrls from '../services/apiUrls';
 import ApiService from '../services/api';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../share/hooks/useAppSelector';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import SelectedArtistScreen from './Home/SelectedArtistScreen';
@@ -75,56 +75,57 @@ const Home = () => {
     'Latest'
   );
   const [loader, setLoader] = useState(false);
-  const [newReleasesdata, setNewreleasesdata] = useState<any[]>([])
+  const [newReleasesdata, setNewReleasesdata] = useState<any[]>([]);
   const loginState = useAppSelector((state: any) => state.auth.loginState);
-  const [bannerdata, setBannerdata] = useState([])
+  const [bannerdata, setBannerdata] = useState([]);
 
+  // ─── Track whether the initial load has ever finished ───────────────────────
+  const initialLoadDone = useRef(false);
+
+  // ─── Load all home screen data together, show skeleton only on first load ───
+  const loadHomeData = async (isRefresh = false) => {
+    if (!isRefresh && !initialLoadDone.current) {
+      setLoader(true);
+    }
+    try {
+      await Promise.all([
+        fetchProfileData(),
+        bannerfun(),
+        recentlypalyedfun(),
+        dashbaordfun(),
+        fetchCategories(),
+        fetchNewReleases(),
+        fetchArtistsByFilter(selectedFilter),
+        topmostdata(),
+        getpublicRecording(),
+      ]);
+    } finally {
+      setLoader(false);
+      initialLoadDone.current = true;
+    }
+  };
+
+  // ─── Initial load on first focus ────────────────────────────────────────────
   useFocusEffect(
-
-
     useCallback(() => {
-      fetchProfileData();
-      categorydata();
-      Dashboarddata();
-      topmostdata();
-      artistmixedsongfun();
-      recommendedsongfun();
-      getartistfun();
-      getRecording();
-      getpublicRecording();
-      newreleasesdata();
-
-      bannerfun()
+      loadHomeData();
     }, [])
+  );
 
-
-  )
-
+  // ─── Re-run dashbaordfun when loginState changes ─────────────────────────────
   useFocusEffect(
     useCallback(() => {
-      dashbaordfun()
+      if (initialLoadDone.current) {
+        dashbaordfun();
+      }
     }, [loginState])
-  )
+  );
 
-
-
+  // ─── Refresh (pull-to-refresh) ────────────────────────────────────────────
   const onRefresh = useCallback(async () => {
     try {
       setRefreshing(true);
-      await Promise.all([
-        fetchProfileData(),
-        categorydata(),
-        Dashboarddata(),
-        topmostdata(),
-        artistmixedsongfun(),
-        recommendedsongfun(),
-        //getartistfun(),
-        getRecording(),
-        getpublicRecording(),
-        newreleasesdata(),
-        fetchArtistsByFilter(selectedFilter),
-
-      ]);
+      await loadHomeData(true);
     } catch (error) {
       console.log('Home refresh error:', error);
     } finally {
@@ -132,88 +133,67 @@ const Home = () => {
     }
   }, [selectedFilter]);
 
+  // ─── Re-fetch when recordingRefresh changes ──────────────────────────────────
   useEffect(() => {
-    getRecording();
-    getpublicRecording();
-    fetchArtistsByFilter(selectedFilter);
+    if (initialLoadDone.current) {
+      getRecording();
+      getpublicRecording();
+      fetchArtistsByFilter(selectedFilter);
+    }
   }, [recordingRefresh]);
 
+  // ─── Re-fetch artist songs when filter chip changes ──────────────────────────
+  useEffect(() => {
+    if (initialLoadDone.current) {
+      fetchArtistsByFilter(selectedFilter);
+    }
+  }, [selectedFilter]);
 
 
+  // ─── Individual API functions (NO setLoader calls here) ─────────────────────
 
   const dashbaordfun = async () => {
-    console.log("popular api called")
     try {
-      //dispatch(loaderstate(true));
-
       const response = await ApiService.get(apiUrls.homeApi);
-
       const data = (response as any)?.data;
-      //  console.log(data, 'dashbaordfun API RESPONSEdddd');
-
       if (data?.success) {
-        console.log(data.data, 'dashbaordfun API RESPONSEdddd');
         if (data.data.user_artists.length === 0) {
           dispatch(setLoginState('first'));
+        } else {
+          setArtistdatad(data.data.user_artists);
         }
-        else {
-          setArtistdatad(data.data.user_artists)
-        }
-
       }
     } catch (error) {
-      console.log('trandingdata ERROR:', error);
-    } finally {
-      // dispatch(loaderstate(false));
+      console.log('dashbaordfun ERROR:', error);
     }
   };
 
-
   const bannerfun = async () => {
-    console.log("bannerfun api called")
     try {
-      //dispatch(loaderstate(true));
-
       const response = await ApiService.get(apiUrls.homebanner);
-
       const data = (response as any)?.data;
-      console.log(data.banners, 'bannerfun API RESPONSEdddd');
-
       if (data?.success) {
-        setBannerdata(data.banners
-        )
+        setBannerdata(data.banners);
       }
     } catch (error) {
       console.log('bannerfun ERROR:', error);
-
-    } finally {
-      // dispatch(loaderstate(false));
     }
   };
 
-  const newreleasesdata = async () => {
-    console.log("popular api called")
+  const fetchNewReleases = async () => {
     try {
-      //dispatch(loaderstate(true));
-
       const response = await ApiService.get(apiUrls.getnewreleases);
-
       const data = (response as any)?.data;
-      console.log(data, 'tranding API RESPONSEdddd');
-
       if (data?.success) {
-        setNewreleasesdata(data.songs);
+        setNewReleasesdata(data.songs);
       }
     } catch (error) {
-      console.log('trandingdata ERROR:', error);
-    } finally {
-      // dispatch(loaderstate(false));
+      console.log('fetchNewReleases ERROR:', error);
     }
   };
 
   const fetchProfileData = async () => {
     try {
-      setLoader(true);
       const response = await ApiService.get(apiUrls.profileApi);
       const data = (response as any).data;
       if (data?.success) {
@@ -221,8 +201,6 @@ const Home = () => {
       }
     } catch (error) {
       console.log('PROFILE ERROR:', error);
-    } finally {
-      setLoader(false);
     }
   };
 
@@ -238,50 +216,39 @@ const Home = () => {
     }
   };
 
-
   const getpublicRecording = async () => {
     try {
       const response = await ApiService.get(apiUrls.getrecordingpublic);
       const data = (response as any).data;
-      console.log(data, "ppppppppppppppp")
       if (data?.success) {
         setRecdatapu(data.recordings);
       }
     } catch (error) {
-      console.log('getrecording ERROR:', error);
+      console.log('getrecordingpublic ERROR:', error);
     }
   };
 
-
-  const categorydata = async () => {
+  const fetchCategories = async () => {
     try {
-      setLoader(true);
       const response = await ApiService.get(apiUrls.categories);
       const data = (response as any).data;
       if (data?.success) {
         setCategories(data.categories);
-        // console.log(data, "kkkk")
       }
     } catch (error) {
-      console.log('Categorydata ERROR:', error);
-    } finally {
-      setLoader(false);
+      console.log('fetchCategories ERROR:', error);
     }
   };
 
   const topmostdata = async () => {
     try {
-      setLoader(true);
       const response = await ApiService.get(apiUrls.getpopularsong);
       const data = (response as any).data;
-      console.log(data, "hfjerjfbjrbfjfb")
       if (data?.success) {
         setPopulardatas(data.songs);
       }
     } catch (error) {
-      console.log('populardatnnnnna ERROR:', error);
-    } finally {
-      setLoader(false);
+      console.log('topmostdata ERROR:', error);
     }
   };
 
@@ -294,10 +261,8 @@ const Home = () => {
       } else if (filter === 'Popular') {
         url = `${apiUrls.getpopularsong}`;
       }
-
       const response = await ApiService.get(url);
       const data = (response as any).data;
-      console.log(data, filter, `${apiUrls.artistsong}/popular`, "swhvwhdvhvdh")
       if (data?.success) {
         setSongsartistdata(data.songs || []);
       } else {
@@ -311,18 +276,15 @@ const Home = () => {
     }
   };
 
-  const artistmixedsongfun = async () => {
+  const recentlypalyedfun = async () => {
     try {
-      setLoader(true);
       const response = await ApiService.get(apiUrls.recentlypalyed);
       const data = (response as any).data;
       if (data?.success) {
         setArtistmixsongdata(data.songs);
       }
     } catch (error) {
-      console.log('popularaaaaadata ERROR:', error);
-    } finally {
-      setLoader(false);
+      console.log('recentlypalyedfun ERROR:', error);
     }
   };
 
@@ -381,10 +343,6 @@ const Home = () => {
       setLoader(false);
     }
   };
-
-  useEffect(() => {
-    fetchArtistsByFilter(selectedFilter);
-  }, [selectedFilter]);
 
 
 
@@ -551,8 +509,8 @@ const Home = () => {
 
               fontFamily={Inter.extrabold}
             >
-              {/* {t('Home.ArtistsMixSong')} */}
-              Browse Collections
+              {t('Home.BrowseCollections')}
+
             </AppText>
 
             <TouchableOpacity

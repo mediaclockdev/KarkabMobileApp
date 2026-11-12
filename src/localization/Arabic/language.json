@@ -27,7 +27,8 @@
       "terms": "شروط الخدمة",
       "and": "و",
       "privacy": "سياسة الخصوصية",
-      "loginFailed": "فشل تسجيل الدخول"
+      "loginFailed": "فشل تسجيل الدخول",
+      "encore": "مرة أخرى"
     },
     "signup": {
       "title": "إنشاء حساب",
@@ -149,9 +150,7 @@
     "Yourrecordedshowhere": "سيظهر أداؤك المُسجَّل هنا",
     "RecentlyPlayed": "تم تشغيلها مؤخرًا",
     "Artists": "الفنانون",
-    "DiscovertimelessSudanesecollections": "اكتشف مجموعات سودانية خالدة",
-    "NoSongsFound": "لم يتم العثور على أغا",
-    "Thisplaylisoesnthaveanysongsyet": "لا تحتوي قائمة التشغيل هذه على أي أغانٍ حتى الآن."
+    "BrowseCollections": "تصفّح المجموعات"
   },
   "Search": {
     "whatwouldtosingtoday?": "ما الأغنية التي ترغب في غنائها اليوم؟",
@@ -164,7 +163,10 @@
     "Explorecuratedcollections": "استكشف المجموعات المختارة",
     "NoPlaylistsFound": "لم يتم العثور على قوائم تشغيل",
     "Thereplaylistsavailable": "لا توجد قوائم تشغيل متاحة",
-    "AbeautifuollectionoftimelessSudanesemusic": "مجموعة رائعة من الموسيقى السودانية الخالدة"
+    "AbeautifuollectionoftimelessSudanesemusic": "مجموعة رائعة من الموسيقى السودانية الخالدة",
+    "Thisplaylisoesnthaveanysongsyet": "لا تحتوي قائمة التشغيل هذه على أي أغانٍ حتى الآن.",
+    "DiscovertimelessSudanesecollections": "اكتشف مجموعات سودانية خالدة",
+    "NoSongsFound": "لم يتم العثور على أغا"
   },
   "Library": {
     "Rooms": "الغرف",

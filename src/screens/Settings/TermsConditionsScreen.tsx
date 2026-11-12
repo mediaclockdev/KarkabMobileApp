@@ -12,6 +12,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import RenderHTML from 'react-native-render-html';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import AppImage from '../../share/components/AppImage';
+import { Logo } from '../../share/constants/media';
 
 const GOLD = '#D49A5C';
 const BG = '#080808';
@@ -60,7 +62,13 @@ const TermsConditionsScreen = () => {
             >
                 <View style={styles.hero}>
                     <View style={styles.iconBox}>
-                        <Text style={styles.iconText}>§</Text>
+                        {/* <Text style={styles.iconText}>§</Text> */}
+                        <AppImage
+                            source={Logo.mainlogo}
+                            height={30}
+                            width={30}
+                            resizeMode='contain'
+                        />
                     </View>
 
                     <Text style={styles.title}>{title}</Text>
