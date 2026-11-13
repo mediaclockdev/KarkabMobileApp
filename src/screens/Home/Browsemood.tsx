@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -24,6 +24,7 @@ import { loaderstate } from '../../auth/redux/authSlice';
 import apiUrls from '../../services/apiUrls';
 import ApiService from '../../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { fontScale, ms, vs } from '../../share/constants/scale';
 
 const { width } = Dimensions.get('window');
 
@@ -127,6 +128,29 @@ export default function Browsemood() {
         { id: 'all', title: 'All' },
         ...categories,
     ];
+
+
+    const categoryScrollRef = useRef<ScrollView>(null);
+
+    const chipLayouts = useRef<Record<string, { x: number; width: number }>>({});
+
+
+    useEffect(() => {
+        const layout = chipLayouts.current[selected];
+
+        if (!layout) return;
+
+        requestAnimationFrame(() => {
+            const targetX =
+                layout.x -
+                (SCREEN_WIDTH - layout.width) / 2;
+
+            categoryScrollRef.current?.scrollTo({
+                x: Math.max(0, targetX),
+                animated: true,
+            });
+        });
+    }, [selected]);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -237,40 +261,51 @@ export default function Browsemood() {
 
 
                 <ScrollView
+                    ref={categoryScrollRef}
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: 15, gap: 10, marginBottom: 15 }}>
-                    {categoryList.map(item => {
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={styles.categoryScrollContent}
+                >
+                    {categoryList.map((item, index) => {
                         const active = item.title === selected;
 
                         return (
                             <TouchableOpacity
-                                key={item}
-                                onPress={() => {
-                                    setSelected(item.title);
+                                key={String(item.id ?? `${item.title}-${index}`)}
+                                activeOpacity={0.8}
+                                onPress={() => setSelected(item.title)}
+                                onLayout={(event) => {
+                                    const { x, width: chipWidth } = event.nativeEvent.layout;
+
+                                    chipLayouts.current[item.title] = {
+                                        x,
+                                        width: chipWidth,
+                                    };
                                 }}
-                                activeOpacity={0.8}>
+                            >
                                 {active ? (
                                     <LinearGradient
                                         colors={['#FF8A00', '#FF3D5A']}
                                         start={{ x: 0, y: 0 }}
                                         end={{ x: 1, y: 0 }}
-                                        style={styles.category}>
+                                        style={styles.category}
+                                    >
                                         <Text
-                                            style={[
-                                                styles.categoryText,
-                                                { color: '#FFF' },
-                                            ]}>
+                                            numberOfLines={1}
+                                            ellipsizeMode="tail"
+                                            style={styles.categoryActiveText}
+                                        >
                                             {item.title}
                                         </Text>
                                     </LinearGradient>
                                 ) : (
-                                    <View style={[styles.category, styles.categoryInactive]}>
+                                    <View style={styles.categoryInactive}>
                                         <Text
-                                            style={[
-                                                styles.categoryText,
-                                                { color: '#DDD' },
-                                            ]}>
+                                            numberOfLines={1}
+                                            ellipsizeMode="tail"
+                                            style={styles.categoryText}
+                                        >
                                             {item.title}
                                         </Text>
                                     </View>
@@ -278,9 +313,7 @@ export default function Browsemood() {
                             </TouchableOpacity>
                         );
                     })}
-
                 </ScrollView>
-
 
 
 
@@ -376,6 +409,7 @@ export default function Browsemood() {
     );
 }
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
 
@@ -449,30 +483,38 @@ const styles = StyleSheet.create({
         color: 'white',
     },
 
-    category: {
-        // paddingHorizontal: 18,
-        minWidth: 100,
-        height: 25,
-        borderRadius: 18,
-        //  marginRight: 10,
-        marginBottom: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
+    // category: {
+    //     paddingHorizontal: ms(15),
+    //     minWidth: vs(100),
+    //     height: vs(35),
+    //     borderRadius: 18,
+    //     //  marginRight: 10,
+    //     marginBottom: 20,
+    //     justifyContent: 'center',
+    //     alignItems: 'center',
 
-    },
+    // },
 
-    categoryInactive: {
-        backgroundColor: '#181818',
-    },
+    // categoryInactive: {
+    //     paddingHorizontal: ms(15),
+    //     minWidth: vs(100),
+    //     height: vs(35),
+    //     borderRadius: 18,
+    //     //  marginRight: 10,
+    //     marginBottom: 20,
+    //     justifyContent: 'center',
+    //     alignItems: 'center',
+    //     backgroundColor: '#181818',
+    // },
 
-    categoryText: {
-        fontSize: 10,
-        fontWeight: '600',
-    },
+    // categoryText: {
+    //     fontSize: 10,
+    //     fontWeight: '600',
+    // },
 
-    categoryActive: {
-        backgroundColor: '#FF6A00',
-    },
+    // categoryActive: {
+    //     backgroundColor: '#FF6A00',
+    // },
 
 
 
@@ -547,6 +589,50 @@ const styles = StyleSheet.create({
 
         fontSize: 11,
         fontFamily: Inter.medium,
+    },
+
+    categoryScrollContent: {
+        paddingHorizontal: ms(18),
+        paddingBottom: ms(12),
+        alignItems: 'center',
+        gap: ms(10),
+    },
+
+    category: {
+        paddingHorizontal: ms(16),
+        minWidth: vs(100),
+        maxWidth: SCREEN_WIDTH * 0.72,
+        height: vs(38),
+        borderRadius: ms(20),
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    categoryActiveText: {
+        fontSize: fontScale(13),
+        fontFamily: Inter.medium,
+        color: '#FFFFFF',
+        textAlign: 'center',
+    },
+
+    categoryInactive: {
+        paddingHorizontal: ms(18),
+        minWidth: vs(90),
+        maxWidth: SCREEN_WIDTH * 0.72,
+        height: vs(38),
+        borderRadius: ms(20),
+        backgroundColor: '#191919',
+        borderWidth: 1,
+        borderColor: '#292929',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    categoryText: {
+        fontSize: fontScale(12),
+        fontFamily: Inter.medium,
+        color: '#DDD',
+        textAlign: 'center',
     },
 
 

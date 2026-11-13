@@ -17,7 +17,7 @@
 		787E6DCC261E4A31A2C3C1D7 /* Inter18pt-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 88BEBC0D16B64AF1A93ACF6F /* Inter18pt-Medium.ttf */; };
 		7D410C4300A446D0AD8EE0EE /* Inter18pt-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 03FB78680ECD40E19196680D /* Inter18pt-ExtraBold.ttf */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
-		9BB9F7B62FF795DA0043C11F /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9BB9F7B52FF795DA0043C11F /* GoogleService-Info.plist */; };
+		9B5E252A30A6A7250094C304 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9B5E252930A6A7250094C304 /* GoogleService-Info.plist */; };
 		B6B0BF9306D445A49CCD9D57 /* Inter18pt-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4287958D1DB54DFE85C280FB /* Inter18pt-Light.ttf */; };
 		CE88CA2866BF416BA2D8481E /* Inter_18pt-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2225818F8BED4CF2B2A55AE8 /* Inter_18pt-Italic.ttf */; };
 		FCB791CA9B984A7F8E54206B /* Inter_18pt-LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 72A405B29F554ED9BCC8068F /* Inter_18pt-LightItalic.ttf */; };
@@ -39,8 +39,8 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = KarKab/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = KarKab/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		88BEBC0D16B64AF1A93ACF6F /* Inter18pt-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter18pt-Medium.ttf"; path = "../assets/fonts/Inter18pt-Medium.ttf"; sourceTree = "<group>"; };
+		9B5E252930A6A7250094C304 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		9BB9F7B22FF7906E0043C11F /* KarKab.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = KarKab.entitlements; path = KarKab/KarKab.entitlements; sourceTree = "<group>"; };
-		9BB9F7B52FF795DA0043C11F /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		A3DF3EBDB7044BA6A7ACB817 /* Inter18pt-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter18pt-Bold.ttf"; path = "../assets/fonts/Inter18pt-Bold.ttf"; sourceTree = "<group>"; };
 		E1665CB5E9BFA668EC1AB85B /* Pods_KarKab.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_KarKab.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -61,7 +61,7 @@
 		13B07FAE1A68108700A75B9A /* KarKab */ = {
 			isa = PBXGroup;
 			children = (
-				9BB9F7B52FF795DA0043C11F /* GoogleService-Info.plist */,
+				9B5E252930A6A7250094C304 /* GoogleService-Info.plist */,
 				9BB9F7B22FF7906E0043C11F /* KarKab.entitlements */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
@@ -201,9 +201,9 @@
 				495A1DC101EE0B1C80B3B4CF /* PrivacyInfo.xcprivacy in Resources */,
 				787E6DCC261E4A31A2C3C1D7 /* Inter18pt-Medium.ttf in Resources */,
 				B6B0BF9306D445A49CCD9D57 /* Inter18pt-Light.ttf in Resources */,
+				9B5E252A30A6A7250094C304 /* GoogleService-Info.plist in Resources */,
 				6AEDBCABAD4243BE90C33450 /* Inter18pt-Bold.ttf in Resources */,
 				4B3083F1DD23419DB753E6EF /* Inter18pt-Regular.ttf in Resources */,
-				9BB9F7B62FF795DA0043C11F /* GoogleService-Info.plist in Resources */,
 				7D410C4300A446D0AD8EE0EE /* Inter18pt-ExtraBold.ttf in Resources */,
 				3B8BCB5BA66E435D85767705 /* Inter18pt-SemiBold.ttf in Resources */,
 				FCB791CA9B984A7F8E54206B /* Inter_18pt-LightItalic.ttf in Resources */,

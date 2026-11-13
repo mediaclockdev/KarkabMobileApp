@@ -699,13 +699,40 @@ const Recording = () => {
     else await pauseRecording();
   };
 
+
+  // adding for preloading instrumental to avoid delay when starting recording
+  const preloadPromiseRef = useRef<Promise<void> | null>(null);
+const preloadedRef = useRef(false);
+
+const preloadInstrumental = async () => {
+  preloadedRef.current = false;
+  if (!instrumentalUrl) return;
+  try {
+    setInstrumentalLoading(true);
+    try { await Sound.stopPlayer(); } catch (_) {}
+    await Sound.setVolume(0);
+    await Sound.startPlayer(instrumentalUrl); // buffering happens here, during countdown
+    await Sound.pausePlayer();
+    await Sound.seekToPlayer(0);
+    await Sound.setVolume(1);
+    preloadedRef.current = true;
+  } catch (e) {
+    console.log('preload error:', e);
+  } finally {
+    setInstrumentalLoading(false);
+  }
+};
+
+// Preload instrumental on mount
+
+
   // ── Start Recording ────────────────────────────────────────────────────────
   const startRecording = async () => {
     try {
       await requestMicPermission();
 
       try { await Sound.stopRecorder(); Sound.removeRecordBackListener(); } catch (_) { }
-      try { await Sound.stopPlayer(); } catch (_) { }
+      // try { await Sound.stopPlayer(); } catch (_) { }
       try { await TrackPlayer.stop(); await TrackPlayer.seekTo(0); } catch (_) { }
 
       if (recordTimerRef.current) {
@@ -728,27 +755,42 @@ const Recording = () => {
       instrumentalOffsetMsRef.current = 0;
 
       // Start instrumental player if available
-      if (instrumentalUrl) {
-        setInstrumentalLoading(true);
-        try {
-          await Sound.startPlayer(instrumentalUrl);
-          instrumentalStartedAtRef.current = Date.now();
-          isPlayingRef.current = true;
-          hasStartedRef.current = true;
-        } catch (audioErr) {
-          console.log('Error starting instrumental:', audioErr);
-          dispatch(
-            showToast({
-              visible: true,
-              message: t('Failed to load instrumental music') || 'فشل تحميل الموسيقى',
-              type: 'error',
-            }),
-          );
-        } finally {
-          setInstrumentalLoading(false);
-        }
-      }
+      // if (instrumentalUrl) {
+      //   setInstrumentalLoading(true);
+      //   try {
+      //     await Sound.startPlayer(instrumentalUrl);
+      //     instrumentalStartedAtRef.current = Date.now();
+      //     isPlayingRef.current = true;
+      //     hasStartedRef.current = true;
+      //   } catch (audioErr) {
+      //     console.log('Error starting instrumental:', audioErr);
+      //     dispatch(
+      //       showToast({
+      //         visible: true,
+      //         message: t('Failed to load instrumental music') || 'فشل تحميل الموسيقى',
+      //         type: 'error',
+      //       }),
+      //     );
+      //   } finally {
+      //     setInstrumentalLoading(false);
+      //   }
+      // }
 
+      if (instrumentalUrl) {
+  await preloadPromiseRef.current;          // already done in most cases
+  try {
+    if (preloadedRef.current) {
+      await Sound.resumePlayer();           // instant
+    } else {
+      await Sound.startPlayer(instrumentalUrl); // fallback
+    }
+    instrumentalStartedAtRef.current = Date.now();
+    isPlayingRef.current = true;
+    hasStartedRef.current = true;
+  } catch (audioErr) {
+    // keep your existing toast here
+  }
+}
       await Sound.startRecorder();
       setRecording(true);
       isRecordingRef.current = true;
@@ -861,6 +903,7 @@ const Recording = () => {
       clearInterval(countdownTimerRef.current);
       countdownTimerRef.current = null;
     }
+    preloadPromiseRef.current = preloadInstrumental();
     setCountdown(3);
     let count = 3;
     countdownTimerRef.current = setInterval(() => {

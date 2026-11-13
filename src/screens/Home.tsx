@@ -41,6 +41,7 @@ import HomeSkeleton from '../share/components/HomeSkeleton';
 import { SvgUri } from 'react-native-svg';
 import { storage } from '../share/storage/mmkv';
 import TrackPlayer from '@rntp/player';
+import { fontScale, ms } from '../share/constants/scale';
 
 const { width } = Dimensions.get('window');
 
@@ -556,7 +557,8 @@ const Home = () => {
                   (navigation as any).navigate('SongsListScreen', {
                     songs: item,
                     previousScreen: 'Home',
-                    filter: true
+                    filter: true,
+                    feature: 'category',
                   })
                 }
                 }
@@ -1147,8 +1149,8 @@ const MoodCard = ({ item, onpress }: any) => (
             </Text> */}
       <SvgUri
         uri={item.category_icon}
-        width={38}
-        height={38}
+        width={ms(45)}
+        height={ms(45)}
       />
       {/* <AppImage
         source={{
@@ -1333,7 +1335,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#252525',
-    height: 50,
+
+     minHeight: ms(75), gap: 5
 
   },
 
@@ -1344,7 +1347,7 @@ const styles = StyleSheet.create({
   moodTitle: {
     color: '#fff',
     fontWeight: '700',
-    fontSize: 10,
+    fontSize: fontScale(12),
     marginRight: 5,
     marginLeft: 5,
   },
