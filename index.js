@@ -1,7 +1,10 @@
 import { AppRegistry } from 'react-native';
 import RNRestart from 'react-native-restart';
 import TrackPlayer from '@rntp/player';
-import { getMessaging, setBackgroundMessageHandler } from '@react-native-firebase/messaging';
+import {
+  getMessaging,
+  setBackgroundMessageHandler,
+} from '@react-native-firebase/messaging';
 import notifee, { EventType } from '@notifee/react-native';
 import { setupAudioPlayer } from './src/services/player';
 import { bootstrapLayoutDirection } from './src/localization/i18n';
@@ -21,6 +24,18 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
     handleNotificationTap({ notification: detail.notification });
   }
 });
+
+setBackgroundMessageHandler(
+  getMessaging(),
+  async remoteMessage => {
+    console.log(
+      '📩 Background FCM message:',
+      remoteMessage,
+    );
+
+    // Handle background data if required.
+  },
+);
 
 // 3. Register the process-scoped playback session BEFORE AppRegistry.registerComponent
 TrackPlayer.registerPlaybackSession(playbackService);
