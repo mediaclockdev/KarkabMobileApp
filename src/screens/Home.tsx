@@ -309,11 +309,7 @@ const Home = () => {
         setRecommendedsongdata(data.songs);
       }
     } catch (error) {
-      console.log('popularrrrrrdata ERROR:', error);
-      if (error?.message == 'Access denied. Invalid or expired token.') {
-        dispatch(showToast({ visible: true, message: 'Session expire', type: 'error' }));
-        logout()
-      }
+      console.log('recommendedsongfun ERROR:', error);
     } finally {
       setLoader(false);
     }
@@ -1094,7 +1090,12 @@ const SongCard = ({
             </LinearGradient>
           </View>
         )}
-        <TouchableOpacity style={styles.playCircle}>
+        <TouchableOpacity
+          onPress={
+            onpress
+
+          }
+          style={styles.playCircle}>
           <AppImage
             source={Images.playicon}
             height={12}
@@ -1336,7 +1337,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#252525',
 
-     minHeight: ms(75), gap: 5
+    minHeight: ms(75), gap: 5
 
   },
 

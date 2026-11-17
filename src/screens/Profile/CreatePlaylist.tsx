@@ -249,9 +249,16 @@ const SwipeablePlaylistCard: React.FC<SwipeableCardProps> = ({
                         <TouchableOpacity
                             activeOpacity={0.8}
                             style={styles.playButton}
-                            onPress={event => {
-                                event.stopPropagation();
-                                onPlay(item);
+                            // onPress={event => {
+                            //     event.stopPropagation();
+                            //     onPlay(item);
+                            // }}
+                            onPress={() => {
+                                if (isOpen.current) {
+                                    closeRow();
+                                } else {
+                                    onPress();
+                                }
                             }}
                         >
                             <AppImage
@@ -893,7 +900,7 @@ const CreatePlaylist = () => {
         return (
             <View style={styles.emptyContainer}>
                 <LinearGradient
-                    colors={['#EB2C78', '#D07113']}
+                    colors={['#FA6144', '#D83B7E', '#7E3FF2']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.emptyIcon}
@@ -935,7 +942,7 @@ const CreatePlaylist = () => {
                     onPress={openCreatePlaylist}
                 >
                     <LinearGradient
-                        colors={['#FF4B4C', '#AB2C5D']}
+                        colors={['#FA6144', '#D83B7E', '#7E3FF2']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.createGradient}
@@ -1082,7 +1089,7 @@ const CreatePlaylist = () => {
                             onPress={openCreatePlaylist}
                         >
                             <LinearGradient
-                                colors={['#FF4B4C', '#AB2C5D']}
+                                colors={['#FA6144', '#D83B7E', '#7E3FF2']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 1 }}
                                 style={styles.createButton}
@@ -1182,7 +1189,7 @@ const CreatePlaylist = () => {
                                 fontFamily={Inter.medium}
                                 marginTop={10}
                             >
-                                Playlist Name
+                                Playlist Name *
                             </AppText>
 
                             <TextInput
@@ -1230,7 +1237,7 @@ const CreatePlaylist = () => {
                                 disabled={savingPlaylist}
                             >
                                 <LinearGradient
-                                    colors={['#FF4B4C', '#AB2C5D']}
+                                    colors={['#FA6144', '#D83B7E', '#7E3FF2']}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 1 }}
                                     style={styles.modalGradient}
@@ -1358,8 +1365,14 @@ const CreatePlaylist = () => {
                             onPress={() => {
                                 setMenuVisible(false);
                                 if (selectedPlaylist) {
-                                    handlePlayPlaylist(selectedPlaylist);
+                                    // handlePlayPlaylist(selectedPlaylist);
+                                    navigation.navigate('PlaylistDetailScreen', {
+                                        playlistId: selectedPlaylist.id,
+                                        playlistName: selectedPlaylist.name,
+                                    });
                                 }
+
+
                             }}
                         >
                             <View

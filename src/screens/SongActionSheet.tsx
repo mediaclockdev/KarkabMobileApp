@@ -29,6 +29,7 @@ import { showToast } from '../auth/redux/authSlice';
 import { Images, Logo, Banner } from '../share/constants/media';
 import { storage } from '../share/storage/mmkv';
 import { useTranslation } from 'react-i18next';
+import Toast from 'react-native-toast-message';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -667,14 +668,15 @@ const SongActionSheet = ({
             console.log('Share error:', error);
         }
     };
+    console.log(song)
 
     const actions: SongAction[] = [
         {
             id: 'favorite',
             title:
                 (song?.is_favorite ?? song?.is_favorite) === true
-                    ? 'Remove from Favorite'
-                    : 'Add to Favorite',
+                    ? t('SongAction.RemovefromFavorite')
+                    : t('SongAction.AddtoFavorite'),
             icon: Images.star1,
             danger: (song?.is_favorite ?? song?.isfavorate) === true,
             onPress: () => {
@@ -690,40 +692,50 @@ const SongActionSheet = ({
         },
         {
             id: 'playlist',
-            title: 'Add to Playlist',
+
+            title: t('SongAction.AddtoPlaylist'),
             icon: Images.playlist,
             onPress: () => {
                 setPlaylistModalVisible(true);
                 getPlaylists();
             },
         },
-        {
-            id: 'like',
-            title: 'Like',
-            icon: Banner.filllike,
-            onPress: () => {
-                if (song?.id) {
-                    handleLikeDislike(song.id, 'like');
-                } else {
-                    closeSheet();
-                }
-            },
-        },
-        {
-            id: 'dislike',
-            title: 'Dislike',
-            icon: Images.like,
-            onPress: () => {
-                if (song?.id) {
-                    handleLikeDislike(song.id, 'dislike');
-                } else {
-                    closeSheet();
-                }
-            },
-        },
+        ...(
+            !song?.recording_url
+                ? [
+
+                    {
+                        id: 'like',
+                        title: t('SongAction.Like'),
+                        icon: Banner.filllike,
+                        onPress: () => {
+                            if (song?.id) {
+                                handleLikeDislike(song.id, 'like');
+                            } else {
+                                closeSheet();
+                            }
+                        },
+                    },
+                    {
+                        id: 'dislike',
+
+                        title: t('SongAction.Dislike'),
+                        icon: Images.like,
+                        onPress: () => {
+                            if (song?.id) {
+                                handleLikeDislike(song.id, 'dislike');
+                            } else {
+                                closeSheet();
+                            }
+                        },
+                    }
+                ]
+                : [])
+        ,
         {
             id: 'share',
-            title: 'Share',
+
+            title: t('SongAction.Share'),
             icon: Logo.share,
             onPress: handleShare,
         },
@@ -741,7 +753,7 @@ const SongActionSheet = ({
         // },
         {
             id: 'copy-link',
-            title: 'Copy Song Link',
+            title: t('SongAction.CopySongLink'),
             icon: Logo.copy,
             onPress: async () => {
                 try {
@@ -753,12 +765,18 @@ const SongActionSheet = ({
                     await Clipboard.setString(songUrl);
                     closeSheet();
 
-                    dispatch(
-                        showToast({
-                            visible: true,
-                            message: 'Song link copied successfully.',
-                            type: 'success',
-                        }),
+                    // dispatch(
+                    //     showToast({
+                    //         visible: true,
+                    //         message: 'Song link copied successfully.',
+                    //         type: 'success',
+                    //     }),
+                    Toast.show({
+                        type: 'info',
+                        position: 'bottom',
+                        bottomOffset: 80,
+                        text1: 'Coming soon!',
+                    }
                     );
                 } catch (error) {
                     closeSheet();
@@ -772,11 +790,12 @@ const SongActionSheet = ({
                 }
             },
         },
+
         ...(song?.recording_url && song?.public_request_status != 'approved'
             ? [
                 {
                     id: 'request-public',
-                    title: 'Request Public Verification',
+                    title: t('SongAction.RequestPublicVerification'),
                     icon: Logo.glob,
                     onPress: () => {
                         if (song?.id) {
@@ -789,7 +808,7 @@ const SongActionSheet = ({
                 },
                 {
                     id: 'delete',
-                    title: 'Delete',
+                    title: t('common.Delete'),
                     icon: Logo.dustbin,
                     danger: true,
                     onPress: () => {
@@ -806,7 +825,7 @@ const SongActionSheet = ({
             ? [
                 {
                     id: 'Remove',
-                    title: 'Remove',
+                    title: t('SongAction.Remove'),
                     icon: Images.bin,
                     danger: true,
                     onPress: () => {
@@ -954,7 +973,8 @@ const SongActionSheet = ({
                         fontFamily={Inter.semibold}
                         color={color.darkthemetext}
                     >
-                        Cancel
+                        {t('common.cancel')}
+
                     </AppText>
                 </TouchableOpacity>
             </Animated.View>
@@ -1104,7 +1124,7 @@ const SongActionSheet = ({
                             fontFamily={Inter.medium}
                             style={{ marginTop: 10 }}
                         >
-                            Playlist Name
+                            Playlist Name *
                         </AppText>
                         <TextInput
                             value={newPlaylistName}
@@ -1284,7 +1304,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     modalSubmitBtn: {
-        backgroundColor: '#FF4B4C',
+        backgroundColor: '#FA6144',
         borderRadius: 8,
         alignItems: 'center',
         paddingVertical: 14,

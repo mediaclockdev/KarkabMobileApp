@@ -2233,6 +2233,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
+  AppState,
+  AppStateStatus,
   Dimensions,
   Easing,
   FlatList,
@@ -2288,6 +2290,8 @@ const AudioRec = () => {
   const navigation = useNavigation<any>();
   const dispatch = useAppDispatch();
   const playsong = useAppSelector((state: any) => state.auth.playsong);
+  const playlistQueue = useAppSelector((state: any) => state.auth.playlistQueue);
+  const playlistIndex = useAppSelector((state: any) => state.auth.playlistIndex ?? 0);
   const routeParams = (route?.params as {
     id?: number | string;
     type?: string;
@@ -2330,6 +2334,8 @@ const AudioRec = () => {
   const repeatModeRef = useRef<RepeatMode>('off');
   const isShuffleRef = useRef(false);
   const isAutoNextingRef = useRef(false);
+  const playlistQueueRef = useRef<any[]>([]);
+  const playlistIndexRef = useRef<number>(0);
 
   // Scrubber & Lyrics
   const [dragProgress, setDragProgress] = useState<number | null>(null);
@@ -2380,6 +2386,10 @@ const AudioRec = () => {
 
   const detailRequestRef = useRef(0);
 
+  const autoNextTriggeredRef = useRef(false);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+
+
 
 
   useFocusEffect(
@@ -2398,7 +2408,8 @@ const AudioRec = () => {
       easing: Easing.linear,
       useNativeDriver: true,
     }).start(({ finished }) => {
-      if (finished && isSpinning.current) {
+      // Only recurse when both: (a) still marked spinning and (b) app is active.
+      if (finished && isSpinning.current && appStateRef.current === 'active') {
         rotationValue.current += 1;
         startSpinning();
       }
@@ -2442,6 +2453,14 @@ const AudioRec = () => {
     isShuffleRef.current = isShuffle;
   }, [isShuffle]);
 
+  useEffect(() => {
+    playlistQueueRef.current = playlistQueue || [];
+  }, [playlistQueue]);
+
+  useEffect(() => {
+    playlistIndexRef.current = playlistIndex || 0;
+  }, [playlistIndex]);
+
   // Hide MiniPlayer on focus
   useFocusEffect(
     useCallback(() => {
@@ -2455,50 +2474,66 @@ const AudioRec = () => {
 
 
 
-  useEffect(() => {
-    const activeSongId = id || playsong?.id;
 
-    if (!activeSongId) {
-      getrendomsong();
-      return;
-    }
 
-    const alreadyLoaded =
-      playsong?.id != null &&
-      String(playsong.id) === String(activeSongId);
+  useFocusEffect(
 
-    if (alreadyLoaded) {
-      console.log(
-        '[AudioRec] Song already loaded. Skipping API request:',
-        activeSongId,
-      );
+    useCallback(() => {
+      const activeSongId = id || playsong?.id;
 
-      setSongDetail(playsong);
-      prepareLyrics(playsong);
-
-      const duration = parseDurationToSeconds(playsong.duration);
-
-      if (duration > 0) {
-        setTrackDuration(duration);
+      if (!activeSongId) {
+        getrendomsong();
+        return;
       }
 
-      setScreenLoading(false);
-      return; // IMPORTANT: Do not fetch again.
-    }
+      const alreadyLoaded =
+        playsong?.id != null &&
+        String(playsong.id) === String(activeSongId);
 
-    const isRecording =
-      type === 'recordings' ||
-      playsong?.recording_url ||
-      playsong?.recordingUrl ||
-      playsong?.type === 'recordings';
+      // if (alreadyLoaded) {
+      //   console.log(
+      //     '[AudioRec] Song already loaded. Skipping API request:',
+      //     activeSongId,
+      //   );
 
-    if (isRecording) {
-      getrecDetail(activeSongId, false);
-    } else {
-      getSongDetail(activeSongId, false);
-    }
-  }, [id, type]);
+      //   setSongDetail(playsong);
+      //   prepareLyrics(playsong);
 
+      //   const duration = parseDurationToSeconds(playsong.duration);
+
+      //   if (duration > 0) {
+      //     setTrackDuration(duration);
+      //   }
+
+      //   setScreenLoading(false);
+      //   return; // IMPORTANT: Do not fetch again.
+      // }
+
+      const isRecording =
+        type === 'recordings'
+
+        //  || playsong?.recording_url
+        ;
+      //  const isRecording =
+      // type === 'recordings' ||
+      // playsong?.recording_url ||
+      // playsong?.recordingUrl ||
+      // playsong?.type === 'recordings';
+      console.log(playsong, "gggggggggggggggggggg", type, isRecording)
+      if (isRecording) {
+        getrecDetail(activeSongId, false);
+        // getSongDetail(activeSongId, false);
+      } else {
+
+        // const duration = parseDurationToSeconds(playsong?.duration);
+
+        // if (duration > 0) {
+        //   setTrackDuration(duration);
+        // }
+        getSongDetail(activeSongId, false);
+      }
+    }, [id, type])
+  )
 
 
 
@@ -2548,9 +2583,19 @@ const AudioRec = () => {
 
   /**
    * 2. PROGRESS POLLING + AUTO-NEXT TRIGGER
+   * Only polls when the app is in the foreground to prevent iOS from
+   * killing the process for excessive background CPU usage.
    */
   useEffect(() => {
+    // Track AppState so we can skip polling when backgrounded.
+    const appStateSub = AppState.addEventListener('change', (next: AppStateStatus) => {
+      appStateRef.current = next;
+    });
+
     const interval = setInterval(async () => {
+      // Skip polling entirely when the app is in the background / inactive.
+      if (appStateRef.current !== 'active') return;
+
       try {
         const progress = await TrackPlayer.getProgress();
 
@@ -2580,7 +2625,10 @@ const AudioRec = () => {
       }
     }, 250);
 
-    return () => clearInterval(interval);
+    return () => {
+      appStateSub.remove();
+      clearInterval(interval);
+    };
   }, []);
 
   /**
@@ -2777,6 +2825,7 @@ const AudioRec = () => {
 
 
   const prepareLyrics = async (song: any) => {
+    console.log(song, "prepareLyrics")
     try {
       const timestamps: LyricTimestamp[] = Array.isArray(
         song?.lyrics_timestamps
@@ -2950,7 +2999,7 @@ const AudioRec = () => {
       const response = await ApiService.get(
         apiUrls.singlesongdetail(songid),
       );
-
+      console.log(response, "singledetail")
       // Ignore an older response if another song was requested meanwhile.
       if (requestId !== detailRequestRef.current) return;
 
@@ -3027,19 +3076,33 @@ const AudioRec = () => {
       if (!songdetailRef.current) setScreenLoading(true);
       const response = await ApiService.get(apiUrls.randomsong);
       if ((response as any).data?.success) {
-        const song = (response as any).data.songs[0];
-        setSongDetail(song);
-        prepareLyrics(song);
-        await playSongItem(song);
+        const rawSongs = (response as any).data?.songs;
+        const currentId = songdetailRef.current?.id || playsong?.id;
+        let song = null;
+
+        if (Array.isArray(rawSongs) && rawSongs.length > 0) {
+          const candidates = rawSongs.filter(
+            (s: any) => String(s?.id) !== String(currentId),
+          );
+          song =
+            candidates.length > 0
+              ? candidates[Math.floor(Math.random() * candidates.length)]
+              : rawSongs[0];
+        } else {
+          song = (response as any).data?.song;
+        }
+
+        if (song?.id) {
+          setSongDetail(song);
+          prepareLyrics(song);
+          navigation.setParams({ id: song.id } as any);
+          setCurrentPosition(0);
+          setActiveLyricIndex(0);
+          await playSongItem(song);
+        }
       }
     } catch (error: any) {
-      // dispatch(
-      //   showToast({
-      //     visible: true,
-      //     message: error?.message || 'Failed to load track.',
-      //     type: 'error',
-      //   })
-      // );
+      console.log('getrendomsong error:', error);
     } finally {
       setScreenLoading(false);
     }
@@ -3050,14 +3113,73 @@ const AudioRec = () => {
     togglePlayPause();
   };
 
-  const isRecordingScreen = type === 'recordings' || isRecordingSong(songdetail);
+  const isRecordingScreen = type == 'recordings' || isRecordingSong(songdetail);
 
   // Next: preloaded native item → instant; else adjacent API → random song.
-  // The screen updates itself through the playsong effect (no skeleton).
+  // In shuffle mode: picks a random song from playlistQueue (or loads random song).
   const handleNext = async () => {
-    if (isRecordingScreen) return;
-    setCurrentPosition(0);
-    await skipToNextTrack(dispatch);
+    console.log(isRecordingScreen, type, songdetail, 'next pressed');
+    if (isRecordingScreen || isBuffering) return;
+
+    if (isAutoNextingRef.current) return;
+    isAutoNextingRef.current = true;
+
+    try {
+      setCurrentPosition(0);
+
+      // 🔀 1. If Shuffle is enabled: pick random from queue or fetch random song
+      if (isShuffleRef.current) {
+        const q = playlistQueueRef.current;
+        const currentId = songdetailRef.current?.id || playsong?.id;
+        const availableSongs =
+          Array.isArray(q) && q.length > 1
+            ? q.filter((s: any) => String(s?.id) !== String(currentId))
+            : [];
+
+        if (availableSongs.length > 0) {
+          const randomIndex = Math.floor(Math.random() * availableSongs.length);
+          const nextSong = availableSongs[randomIndex];
+          navigation.setParams({ id: nextSong.id } as any);
+          setSongDetail(nextSong);
+          prepareLyrics(nextSong);
+          setCurrentPosition(0);
+          setActiveLyricIndex(0);
+          await playSongItem(nextSong);
+          return;
+        }
+
+        await getrendomsong();
+        return;
+      }
+
+      // 2. Regular Next: Queue wrap-around if repeat 'all' at the end of playlist
+      const q = playlistQueueRef.current;
+      const qIndex = playlistIndexRef.current;
+      if (
+        repeatModeRef.current === 'all' &&
+        Array.isArray(q) &&
+        q.length > 1 &&
+        qIndex >= q.length - 1
+      ) {
+        const firstSong = q[0];
+        navigation.setParams({ id: firstSong.id } as any);
+        setSongDetail(firstSong);
+        prepareLyrics(firstSong);
+        setCurrentPosition(0);
+        setActiveLyricIndex(0);
+        await playSongItem(firstSong);
+        return;
+      }
+
+      // 3. Regular Next: skipToNextTrack (preloaded native item or adjacent API)
+      await skipToNextTrack(dispatch);
+    } catch (error) {
+      console.log('handleNext error:', error);
+    } finally {
+      setTimeout(() => {
+        isAutoNextingRef.current = false;
+      }, 500);
+    }
   };
 
   // Previous: >3s restarts; else native previous; else adjacent API.
@@ -3069,6 +3191,47 @@ const AudioRec = () => {
     }
     await skipToPreviousTrack(dispatch);
   };
+
+
+  // Reset the guard when the next song starts playing
+  useEffect(() => {
+    if (
+      playbackState === PlaybackState.Playing ||
+      (playbackState as any) === 'playing'
+    ) {
+      autoNextTriggeredRef.current = false;
+    }
+  }, [playbackState]);
+
+  // Automatically play the next song when the current song finishes
+  useEffect(() => {
+    const isSongEnded =
+      playbackState === PlaybackState.Ended ||
+      (playbackState as any) === 'ended';
+
+    if (
+      !isSongEnded ||
+      screenLoading ||
+      isRecordingScreen ||
+      autoNextTriggeredRef.current
+    ) {
+      return;
+    }
+
+    if (repeatModeRef.current === 'one') {
+      restartForRepeatOne();
+      return;
+    }
+
+    autoNextTriggeredRef.current = true;
+
+    console.log('Current song finished. Playing next song...');
+
+    handleNext().catch(error => {
+      console.log('Auto next song error:', error);
+      autoNextTriggeredRef.current = false;
+    });
+  }, [playbackState, screenLoading, isRecordingScreen]);
 
   const toggleRepeatMode = () => {
     const nextMode: RepeatMode =
@@ -3087,6 +3250,7 @@ const AudioRec = () => {
   const toggleShuffle = () => {
     const nextState = !isShuffle;
     setIsShuffle(nextState);
+    isShuffleRef.current = nextState;
     dispatch(
       showToast({
         visible: true,
@@ -3356,11 +3520,11 @@ const AudioRec = () => {
               fontFamily={Inter.medium}
               style={{ marginLeft: 4 }}
             >
-              {previousScreen || 'Library'}
+              {previousScreen || 'Home'}
             </AppText>
           </TouchableOpacity>
 
-          <AppText
+          {/* <AppText
             color="#FFFFFF"
             fontSize={15}
             fontWeight="600"
@@ -3368,7 +3532,7 @@ const AudioRec = () => {
           >
 
             {t('Player.Nowplaying')}
-          </AppText>
+          </AppText> */}
 
           <TouchableOpacity
             activeOpacity={0.7}
@@ -3400,7 +3564,7 @@ const AudioRec = () => {
                       source={GlobalImage(
                         songdetail?.cover_image_url || songdetail?.album_picture_url,
                       )}
-                   
+
                       // resizeMode='stretch'
                       style={styles.artworkImage}
                     />
@@ -3743,14 +3907,16 @@ const AudioRec = () => {
                     <AppText color="rgba(255,255,255,0.5)" fontSize={14}>
                       {type === 'recordings'
                         ? t('Player.Lyricsarenotavailablefortherecordedsong')
-                        : t('Player.Lyricsnotavailableforthissong')}
+                        : isBuffering ? "Loading Lyrics ..." : t('Player.Lyricsnotavailableforthissong')
+
+                      }
                     </AppText>
                   </View>
                 )}
               </View>
             )}
 
-  {/* Bottom Controls Section: Scrubber + Controls + Sing CTA */}
+            {/* Bottom Controls Section: Scrubber + Controls + Sing CTA */}
             <View style={styles.bottomSection}>
               {/* Scrubber Slider */}
               <View style={styles.scrubberContainer}>
@@ -3996,10 +4162,10 @@ const AudioRec = () => {
             </View>
 
 
-          
 
 
-          
+
+
           </View>
         )}
       </SafeAreaView>
@@ -4067,7 +4233,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     width: ms(240),
     height: ms(210),
-    
+
   },
   titleContainer: {
     alignItems: 'center',
@@ -4152,6 +4318,7 @@ const styles = StyleSheet.create({
   fullLyricText: {
     lineHeight: 32,
     letterSpacing: -0.3,
+    textAlign: 'center'
   },
   activeWordHighlight: {
     color: '#FF6239',

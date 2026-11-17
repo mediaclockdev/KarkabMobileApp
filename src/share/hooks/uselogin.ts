@@ -52,12 +52,16 @@ export const useLogin = () => {
 
             storage.set('authData', JSON.stringify(authData));
             if (res.token) storage.set('userToken', res.token);
+            storage.set(
+                'savedCredentials',
+                JSON.stringify({ email: email.trim(), password }),
+            );
 
             dispatch(loginSuccess(authData));
             dispatch(setAuthenticated(true));
             //dispatch(setLoginState('first'));
         },
-        [dispatch],
+        [dispatch, email, password],
     );
 
     const submit = useCallback(async () => {

@@ -42,10 +42,12 @@ const HomeBanner = ({ data }: { data: any[] }) => {
       setActiveIndex(prevIndex => {
         const nextIndex = (prevIndex + 1) % (data?.length || 1);
 
-        flatListRef?.current?.scrollToIndex({
-          index: nextIndex,
-          animated: true,
-        });
+        try {
+          flatListRef?.current?.scrollToIndex({
+            index: nextIndex,
+            animated: true,
+          });
+        } catch (_e) {}
 
         return nextIndex;
       });
@@ -152,6 +154,7 @@ const HomeBanner = ({ data }: { data: any[] }) => {
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item, index) => String(item.id ?? index)}
         onMomentumScrollEnd={onScroll}
+        onScrollToIndexFailed={() => {}}
         renderItem={({ item }) => (
 
           <TouchableOpacity activeOpacity={0.9}>

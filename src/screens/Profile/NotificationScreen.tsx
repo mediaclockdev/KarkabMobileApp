@@ -197,20 +197,41 @@ const NotificationScreen = () => {
         }
     };
 
+    // const markAllAsRead = async () => {
+    //     const unreadNotifications = items.filter(item => item.unread);
+
+    //     if (unreadNotifications.length === 0) return;
+
+    //     try {
+    //         await Promise.all(
+    //             unreadNotifications.map(item =>
+    //                 ApiService.put(
+    //                     apiUrls.marknotification(item.id),
+    //                     {}
+    //                 )
+    //             )
+    //         );
+
+    //         setItems(previous =>
+    //             previous.map(item => ({
+    //                 ...item,
+    //                 unread: false,
+    //             }))
+    //         );
+
+    //         setUnreadCount(0);
+    //     } catch (error) {
+    //         console.log('Mark all notifications as read error:', error);
+    //     }
+    // };
+
     const markAllAsRead = async () => {
         const unreadNotifications = items.filter(item => item.unread);
 
         if (unreadNotifications.length === 0) return;
 
         try {
-            await Promise.all(
-                unreadNotifications.map(item =>
-                    ApiService.put(
-                        apiUrls.marknotification(item.id),
-                        {}
-                    )
-                )
-            );
+            await ApiService.get(apiUrls.markall);
 
             setItems(previous =>
                 previous.map(item => ({
@@ -224,8 +245,6 @@ const NotificationScreen = () => {
             console.log('Mark all notifications as read error:', error);
         }
     };
-
-
 
 
 
@@ -823,7 +842,7 @@ const styles = StyleSheet.create({
     },
 
     subtitle: {
-        color: '#FFF97E',
+        color: '#FD8701',
         fontSize: 12,
         marginTop: 2,
         fontFamily: Inter.regular,
@@ -877,14 +896,14 @@ const styles = StyleSheet.create({
 
     recentSubtitle: {
         color: '#6B6B6B',
-        fontSize: 9,
+        fontSize: 14,
         marginTop: 4,
         fontFamily: Inter.regular,
     },
 
     markRead: {
-        color: '#F6A202',
-        fontSize: 10,
+        color: '#FD8701',
+        fontSize: 14,
         fontFamily: Inter.medium,
     },
 
@@ -936,7 +955,7 @@ const styles = StyleSheet.create({
     notificationTitle: {
         flex: 1,
         color: '#FFFFFF',
-        fontSize: 11,
+        fontSize: 14,
         fontWeight: '600',
         fontFamily: Inter.medium,
     },
@@ -951,7 +970,7 @@ const styles = StyleSheet.create({
 
     notificationMessage: {
         color: '#8A8A8A',
-        fontSize: 9,
+        fontSize: 12,
         lineHeight: 14,
         marginTop: 5,
         paddingRight: 5,
@@ -960,7 +979,7 @@ const styles = StyleSheet.create({
 
     notificationTime: {
         color: '#555555',
-        fontSize: 8,
+        fontSize: 12,
         marginTop: 5,
         fontFamily: Inter.regular,
     },

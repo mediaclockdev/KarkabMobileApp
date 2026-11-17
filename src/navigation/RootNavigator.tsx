@@ -16,14 +16,29 @@ const RootNavigator: React.FC = () => {
     );
 
     useEffect(() => {
-        const authData = storage.getString('authData');
         const token = storage.getString('userToken');
+        const authDataStr = storage.getString('authData');
 
-
-        if (authData && token) {
+        if (token || authDataStr) {
             try {
-                dispatch(loginSuccess(JSON.parse(authData)));
-                dispatch(setAuthenticated(true));
+                let parsed: any = {};
+                if (authDataStr) {
+                    parsed = JSON.parse(authDataStr);
+                }
+                const activeToken = token || parsed.accessToken;
+                if (activeToken) {
+                    dispatch(
+                        loginSuccess({
+                            user: parsed.user ?? null,
+                            accessToken: activeToken,
+                            refreshToken: parsed.refreshToken ?? null,
+                        }),
+                    );
+                    dispatch(setAuthenticated(true));
+                } else {
+                    storage.remove('authData');
+                    storage.remove('userToken');
+                }
             } catch {
                 storage.remove('authData');
                 storage.remove('userToken');

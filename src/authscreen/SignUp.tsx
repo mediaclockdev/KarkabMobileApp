@@ -646,8 +646,8 @@ export default function SignUp() {
 
         <AppImage
           source={Logo.loginlogo}
-          width={144}
-          height={142}
+          width={94}
+          height={92}
           style={styles.logo}
         />
 
@@ -656,35 +656,49 @@ export default function SignUp() {
             color={colors.darkthemetext}
             fontSize={28}
             fontFamily={Inter.semibold}
+            style={{ marginTop: 10 }}
           >
-            {`${t('auth.signup.headline')} `}
+            {/* {`${t('auth.signup.headline')} `} */}
+            Create Your account
           </AppText>
-          <AppImage
+          {/* <AppImage
             resizeMode="contain"
             source={Banner.signuptext}
             width={94}
             height={34}
             style={styles.headlineImage}
-          />
+          /> */}
         </View>
 
         <AppText
           color={colors.darkthemetext}
           fontSize={16}
           fontFamily={Inter.regular}
+          style={{ marginVertical: 10 }}
         >
           {t('auth.login.tagline')}
         </AppText>
-        <AppText
+        {/* <AppText
           color="#F3B40F"
           fontSize={16}
           fontFamily={Inter.regular}
           marginBottom={10}
+          style={{ textAlign: 'center' }}
         >
           {t('auth.login.taglineAccent')}
-        </AppText>
+        </AppText> */}
 
         {/* NAME — natural direction, users type their own language */}
+
+        <AppText
+          color={'#FFFF'}
+          fontSize={14}
+          fontFamily={Inter.regular}
+          style={{ alignSelf: 'flex-start' }}
+        >
+          {t('auth.signup.fullName')} *
+        </AppText>
+
         <View style={styles.inputContainer}>
           <AppImage
             source={Logo.person}
@@ -705,6 +719,14 @@ export default function SignUp() {
         {renderError(errors.name)}
 
         {/* EMAIL — always LTR characters */}
+        <AppText
+          color={'#FFFF'}
+          fontSize={14}
+          fontFamily={Inter.regular}
+          style={{ alignSelf: 'flex-start', marginTop: 10 }}
+        >
+          {t('auth.login.Email')} *
+        </AppText>
         <View style={styles.inputContainer}>
           <AppImage
             source={Logo.email}
@@ -729,6 +751,14 @@ export default function SignUp() {
         {renderError(errors.email)}
 
         {/* PASSWORD */}
+        <AppText
+          color={'#FFFF'}
+          fontSize={14}
+          fontFamily={Inter.regular}
+          style={{ alignSelf: 'flex-start', marginTop: 10 }}
+        >
+          {t('auth.login.Password')} *
+        </AppText>
         <View style={styles.inputContainer}>
           <AppImage
             source={Logo.lock}
@@ -764,6 +794,15 @@ export default function SignUp() {
         {renderError(errors.password)}
 
         {/* CONFIRM PASSWORD */}
+        <AppText
+          color={'#FFFF'}
+          fontSize={14}
+          fontFamily={Inter.regular}
+          style={{ alignSelf: 'flex-start', marginTop: 10 }}
+        >
+
+          {t('auth.signup.confirmPassword')} *
+        </AppText>
         <View style={styles.inputContainer}>
           <AppImage
             source={Logo.lock}
@@ -954,6 +993,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginVertical: 5,
     gap: 4,
+    marginTop: 15
   },
   legalWrapper: {
     justifyContent: 'center',

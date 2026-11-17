@@ -10,6 +10,7 @@ import { useAppColors } from '../constants/color';
 import { changeLanguage } from '../../localization/changeLanguage';
 import { LANGUAGE_LIST, AppLanguage } from '../../localization/supportLang';
 import LinearGradient from 'react-native-linear-gradient';
+import AppImageLg from './AppImageLg';
 
 export default function LanguageSelector() {
   const { i18n } = useTranslation();
@@ -120,11 +121,11 @@ export default function LanguageSelector() {
             ]}
           >
             <View style={styles.modalIcon}>
-              <AppImage
+              <AppImageLg
                 source={Logo.language}
                 width={26}
                 height={26}
-                tintColor="#FFB300"
+              //  tintColor="#FFB300"
               />
             </View>
 
@@ -169,8 +170,8 @@ export default function LanguageSelector() {
                 style={styles.confirmButton}
               >
                 <LinearGradient
-                  colors={['#FFB300', '#F3870C', '#CF7D00']}
-                  start={{ x: 0, y: 0 }}
+                  colors={['#FD8701', '#D62C64', '#BA17A6', '#8801F1']}
+                  start={{ x: 0.2, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.confirmGradient}
                 >
@@ -196,7 +197,7 @@ const styles = StyleSheet.create({
   wrapper: {
     alignSelf: 'flex-end',
     zIndex: 999,
-    marginTop: Platform.OS == 'ios' ? 15 : 25
+    marginTop: Platform.OS == 'ios' ? 0 : 25
   },
   trigger: {
     borderWidth: 1,

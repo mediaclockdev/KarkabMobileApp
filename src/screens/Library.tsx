@@ -74,7 +74,7 @@ const Library = () => {
       image: Images.like,
       title: 'Favourites\nSongs',
       number: favoritescount,
-      bordercolor: '#9214699C',
+      bordercolor: '#8F4602',
     },
     {
       image: Images.mic,
@@ -150,7 +150,7 @@ const Library = () => {
       const response = await ApiService.get(apiUrls.getsonglist, {
         params: {
           page: pageNumber,
-          limit: LIMIT,
+          limit: pageNumber * LIMIT,
         },
       });
 
@@ -371,47 +371,7 @@ const Library = () => {
     <View style={{ gap: 20, paddingTop: 16 }}>
 
       {/* 4 Feature Cards */}
-      {/* <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        {ferture.map((item, index) => (
-          <View
-            key={index}
-            style={{
-              borderColor: '#9D3F00',
-              borderWidth: 1,
-              justifyContent: 'center',
-              alignItems: 'center',
-              width: '30.6%',
-              flexDirection: 'row',
-              gap: 10,
-              paddingHorizontal: 0,
-              paddingVertical: 10,
-              borderRadius: 8,
-            }}
-          >
-            <View
-              style={{
-                borderWidth: 1,
-                borderColor: item.bordercolor,
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: 6,
-                borderRadius: 50,
-              }}
-            >
-              <AppImage source={item.image} height={28} width={28} />
-            </View>
 
-            <View>
-              <AppText fontSize={9} fontFamily={Inter.regular} color={color.darkthemetext}>
-                {item.title}
-              </AppText>
-              <AppText fontSize={17} fontFamily={Inter.regular} color={color.darkthemetext}>
-                {item.number}
-              </AppText>
-            </View>
-          </View>
-        ))}
-      </View> */}
 
       {visible && (
         <>
@@ -711,6 +671,8 @@ const Library = () => {
           ))}
         </View>
 
+
+
         {/* Filter Row */}
         <View style={styles.filterview}>
           {/* All Genres */}
@@ -918,6 +880,47 @@ const Library = () => {
             </View>
           </TouchableOpacity>
         </LinearGradient> */}
+        </View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+          {ferture.map((item, index) => (
+            <View
+              key={index}
+              style={{
+                borderColor: '#FF741D',
+                borderWidth: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: '30.6%',
+                flexDirection: 'row',
+                gap: 10,
+                paddingHorizontal: 0,
+                paddingVertical: 10,
+                borderRadius: 8,
+              }}
+            >
+              <View
+                style={{
+                  borderWidth: 1,
+                  borderColor: item.bordercolor,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  padding: 6,
+                  borderRadius: 50,
+                }}
+              >
+                <AppImage source={item.image} height={24} width={24} tintColor={"#FF741D"} />
+              </View>
+
+              <View>
+                <AppText fontSize={9} fontFamily={Inter.regular} color={color.darkthemetext}>
+                  {item.title}
+                </AppText>
+                <AppText fontSize={17} fontFamily={Inter.regular} color={color.darkthemetext}>
+                  {item.number}
+                </AppText>
+              </View>
+            </View>
+          ))}
         </View>
 
         {/* Main List with Integrated Header and Pagination */}

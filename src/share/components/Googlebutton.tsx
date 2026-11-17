@@ -97,19 +97,16 @@ export default function GoogleButton() {
       console.log("Google Login Response:", res.success);
 
       if (res.success) {
-        // Save token
-        // dispatch(loginSuccess(...))
+        const authData = {
+          user: res?.user ?? null,
+          accessToken: res?.token,
+          refreshToken: res?.refreshToken ?? null,
+        };
+        storage.set('authData', JSON.stringify(authData));
+        if (res.token) storage.set('userToken', res.token);
 
-        dispatch(
-          loginSuccess({
-            user: res?.user ?? null,
-            accessToken: res?.token,
-            refreshToken: res?.refreshToken ?? null,
-          })
-        );
-        storage.set('userToken', res.token);
-
-        dispatch(setAuthenticated(true))
+        dispatch(loginSuccess(authData));
+        dispatch(setAuthenticated(true));
       } else {
         Alert.alert("Error", res.error || res.message);
       }

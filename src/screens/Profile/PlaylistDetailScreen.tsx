@@ -19,10 +19,11 @@ import { Images } from '../../share/constants/media';
 import color, { useAppColors } from '../../share/constants/color';
 import { Inter } from '../../share/constants/fonts';
 import apiUrls from '../../services/apiUrls';
-import { addsong, isPausesd, openSongAction, showToast } from '../../auth/redux/authSlice';
+import { addsong, isPausesd, openSongAction, setHideMiniPlayer, showToast } from '../../auth/redux/authSlice';
 import { useAppDispatch, useAppSelector } from '../../share/hooks/useAppSelector';
 import TrackPlayer from '@rntp/player';
 import { playSongList, playTrackSong } from '../../services/player'
+import Sound from 'react-native-nitro-sound';
 
 type PlaylistSong = {
     id: string;
@@ -400,40 +401,118 @@ const PlaylistDetailScreen = () => {
         }
     };
 
-    const handleToggleSong = async (item: PlaylistSong, index?: number) => {
-        const isThisSongPlaying = playsong?.id?.toString() === item.id?.toString();
+    // const handleToggleSong = async (item: PlaylistSong, index?: number) => {
+    //     const isThisSongPlaying = playsong?.id?.toString() === item.id?.toString();
 
-        if (isThisSongPlaying) {
-            if (!isPaused) {
-                await TrackPlayer.pause();
-                dispatch(isPausesd(true));
-            } else {
-                await TrackPlayer.play();
-                dispatch(isPausesd(false));
-            }
-            return;
-        }
+    //     if (isThisSongPlaying) {
+    //         if (!isPaused) {
+    //             await TrackPlayer.pause();
+    //             dispatch(isPausesd(true));
+    //         } else {
+    //             await TrackPlayer.play();
+    //             dispatch(isPausesd(false));
+    //         }
+    //         return;
+    //     }
 
-        setPlayingId(item.id.toString());
+    //     setPlayingId(item.id.toString());
+    //     setLoadings(true);
+    //     dispatch(isPausesd(false));
+
+    //     try {
+    //         const list = songs.length > 0 ? songs : [item];
+    //         const targetIdx =
+    //             typeof index === 'number' && index >= 0
+    //                 ? index
+    //                 : list.findIndex(
+    //                     (s: any) => s.id?.toString() === item.id?.toString(),
+    //                 );
+    //         await playSongList(list, targetIdx >= 0 ? targetIdx : 0, true);
+    //     } catch (error) {
+    //         console.log('Playlist song play error:', error);
+    //         dispatch(addsong({ ...item }));
+    //     } finally {
+    //         setLoadings(false);
+    //     }
+    // };
+
+
+
+    const playRecording = async (item: any) => {
+        dispatch(setHideMiniPlayer(false))
+        try {
+
+            await Sound.stopPlayer();
+
+            await Sound.removePlayBackListener();
+
+        } catch (e) { }
+
+        setPlayingId(item.id?.toString());
+
         setLoadings(true);
-        dispatch(isPausesd(false));
+
+        await dispatch(isPausesd(false));
 
         try {
-            const list = songs.length > 0 ? songs : [item];
-            const targetIdx =
-                typeof index === 'number' && index >= 0
-                    ? index
-                    : list.findIndex(
-                        (s: any) => s.id?.toString() === item.id?.toString(),
-                    );
-            await playSongList(list, targetIdx >= 0 ? targetIdx : 0, true);
+
+            const list = songs.length > 0 ? songs : songs || [];
+
+            const songIndex = list.findIndex(
+
+                (s: any) => s.id?.toString() === item.id?.toString()
+
+            );
+
+            const initialIndex = songIndex >= 0 ? songIndex : 0;
+
+            if (list.length > 0) {
+
+                await playSongList(list, initialIndex, true);
+
+            } else {
+
+                await playTrackSong(item, true);
+
+            }
+
         } catch (error) {
-            console.log('Playlist song play error:', error);
+
+            console.log('Librarylist play error:', error);
+
             dispatch(addsong({ ...item }));
+
         } finally {
+
             setLoadings(false);
+
         }
+
     };
+
+
+    const stopRecording = async () => {
+
+        try {
+
+            await dispatch(isPausesd(true));
+
+            await TrackPlayer.pause();
+
+            try {
+
+                await Sound.pausePlayer();
+
+            } catch (e) { }
+
+        } catch (error) {
+
+            console.log('Stop Error:', error);
+
+        }
+
+    };
+
 
     const renderPlaylistSong = ({
         item,
@@ -443,7 +522,8 @@ const PlaylistDetailScreen = () => {
         index: number;
     }) => {
         const isThisSongActive = playsong?.id?.toString() === item.id?.toString();
-
+        const isActive = playingId?.toString() === item.id?.toString();
+        const isCurrentPlaying = isActive && !isPaused;
         return (
             <TouchableOpacity
                 activeOpacity={0.8}
@@ -494,7 +574,7 @@ const PlaylistDetailScreen = () => {
                 </View>
                 <TouchableOpacity
                     style={styles.playButton}
-                    onPress={() => handleToggleSong(item, index)}
+                    onPress={() => (isCurrentPlaying ? stopRecording() : playRecording(item))}
                 >
                     {loadings && playingId?.toString() === item.id?.toString() ? (
                         <ActivityIndicator size="small" color="#FFFFFF" />
@@ -622,7 +702,7 @@ const PlaylistDetailScreen = () => {
         return (
             <View style={styles.emptyContainer}>
                 <LinearGradient
-                    colors={['#FF4B4C', '#AB2C5D']}
+                    colors={['#FA6144', '#D83B7E', '#7E3FF2']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.emptyIcon}
@@ -663,7 +743,7 @@ const PlaylistDetailScreen = () => {
                     style={styles.emptyButton}
                 >
                     <LinearGradient
-                        colors={['#FF4B4C', '#AB2C5D']}
+                        colors={['#FA6144', '#D83B7E', '#7E3FF2']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.emptyButtonGradient}
@@ -787,10 +867,7 @@ const PlaylistDetailScreen = () => {
                                 onPress={handlePlayAll}
                             >
                                 <LinearGradient
-                                    colors={[
-                                        '#FF4B4C',
-                                        '#AB2C5D',
-                                    ]}
+                                    colors={['#FA6144', '#D83B7E', '#7E3FF2']}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 1 }}
                                     style={styles.playAllGradient}
@@ -851,10 +928,7 @@ const PlaylistDetailScreen = () => {
                             onPress={openAddSongs}
                         >
                             <LinearGradient
-                                colors={[
-                                    '#FF4B4C',
-                                    '#AB2C5D',
-                                ]}
+                                colors={['#FA6144', '#D83B7E', '#7E3FF2']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 1 }}
                                 style={styles.addButton}
@@ -1087,10 +1161,7 @@ const PlaylistDetailScreen = () => {
                             ]}
                         >
                             <LinearGradient
-                                colors={[
-                                    '#FF4B4C',
-                                    '#AB2C5D',
-                                ]}
+                                colors={['#FA6144', '#D83B7E', '#7E3FF2']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 1 }}
                                 style={styles.addToPlaylistGradient}

@@ -81,6 +81,15 @@ export default function SearchSongSecreen() {
         total: 0,
     });
 
+
+    useFocusEffect(
+        useCallback(() => {
+            setSearchText('')
+            setActiveTab('all')
+        }, [route])
+    )
+
+
     const deduplicate = (items: any[]) => {
         const seen = new Set();
         return items.filter(item => {
@@ -539,38 +548,32 @@ export default function SearchSongSecreen() {
                     >
                         {TABS.map(tab => {
                             const isActive = activeTab === tab.key;
+
                             return (
                                 <TouchableOpacity
                                     key={tab.key}
                                     activeOpacity={0.8}
                                     onPress={() => setActiveTab(tab.key)}
-                                    style={[
-                                        styles.tabPill,
-                                        !isActive && styles.tabPillInactive,
-                                    ]}
+                                    style={styles.tabTouchable}
                                 >
-                                    {isActive && (
+                                    {isActive ? (
                                         <LinearGradient
-                                            colors={[
-                                                '#FF6A00',
-                                                '#EE0979',
-                                                '#9B51E0',
-                                            ]}
+                                            colors={['#FF6A00', '#EE0979', '#9B51E0']}
                                             start={{ x: 0, y: 0.5 }}
                                             end={{ x: 1, y: 0.5 }}
-                                            style={StyleSheet.absoluteFill}
-                                        />
+                                            style={styles.tabActiveGradient}
+                                        >
+                                            <AppText style={styles.tabTextActive} numberOfLines={1}>
+                                                {tab.label}
+                                            </AppText>
+                                        </LinearGradient>
+                                    ) : (
+                                        <View style={styles.tabInactive}>
+                                            <AppText style={styles.tabTextInactive} numberOfLines={1}>
+                                                {tab.label}
+                                            </AppText>
+                                        </View>
                                     )}
-                                    <AppText
-                                        style={
-                                            isActive
-                                                ? styles.tabTextActive
-                                                : styles.tabTextInactive
-                                        }
-                                        numberOfLines={1}
-                                    >
-                                        {tab.label}
-                                    </AppText>
                                 </TouchableOpacity>
                             );
                         })}
@@ -672,7 +675,7 @@ export default function SearchSongSecreen() {
 
                                     {/* SONGS SECTION */}
                                     {searchResults.songs?.length > 0 && (
-                                        <View style={styles.sectionBlock}>
+                                        <View style={{ marginBottom: -120 }}>
                                             <View style={styles.sectionHeader}>
                                                 <AppText
                                                     style={styles.sectionTitle}
@@ -940,38 +943,9 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         lineHeight: 13,
     },
-    tabsContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 4,
-        gap: 8,
-        marginBottom: 16,
-    },
-    tabPill: {
-        height: 38,
-        paddingHorizontal: 18,
-        borderRadius: 19,
-        justifyContent: 'center',
-        alignItems: 'center',
-        overflow: 'hidden',
-    },
-    tabPillInactive: {
-        backgroundColor: '#18181D',
-        borderWidth: 1,
-        borderColor: '#26262E',
-    },
-    tabTextActive: {
-        color: '#FFFFFF',
-        fontSize: 13,
-        fontFamily: Inter.bold,
-        textAlign: 'center',
-    },
-    tabTextInactive: {
-        color: '#8E8E93',
-        fontSize: 13,
-        fontFamily: Inter.medium,
-        textAlign: 'center',
-    },
+
+
+
     emptyPromptContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -1079,4 +1053,91 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    tabsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 4,
+        gap: 8,
+        marginBottom: 16,
+    },
+
+    tabPill: {
+        height: 38,
+        paddingHorizontal: 18,
+        borderRadius: 19,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+        position: 'relative',
+    },
+
+    tabPillInactive: {
+        backgroundColor: '#18181D',
+        borderWidth: 1,
+        borderColor: '#26262E',
+    },
+
+    tabText: {
+        fontSize: 13,
+        textAlign: 'center',
+    },
+
+
+
+
+
+
+
+    tabPillActive: {
+        backgroundColor: '#EE0979',
+        borderWidth: 0,
+    },
+
+
+
+    activeTabGradient: {
+        ...StyleSheet.absoluteFillObject,
+        borderRadius: 19,
+    },
+
+
+
+    tabTouchable: {
+        borderRadius: 19,
+    },
+
+    tabActiveGradient: {
+        height: 38,
+        minWidth: 108,
+        borderRadius: 19,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+    },
+
+    tabInactive: {
+        height: 38,
+        paddingHorizontal: 18,
+        borderRadius: 19,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#18181D',
+        borderWidth: 1,
+        borderColor: '#26262E',
+    },
+
+    tabTextActive: {
+        color: '#FFFFFF',
+        fontSize: 13,
+        fontFamily: Inter.bold,
+        textAlign: 'center',
+    },
+
+    tabTextInactive: {
+        color: '#8E8E93',
+        fontSize: 13,
+        fontFamily: Inter.medium,
+        textAlign: 'center',
+    },
+
 });

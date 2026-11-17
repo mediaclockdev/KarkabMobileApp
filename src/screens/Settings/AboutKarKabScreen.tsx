@@ -29,7 +29,7 @@ const AboutKarKabScreen = () => {
 
     const item = route.params?.item;
     const isArabic = i18n.language?.split('-')[0] === 'ar';
-
+    console.log(item, "jjjjekeke")
     const title = isArabic
         ? item?.title_ar || 'عن تطبيق كركب'
         : item?.title_en || 'About KarKab';
@@ -88,15 +88,24 @@ const AboutKarKabScreen = () => {
                 <View style={styles.brandCard}>
                     <View style={styles.logoBox}>
                         {/* <Text style={styles.logoLetter}>K</Text> */}
-                        <AppImage
+                        {/* <AppImage
                             source={Logo.mainlogo}
                             height={68}
                             width={68}
+                        /> */}
+                        <AppImage
+                            source={Logo.loginlogo}
+                            width={94}
+                            height={92}
+                            style={{
+                                alignSelf: 'center',
+                                marginTop: 40,
+                            }}
                         />
                     </View>
+                    {/* <Text style={styles.brandArabic}>كاركاب</Text>
+                    <Text style={styles.brandName}>KarKab</Text> */}
 
-                    <Text style={styles.brandName}>KarKab</Text>
-                    <Text style={styles.brandArabic}>كاركاب</Text>
 
                     <Text style={styles.brandDescription}>
                         {isArabic
@@ -107,7 +116,7 @@ const AboutKarKabScreen = () => {
                     <View style={styles.versionBadge}>
                         <Text style={styles.versionText}>
                             {isArabic ? 'الإصدار ' : 'VERSION '}
-                            {extra.app_version || item?.version || '2.4.0'}
+                            {extra.app_version || item?.version || '1.0.0'}
                         </Text>
                     </View>
                 </View>
@@ -119,19 +128,19 @@ const AboutKarKabScreen = () => {
                 <View style={styles.infoCard}>
                     <InfoRow
                         label={isArabic ? 'اسم التطبيق' : 'App Name'}
-                        value={extra.app_name || 'KarKab'}
+                        value={extra.app_name || isArabic ? 'كركاب' : 'KarKab'}
                     />
                     <View style={styles.separator} />
 
                     <InfoRow
                         label={isArabic ? 'الإصدار' : 'Version'}
-                        value={extra.app_version || item?.version || '2.4.0'}
+                        value={extra.app_version || item?.version || '1.0.0'}
                     />
                     <View style={styles.separator} />
 
                     <InfoRow
                         label={isArabic ? 'رقم البناء' : 'Build Number'}
-                        value={String(extra.build_number || '—')}
+                        value={String(extra.build_number || '1')}
                     />
                 </View>
 
@@ -286,7 +295,7 @@ const styles = StyleSheet.create({
         fontSize: 13,
         textAlign: 'center',
         lineHeight: 22,
-        marginTop: 15,
+        marginTop: 25,
     },
     versionBadge: {
         marginTop: 18,

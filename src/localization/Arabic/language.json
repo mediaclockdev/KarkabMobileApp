@@ -8,7 +8,8 @@
     "error": "خطأ",
     "somethingWentWrong": "حدث خطأ ما",
     "restartManually": "يرجى إغلاق التطبيق وإعادة فتحه لتطبيق اللغة الجديدة.",
-    "Confirm": "تأكيد"
+    "Confirm": "تأكيد",
+    "Delete": "حذف"
   },
   "auth": {
     "login": {
@@ -208,7 +209,7 @@
     "Textsize": "حجم النص",
     "Fulllyrics": "كلمات الأغنية كاملة",
     "LYRICS": "كلمات الأغنية",
-    "Lyricsarenotavailablefortherecordedsong": "كلمات الأغنية المسجلة غير متاحة",
+    "Lyricsarenotavailablefortherecordedsong": "هذه أغنية سجلها أحد المستخدمين، لذا لا تتوفر لها كلمات. إذا كنت ترغب في عرض كلمات الأغنية أثناء الاستماع، يرجى تشغيل نسخة رسمية من أغنية الفنان بدلاً من ذلك.",
     "Lyricsnotavailableforthissong": "كلمات هذه الأغنية غير متاحة",
     "Singthissong": "غنِّ هذه الأغنية",
     "Prepareinstrumentalandlyrics": "تجهيز الموسيقى وكلمات الأغنية",
@@ -247,5 +248,16 @@
     "ChangeLanguage": "تغيير اللغة",
     "Areyouwanttochangetheapplanguage": "هل أنت متأكد أنك تريد تغيير لغة التطبيق؟",
     "Theapplicationreloadtoapplythechangesproperly": "سيتم إعادة تشغيل التطبيق لتطبيق التغييرات بشكل صحيح."
+  },
+  "SongAction": {
+    "AddtoFavorite": "إضافة إلى المفضلة",
+    "RemovefromFavorite": "إزالة من المفضلة",
+    "AddtoPlaylist": "إضافة إلى قائمة التشغيل",
+    "Like": "إعجاب",
+    "Dislike": "عدم الإعجاب",
+    "Share": "مشاركة",
+    "CopySongLink": "نسخ رابط الأغنية",
+    "RequestPublicVerification": "طلب التحقق للنشر العام",
+    "Remove": "إزالة"
   }
 }

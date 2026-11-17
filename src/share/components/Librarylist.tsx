@@ -985,7 +985,7 @@ const Librarylist = ({
   }, [playsong?.id]);
 
   const playRecording = async (item: any) => {
-
+    console.log(item, "kkkkklllllll")
     try {
 
       await Sound.stopPlayer();
@@ -1284,7 +1284,7 @@ const Librarylist = ({
   };
 
   const openDetail = (item: MusicItem) =>
-
+    // console.log(item, "item", type)
     (navigation as any).navigate('.', {
 
       id: item.id,
@@ -1464,56 +1464,62 @@ const Librarylist = ({
               <View style={styles.dot} />
             </TouchableOpacity>
 
-            <TouchableOpacity
 
-              activeOpacity={0.85}
+            {
+              item.recording_url ?
+                null :
+                <TouchableOpacity
 
-              disabled={singLoadingId !== null}
+                  activeOpacity={0.85}
 
-              onPress={() => handleSing(item)}
+                  disabled={singLoadingId !== null}
 
-              style={{ opacity: singLoadingId && !isSingLoading ? 0.5 : 1 }}
-            >
-              <LinearGradient
+                  onPress={() => handleSing(item)}
 
-                colors={BRAND_GRADIENT}
+                  style={{ opacity: singLoadingId && !isSingLoading ? 0.5 : 1 }}
+                >
+                  <LinearGradient
 
-                start={{ x: 0, y: 0 }}
+                    colors={BRAND_GRADIENT}
 
-                end={{ x: 1, y: 0 }}
+                    start={{ x: 0, y: 0 }}
 
-                style={styles.singBtn}
-              >
+                    end={{ x: 1, y: 0 }}
 
-                {isSingLoading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                    style={styles.singBtn}
+                  >
 
-                ) : (
-                  <>
-                    <AppImage
+                    {isSingLoading ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
 
-                      source={Images.mic}
+                    ) : (
+                      <>
+                        <AppImage
 
-                      width={13}
+                          source={Images.mic}
 
-                      height={13}
+                          width={13}
 
-                      tintColor="#FFFFFF"
+                          height={13}
 
-                      resizeMode="contain"
+                          tintColor="#FFFFFF"
 
-                    />
+                          resizeMode="contain"
 
-                    {/* swap with your i18n key, e.g. t('sing') */}
-                    <AppText fontSize={12} fontWeight="700" fontFamily={Inter.bold} color="#FFFFFF">
-                      {t('Library.Sing')}
+                        />
 
-                    </AppText>
-                  </>
+                        {/* swap with your i18n key, e.g. t('sing') */}
+                        <AppText fontSize={12} fontWeight="700" fontFamily={Inter.bold} color="#FFFFFF">
+                          {t('Library.Sing')}
 
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
+                        </AppText>
+                      </>
+
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+            }
+
           </View>
         </View>
       </LinearGradient>

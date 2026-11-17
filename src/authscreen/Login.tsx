@@ -662,8 +662,8 @@ export default function LoginScreen() {
 
           <AppImage
             source={Logo.loginlogo}
-            width={144}
-            height={142}
+            width={94}
+            height={92}
             style={styles.logo}
           />
 
@@ -695,21 +695,31 @@ export default function LoginScreen() {
             color={colors.darkthemetext}
             fontSize={16}
             fontFamily={Inter.regular}
-            marginTop={10}
+
+            style={{ marginVertical: 10 }}
           >
             {t('auth.login.tagline')}
           </AppText>
 
-          <AppText
+          {/* <AppText
             color="#F3B40F"
             fontSize={16}
             fontFamily={Inter.regular}
             marginBottom={10}
+            style={{ textAlign: 'center' }}
           >
             {t('auth.login.taglineAccent')}
-          </AppText>
+          </AppText> */}
 
           {/* Email — always LTR regardless of app language */}
+          <AppText
+            color={'#FFFF'}
+            fontSize={14}
+            fontFamily={Inter.regular}
+            style={{ alignSelf: 'flex-start', marginTop: 10 }}
+          >
+            {t('auth.login.Email')} *
+          </AppText>
           <View style={styles.inputContainer}>
             <AppImage
               source={Logo.email}
@@ -735,6 +745,14 @@ export default function LoginScreen() {
           {renderError(errors.email)}
 
           {/* Password — always LTR */}
+          <AppText
+            color={'#FFFF'}
+            fontSize={14}
+            fontFamily={Inter.regular}
+            style={{ alignSelf: 'flex-start', marginTop: 10 }}
+          >
+            {t('auth.login.Password')} *
+          </AppText>
           <View style={styles.inputContainer}>
             <AppImage
               source={Logo.lock}
@@ -746,7 +764,7 @@ export default function LoginScreen() {
               value={password}
 
               onChangeText={onChangePassword}
-              placeholder={t('auth.login.passwordPlaceholder')}
+              placeholder={t('auth.login.Password')}
               placeholderTextColor="#B4B1AD"
               secureTextEntry={secure}
               autoCapitalize="none"
@@ -758,7 +776,7 @@ export default function LoginScreen() {
                 styles.input,
                 ltrField,
                 { color: colors.darkthemetext },
-                secure && { fontFamily: undefined, letterSpacing: 2 },
+                secure && { fontFamily: undefined, letterSpacing: 0 },
               ]}
             />
             <TouchableOpacity
@@ -907,7 +925,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 5,
+    marginTop: 10,
   },
   inputContainer: {
     width: '100%',
@@ -919,7 +937,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 15,
     gap: 10,
-    marginVertical: 5,
+    marginBottom: 5,
   },
   input: {
     flex: 1,
@@ -964,6 +982,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginVertical: 5,
     gap: 4,
+    marginTop: 15
 
   },
   legalWrapper: {

@@ -40,14 +40,15 @@ export default function AppleButton() {
 
       if (res?.token) {
         console.log("Apple Login Response:", res);
+        const authData = {
+          user: res?.user ?? null,
+          accessToken: res?.token,
+          refreshToken: null,
+        };
+        storage.set('authData', JSON.stringify(authData));
         storage.set('userToken', res.token);
-        dispatch(
-          loginSuccess({
-            user: res?.user ?? null,
-            accessToken: res?.token,
-          })
-        );
-        dispatch(setAuthenticated(true))
+        dispatch(loginSuccess(authData));
+        dispatch(setAuthenticated(true));
       } else {
         Alert.alert("Error", res.error || res.message);
       }

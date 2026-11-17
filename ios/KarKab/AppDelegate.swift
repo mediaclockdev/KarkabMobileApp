@@ -1,4 +1,5 @@
 import Firebase
+import FirebaseCore
 import FirebaseMessaging
 import UIKit
 import React

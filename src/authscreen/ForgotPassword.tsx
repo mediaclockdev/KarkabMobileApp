@@ -153,13 +153,19 @@ export default function ForgotPassword() {
           />
         </TouchableOpacity>
 
-        <AppImage
+        {/* <AppImage
           source={Logo.forgotpassword}
           width={135}
           height={135}
           style={{
             marginTop: 60,
           }}
+        /> */}
+        <AppImage
+          source={Logo.loginlogo}
+          width={94}
+          height={92}
+          style={styles.logo}
         />
         <View
           style={{
@@ -179,34 +185,44 @@ export default function ForgotPassword() {
             Forgot
           </AppText>
 
-          <AppImage
+          {/* <AppImage
             source={Banner.forgottext}
             resizeMode="contain"
             width={142}
             height={38}
             style={{ marginTop: 1.5 }}
-          />
+          /> */}
+
+          <AppText
+            color={colors.darkthemetext}
+            fontSize={28}
+            fontFamily={Inter.semibold}
+          //   style={{ marginRight: 6 }}
+          >
+            Password?
+          </AppText>
         </View>
 
 
         <AppText
           color={"#A59C93"}
-          fontSize={13}
+          fontSize={14}
           fontFamily={Inter.regular}
           marginTop={8}
           textAlign="center"
         >
-          {t("No worries ! Enter your email address and we’ll")}
+          {/* {t("No worries ! Enter your email address and we’ll")} */}
+          Enter your email address to reset password.
         </AppText>
 
-        <AppText
+        {/* <AppText
           color={"#A59C93"}
           fontSize={13}
           fontFamily={Inter.regular}
           textAlign="center"
         >
           {t("send you OTP to reset your password")}
-        </AppText>
+        </AppText> */}
 
         <View style={{ height: 40 }} />
         <View style={{ width: '100%' }}>
@@ -215,9 +231,9 @@ export default function ForgotPassword() {
             fontSize={13}
             fontFamily={Inter.medium}
             textAlign="left"
-            marginBottom={20}
+            marginBottom={10}
           >
-            {t("Email Address")}
+            {t("Email")}
           </AppText>
         </View>
 
@@ -235,7 +251,7 @@ export default function ForgotPassword() {
           <TextInput
             value={email}
             onChangeText={setEmail}
-            placeholder={t("Enter Email")}
+            placeholder={t("Enter Your Register Email")}
             placeholderTextColor="#B4B1AD"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -271,7 +287,7 @@ export default function ForgotPassword() {
           onPress={handleSendOtp}
         >
           <LinearGradient
-            colors={["#E97124", "#C33332", "#801538",]}
+            colors={['#FD8701', '#D62C64', '#BA17A6', '#8801F1']}
             start={{ x: 0.2, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[
@@ -374,5 +390,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     flexDirection: 'row'
+  },
+  logo: {
+    alignSelf: 'center',
+    marginTop: 40,
   },
 });

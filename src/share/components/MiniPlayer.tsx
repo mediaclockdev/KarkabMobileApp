@@ -738,11 +738,14 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
 
     /**
      * 1. Progress bar (only while visible).
+     * Guards against background CPU usage that triggers iOS watchdog termination.
      */
     useEffect(() => {
         if (!currentSong?.id || hideMiniPlayer) return;
 
         const interval = setInterval(async () => {
+            // Skip polling when the app is not in the foreground.
+            if (appStateRef.current !== 'active') return;
             try {
                 const progress = await TrackPlayer.getProgress();
                 if (!progress) return;
@@ -838,16 +841,32 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
             await stopCurrentSong();
         } finally {
             dispatch(setHideMiniPlayer(true));
-            dispatch(addsong(''));
+            // dispatch(addsong(''));
         }
     };
 
+    // const openFullPlayer = () => {
+    //     if (!currentSong?.id) return;
+    //     navigation.navigate(FULL_PLAYER_ROUTE, {
+    //         id: currentSong.id,
+    //         type: isRecordingSong(currentSong) ? 'recordings' : undefined,
+    //     });
+    // };
+
+
+
     const openFullPlayer = () => {
-        if (!currentSong?.id) return;
-        navigation.navigate(FULL_PLAYER_ROUTE, {
-            id: currentSong.id,
-            type: isRecordingSong(currentSong) ? 'recordings' : undefined,
-        });
+
+        const targetSong = currentSong?.id ? currentSong : playsong;
+        if (targetSong?.id) {
+            const isRec = !!(targetSong?.recording_url || targetSong?.recordingUrl || targetSong?.type === 'recordings');
+            (navigation as any).navigate('.', {
+                id: targetSong.id,
+                type: isRec ? 'recordings' : undefined,
+            });
+
+            // dispatch(openSongAction(playsong));
+        }
     };
 
     if (!currentSong?.id || hideMiniPlayer) return null;
@@ -952,17 +971,17 @@ const MiniPlayer = ({ onNext, onPrevious, bottomOffset = 78 }: MiniPlayerProps) 
                 </View>
             </TouchableOpacity>
 
-    
 
 
 
-             {/* Live Progress Line */}
-           <TouchableWithoutFeedback onPress={openFullPlayer}>
-               <View style={styles.bottomProgressTrack}>
-                   {/* <View
+
+            {/* Live Progress Line */}
+            <TouchableWithoutFeedback onPress={openFullPlayer}>
+                <View style={styles.bottomProgressTrack}>
+                    {/* <View
                        style={[styles.bottomProgressFill, { width: `${progressPercent}%` }]}
                    /> */}
-                   <LinearGradient
+                    <LinearGradient
                         colors={['#FA6144', '#D83B7E', '#7E3FF2']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}

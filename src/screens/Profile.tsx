@@ -9,7 +9,7 @@ import LinearGradient from "react-native-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Inter } from "../share/constants/fonts";
 import { useAppDispatch } from "../share/hooks/useAppSelector";
-import { addsong, loaderstate, setAuthenticated, showToast } from "../auth/redux/authSlice";
+import { addsong, loaderstate, openSongAction, setAuthenticated, showToast } from "../auth/redux/authSlice";
 import Sound, {
     AudioEncoderAndroidType,
     AudioSourceAndroidType,
@@ -715,7 +715,7 @@ const Profile = () => {
                                         (navigation as any).navigate('CreatePlaylist' as never),
                                 },
                                 {
-                                    title: t('Library.Myplaylists'),
+                                    title: t('Library.Favorites'),
                                     image: Images.like,
                                     onPress: () =>
                                         (navigation as any).navigate('SongsListScreen' as never, {
@@ -791,7 +791,7 @@ const Profile = () => {
                                 style={styles.seeAllButton}
                             >
                                 <AppText
-                                    color="#B84CFF"
+                                    color="#FA6144"
                                     fontSize={12}
                                     fontFamily={Inter.medium}
                                 >
@@ -799,7 +799,7 @@ const Profile = () => {
 
                                 </AppText>
 
-                                <AppText color="#B84CFF" fontSize={18}>
+                                <AppText color="#FA6144" fontSize={18}>
                                     ›
                                 </AppText>
                             </TouchableOpacity>
@@ -862,6 +862,7 @@ const Profile = () => {
                                         <TouchableOpacity
                                             style={styles.moreButton}
                                             onPress={() => {
+                                                dispatch(openSongAction(item))
                                                 // Add recording options here if required.
                                             }}
                                         >
@@ -897,7 +898,7 @@ const Profile = () => {
                             >
                                 <View style={styles.createPlaylistInner}>
                                     <AppText
-                                        color="#B84CFF"
+                                        color="#FA6144"
                                         fontSize={20}
                                         fontWeight="400"
                                     >
@@ -905,7 +906,7 @@ const Profile = () => {
                                     </AppText>
 
                                     <AppText
-                                        color="#B84CFF"
+                                        color="#FA6144"
                                         fontSize={13}
                                         fontFamily={Inter.medium}
                                     >

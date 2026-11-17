@@ -233,7 +233,8 @@ const Recording = () => {
 
   // Playback preview state (review screen)
   const [previewPlaying, setPreviewPlaying] = useState(false);
-
+  const [isPauseLoading, setIsPauseLoading] = useState(false);
+  const pauseLoadingRef = useRef(false);
   // Helper to format & validate audio URLs
   const getCleanAudioUrl = (url?: any): string | undefined => {
     if (!url || typeof url !== 'string') return undefined;
@@ -307,6 +308,12 @@ const Recording = () => {
   const pauseStartTimeRef = useRef<number>(0);
   const instrumentalStartedAtRef = useRef<number>(0);
   const instrumentalOffsetMsRef = useRef<number>(0);
+  // Always holds the latest targetDurationMs so the interval callback never
+  // captures a stale value from its closure.
+  const targetDurationMsRef = useRef<number>(0);
+
+  // Keep ref in sync every render so setInterval always reads the current value.
+  targetDurationMsRef.current = targetDurationMs;
 
   const isRecorded = Boolean(path) && !recording;
 
@@ -317,15 +324,39 @@ const Recording = () => {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
-  // ── Cleanups ───────────────────────────────────────────────────────────────
-  useEffect(() => {
-    return () => {
-      Sound.removeRecordBackListener();
-      Sound.stopRecorder().catch(() => { });
-      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-      if (recordTimerRef.current) clearInterval(recordTimerRef.current);
-    };
-  }, []);
+
+
+
+
+
+
+
+  // ── Cleanups — ONLY on true unmount (component removed from stack) ─────────
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        // This runs only when the screen is unmounted (removed from navigation stack),
+        // NOT on every blur/focus. That prevents the interval from being killed
+        // just because the user briefly navigated to another screen.
+        Sound.removeRecordBackListener();
+        Sound.stopRecorder().catch(() => { });
+        Sound.stopPlayer().catch(() => { });
+        if (countdownTimerRef.current) {
+          clearInterval(countdownTimerRef.current);
+          countdownTimerRef.current = null;
+        }
+        if (recordTimerRef.current) {
+          clearInterval(recordTimerRef.current);
+          recordTimerRef.current = null;
+        }
+        clearInterval(countdownTimerRef?.current);
+        //   countdownTimerRef?.current = null;
+        clearInterval(recordTimerRef?.current);
+        //  recordTimerRef?.current = null;
+
+      };
+    }, [route, navigation])
+  )
 
   useFocusEffect(
     useCallback(() => {
@@ -340,13 +371,58 @@ const Recording = () => {
       pauseStartTimeRef.current = 0;
       isPlayingRef.current = false;
       hasStartedRef.current = false;
-      setRecordingName(`Take 1 – ${songTitle}`);
-
+      instrumentalStartedAtRef.current = 0;
+      instrumentalOffsetMsRef.current = 0;
+    }, [data, navigation, route])
+  )
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(setHideMiniPlayer(true));
       return () => {
-        Sound.removeRecordBackListener();
-        Sound.stopRecorder().catch(() => { });
-        if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-        if (recordTimerRef.current) clearInterval(recordTimerRef.current);
+        dispatch(setHideMiniPlayer(false));
+      };
+    }, [dispatch])
+  );
+
+
+  // ── On first focus only: reset state for a fresh session ──────────────────
+  // We use a ref-flag so this only fires ONCE per mount, not on every re-focus.
+  // Re-focusing mid-recording (e.g. returning from a permission dialog) no
+  // longer wipes out the running timer.
+  const hasInitialisedRef = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasInitialisedRef.current) {
+        hasInitialisedRef.current = true;
+        setSaved(false);
+        setPath('');
+        setRecPercentage(0);
+        setRecordTime('00:00');
+        setPlaybackPositionMs(0);
+        setActiveLyricIndex(0);
+        setIsPaused(false);
+        isPausedRef.current = false;
+        pauseStartTimeRef.current = 0;
+        isPlayingRef.current = false;
+        hasStartedRef.current = false;
+        setRecordingName(`Take 1 – ${songTitle}`);
+      }
+
+      // Cleanup on blur: only stop things when recording is NOT active.
+      // If recording is active, we let it continue (the unmount effect handles final cleanup).
+      return () => {
+        if (!isRecordingRef.current) {
+          Sound.removeRecordBackListener();
+          Sound.stopRecorder().catch(() => { });
+          if (countdownTimerRef.current) {
+            clearInterval(countdownTimerRef.current);
+            countdownTimerRef.current = null;
+          }
+          if (recordTimerRef.current) {
+            clearInterval(recordTimerRef.current);
+            recordTimerRef.current = null;
+          }
+        }
       };
     }, [data, songTitle]),
   );
@@ -367,51 +443,47 @@ const Recording = () => {
     }, [dispatch]),
   );
 
-  // Sound Playback Listener
-  useFocusEffect(
-    useCallback(() => {
-      isPlayingRef.current = false;
-      hasStartedRef.current = false;
-      setPlaybackPositionMs(0);
-      setActiveLyricIndex(0);
+  // Sound Playback Listener — registered once per mount, NOT cleared on blur.
+  // Resetting playbackPositionMs/activeLyricIndex on every focus would jump the
+  // timer back to 00:00 each time the user briefly leaves the screen.
+  useEffect(() => {
+    const playbackListener = (event: any) => {
+      const rawPos = Number(event.currentPosition ?? event.current_position);
+      const pos = !isNaN(rawPos) && rawPos > 0 ? rawPos : 0;
+      const dur = Number(event.duration) || 0;
 
-      const playbackListener = (event: any) => {
-        const rawPos = Number(event.currentPosition ?? event.current_position);
-        const pos = !isNaN(rawPos) && rawPos > 0 ? rawPos : 0;
-        const dur = Number(event.duration) || 0;
+      if (dur > 0) {
+        setInstrumentalDurationMs(prev => (prev !== dur ? dur : prev));
+      }
 
-        if (dur > 0) {
-          setInstrumentalDurationMs(prev => (prev !== dur ? dur : prev));
+      // Slight drift synchronization with native audio if drift > 600ms
+      if (pos > 0 && !isPausedRef.current && isRecordingRef.current) {
+        const currentElapsed = Date.now() - recordStartTimeRef.current;
+        if (Math.abs(currentElapsed - pos) > 600) {
+          recordStartTimeRef.current = Date.now() - pos;
         }
+      }
 
-        // Slight drift synchronization with native audio if drift > 600ms
-        if (pos > 0 && !isPausedRef.current && isRecordingRef.current) {
-          const currentElapsed = Date.now() - recordStartTimeRef.current;
-          if (Math.abs(currentElapsed - pos) > 600) {
-            recordStartTimeRef.current = Date.now() - pos;
-          }
-        }
+      if (dur > 0 && pos >= dur - 100) {
+        isPlayingRef.current = false;
+        hasStartedRef.current = false;
+      }
+    };
 
-        if (dur > 0 && pos >= dur - 100) {
-          isPlayingRef.current = false;
-          hasStartedRef.current = false;
-        }
-      };
+    Sound.addPlayBackListener(playbackListener);
+    playbackListenerRef.current = true;
 
-      Sound.addPlayBackListener(playbackListener);
-      playbackListenerRef.current = true;
-
-      return () => {
-        Sound.removePlayBackListener();
-        playbackListenerRef.current = false;
-        if (isPlayingRef.current || hasStartedRef.current) {
-          Sound.stopPlayer().catch(() => { });
-          isPlayingRef.current = false;
-          hasStartedRef.current = false;
-        }
-      };
-    }, []),
-  );
+    return () => {
+      Sound.removePlayBackListener();
+      playbackListenerRef.current = false;
+      // Only stop the player on true unmount, not on blur/focus cycles.
+      if (isPlayingRef.current || hasStartedRef.current) {
+        Sound.stopPlayer().catch(() => { });
+        isPlayingRef.current = false;
+        hasStartedRef.current = false;
+      }
+    };
+  }, []);
   useEffect(() => {
     if (!autoScroll || !lyricsLines.length || activeLyricIndex < 0) {
       return;
@@ -664,10 +736,27 @@ const Recording = () => {
   }, [playbackPositionMs, activeLyricIndex]);
 
   // ── Pause / Resume Recording ───────────────────────────────────────────────
+  // const pauseRecording = async () => {
+  //   try {
+  //     await Sound.pauseRecorder();
+  //     if (isPlayingRef.current) await Sound.pausePlayer().catch(() => { });
+  //     pauseStartTimeRef.current = Date.now();
+  //     isPausedRef.current = true;
+  //     setIsPaused(true);
+  //   } catch (e) {
+  //     console.log('pauseRecorder error:', e);
+  //   }
+  // };
   const pauseRecording = async () => {
     try {
-      await Sound.pauseRecorder();
-      if (isPlayingRef.current) await Sound.pausePlayer().catch(() => { });
+
+      await Promise.all([
+        Sound.pauseRecorder(),
+        isPlayingRef.current
+          ? Sound.pausePlayer()
+          : Promise.resolve(),
+      ]);
+
       pauseStartTimeRef.current = Date.now();
       isPausedRef.current = true;
       setIsPaused(true);
@@ -678,15 +767,24 @@ const Recording = () => {
 
   const resumeRecording = async () => {
     try {
-      await Sound.resumeRecorder();
+      await Promise.all([
+        Sound.resumeRecorder(),
+        instrumentalUrl && hasStartedRef.current
+          ? Sound.resumePlayer()
+          : Promise.resolve(),
+      ]);
+
       if (instrumentalUrl && hasStartedRef.current) {
-        await Sound.resumePlayer().catch(() => { });
         isPlayingRef.current = true;
       }
+
       if (pauseStartTimeRef.current > 0) {
-        recordStartTimeRef.current += Date.now() - pauseStartTimeRef.current;
+        recordStartTimeRef.current +=
+          Date.now() - pauseStartTimeRef.current;
+
         pauseStartTimeRef.current = 0;
       }
+
       isPausedRef.current = false;
       setIsPaused(false);
     } catch (e) {
@@ -695,42 +793,79 @@ const Recording = () => {
   };
 
   const togglePauseRecording = async () => {
-    if (isPausedRef.current) await resumeRecording();
-    else await pauseRecording();
+    // Prevent multiple taps
+    if (pauseLoadingRef.current) return;
+
+    pauseLoadingRef.current = true;
+    setIsPauseLoading(true);
+
+    try {
+      if (isPausedRef.current) {
+        await resumeRecording();
+      } else {
+        await pauseRecording();
+      }
+    } finally {
+      pauseLoadingRef.current = false;
+      setIsPauseLoading(false);
+    }
   };
+
+  // const resumeRecording = async () => {
+  //   try {
+  //     await Sound.resumeRecorder();
+  //     if (instrumentalUrl && hasStartedRef.current) {
+  //       await Sound.resumePlayer().catch(() => { });
+  //       isPlayingRef.current = true;
+  //     }
+  //     if (pauseStartTimeRef.current > 0) {
+  //       recordStartTimeRef.current += Date.now() - pauseStartTimeRef.current;
+  //       pauseStartTimeRef.current = 0;
+  //     }
+  //     isPausedRef.current = false;
+  //     setIsPaused(false);
+  //   } catch (e) {
+  //     console.log('resumeRecorder error:', e);
+  //   }
+  // };
+
+  // const togglePauseRecording = async () => {
+  //   if (isPausedRef.current) await resumeRecording();
+  //   else await pauseRecording();
+  // };
 
 
   // adding for preloading instrumental to avoid delay when starting recording
   const preloadPromiseRef = useRef<Promise<void> | null>(null);
-const preloadedRef = useRef(false);
+  const preloadedRef = useRef(false);
 
-const preloadInstrumental = async () => {
-  preloadedRef.current = false;
-  if (!instrumentalUrl) return;
-  try {
-    setInstrumentalLoading(true);
-    try { await Sound.stopPlayer(); } catch (_) {}
-    await Sound.setVolume(0);
-    await Sound.startPlayer(instrumentalUrl); // buffering happens here, during countdown
-    await Sound.pausePlayer();
-    await Sound.seekToPlayer(0);
-    await Sound.setVolume(1);
-    preloadedRef.current = true;
-  } catch (e) {
-    console.log('preload error:', e);
-  } finally {
-    setInstrumentalLoading(false);
-  }
-};
+  const preloadInstrumental = async () => {
+    preloadedRef.current = false;
+    if (!instrumentalUrl) return;
+    try {
+      setInstrumentalLoading(true);
+      try { await Sound.stopPlayer(); } catch (_) { }
+      await Sound.setVolume(0);
+      await Sound.startPlayer(instrumentalUrl); // buffering happens here, during countdown
+      await Sound.pausePlayer();
+      await Sound.seekToPlayer(0);
+      await Sound.setVolume(1);
+      preloadedRef.current = true;
+    } catch (e) {
+      console.log('preload error:', e);
+    } finally {
+      setInstrumentalLoading(false);
+    }
+  };
 
-// Preload instrumental on mount
+  // Preload instrumental on mount
 
 
   // ── Start Recording ────────────────────────────────────────────────────────
   const startRecording = async () => {
     try {
       await requestMicPermission();
-
+      //   startPlayingMusic()
       try { await Sound.stopRecorder(); Sound.removeRecordBackListener(); } catch (_) { }
       // try { await Sound.stopPlayer(); } catch (_) { }
       try { await TrackPlayer.stop(); await TrackPlayer.seekTo(0); } catch (_) { }
@@ -777,20 +912,20 @@ const preloadInstrumental = async () => {
       // }
 
       if (instrumentalUrl) {
-  await preloadPromiseRef.current;          // already done in most cases
-  try {
-    if (preloadedRef.current) {
-      await Sound.resumePlayer();           // instant
-    } else {
-      await Sound.startPlayer(instrumentalUrl); // fallback
-    }
-    instrumentalStartedAtRef.current = Date.now();
-    isPlayingRef.current = true;
-    hasStartedRef.current = true;
-  } catch (audioErr) {
-    // keep your existing toast here
-  }
-}
+        await preloadPromiseRef.current;          // already done in most cases
+        try {
+          if (preloadedRef.current) {
+            await Sound.resumePlayer();           // instant
+          } else {
+            await Sound.startPlayer(instrumentalUrl); // fallback
+          }
+          instrumentalStartedAtRef.current = Date.now();
+          isPlayingRef.current = true;
+          hasStartedRef.current = true;
+        } catch (audioErr) {
+          // keep your existing toast here
+        }
+      }
       await Sound.startRecorder();
       setRecording(true);
       isRecordingRef.current = true;
@@ -821,8 +956,8 @@ const preloadInstrumental = async () => {
           setRecordTime(`${mins}:${secs}`);
         }
 
-        if (targetDurationMs > 0) {
-          setRecPercentage(Math.min(100, Math.floor((elapsedMs / targetDurationMs) * 100)));
+        if (targetDurationMsRef.current > 0) {
+          setRecPercentage(Math.min(100, Math.floor((elapsedMs / targetDurationMsRef.current) * 100)));
         }
       }, 50);
     } catch (e) {
@@ -898,6 +1033,13 @@ const preloadInstrumental = async () => {
     } catch (_) { }
   };
 
+  // Keep a stable ref to startRecording so startCountdown never captures a
+  // stale closure of it (avoids the interval firing with old state values).
+  const startRecordingRef = useRef(startRecording);
+  useEffect(() => {
+    startRecordingRef.current = startRecording;
+  });
+
   const startCountdown = useCallback(() => {
     if (countdownTimerRef.current) {
       clearInterval(countdownTimerRef.current);
@@ -916,10 +1058,13 @@ const preloadInstrumental = async () => {
           countdownTimerRef.current = null;
         }
         setCountdown(null);
-        startRecording();
+        // Always use the latest version of startRecording via the ref.
+        startRecordingRef.current();
       }
     }, 1000);
-  }, [startRecording]);
+    // No dependency on startRecording — we read it from startRecordingRef.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleBack = useCallback(async () => {
     try {
@@ -1046,12 +1191,25 @@ const preloadInstrumental = async () => {
         setTitle('');
         setAlbumName('');
         setAlbumPicture(null);
+        setErrorMessage(null)
         if (response.data.recording_url) setPath(response.data.recording_url);
-        dispatch(showToast({ visible: true, message: t('Recording saved successfully.') || 'تم حفظ التسجيل بنجاح.', type: 'success' }));
+
+        if (
+          status != 'private'
+        ) {
+          dispatch(showToast({ visible: true, message: t('Request submitted. Awaiting admin approval to publish your song') || 'تم حفظ التسجيل بنجاح.', type: 'success' }));
+        }
+        else {
+
+
+          dispatch(showToast({ visible: true, message: t('Recording saved successfully.') || 'تم حفظ التسجيل بنجاح.', type: 'success' }));
+        }
       } else {
+        console.log(response)
         setErrorMessage(response?.data?.message || 'Recording upload failed.');
       }
     } catch (error: any) {
+      console.log(error)
       setErrorMessage(error?.response?.data?.message || 'Recording upload failed.');
     } finally {
       setIsUploading(false);
@@ -1363,9 +1521,9 @@ const preloadInstrumental = async () => {
           ) : recording ? (
             <>
               {/* Pause / Resume Button */}
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={togglePauseRecording}
-                activeOpacity={0.85}
+                 activeOpacity={0.85}
                 style={S.pauseButton}
               >
                 <View style={S.pauseIconBars}>
@@ -1379,8 +1537,50 @@ const preloadInstrumental = async () => {
                   )}
                 </View>
                 <Text style={S.pauseButtonText}>{isPaused ? 'Resume' : 'Pause'}</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
+              <TouchableOpacity
+                onPress={togglePauseRecording}
+                activeOpacity={0.8}
+                disabled={isPauseLoading}
+                style={[
+                  S.pauseButton,
+                  isPauseLoading && { opacity: 0.7 },
+                ]}
+              >
+                <View style={S.pauseIconBars}>
+                  {isPauseLoading ? (
+                    <ActivityIndicator
+                      size="small"
+                      color="#FFFFFF"
+                    />
+                  ) : isPaused ? (
+                    <Text
+                      style={{
+                        color: '#FFFFFF',
+                        fontSize: 18,
+                        fontWeight: '700',
+                      }}
+                    >
+                      ▶
+                    </Text>
+                  ) : (
+                    <>
+                      <View style={S.pauseBar} />
+                      <View style={S.pauseBar} />
+                    </>
+                  )}
+                </View>
 
+                <Text style={S.pauseButtonText}>
+                  {isPauseLoading
+                    ? isPaused
+                      ? 'Resuming...'
+                      : 'Pausing...'
+                    : isPaused
+                      ? 'Resume'
+                      : 'Pause'}
+                </Text>
+              </TouchableOpacity>
               {/* Finish Button */}
               <TouchableOpacity
                 onPress={stopRecording}
@@ -1541,17 +1741,33 @@ const preloadInstrumental = async () => {
 
             {/* 1. Save Recording Button (Gradient) */}
             <TouchableOpacity
-              onPress={() => { setTitle(recordingName); setSaveModalVisible(true); }}
+              onPress={() => {
+                if (saved) {
+                  dispatch(showToast({ visible: true, message: 'Recording already saved. Try another session.', type: 'info' }));
+                  return;
+                }
+
+                setTitle(recordingName);
+                setSaveModalVisible(true);
+              }}
               activeOpacity={0.85}
               style={R.saveRecordingBtn}
             >
               <LinearGradient
-                colors={saved ? ['#27AE60', '#2ECC71'] : ['#FF6315', '#D61A80', '#8500DC']}
+                colors={saved
+                  ? ['#27AE60', '#2ECC71']
+                  : ['#FF6315', '#D61A80', '#8500DC']
+                }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={R.saveRecordingGradient}
               >
-                <AppImage source={saved ? Logo.filltick : Images.import} height={18} width={18} tintColor="#FFFFFF" />
+                <AppImage
+                  source={saved ? Logo.filltick : Images.import}
+                  height={18}
+                  width={18}
+                  tintColor="#FFFFFF"
+                />
                 <Text style={R.saveRecordingText}>
                   {saved ? 'Saved!' : 'Save recording'}
                 </Text>
@@ -1569,7 +1785,7 @@ const preloadInstrumental = async () => {
             </TouchableOpacity>
 
             {/* 3. Discard Recording (Red text) */}
-            <TouchableOpacity
+            {/* <TouchableOpacity
               onPress={handleDiscardRecording}
               activeOpacity={0.85}
               style={R.discardBtn}
@@ -1578,16 +1794,23 @@ const preloadInstrumental = async () => {
 
               <AppImage source={Images.bin} height={16} width={16} tintColor="#FF4B4B" resizeMode='contain' />
               <Text style={R.discardText}>Discard recording</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             {/* 4. Back to Library */}
             <TouchableOpacity
-              onPress={handleBack}
+              //   onPress={handleBack}
+              onPress={() =>
+                (navigation as any).navigate('RecordingList' as never, {
+
+                  previousScreen: 'Profile',
+                  isRecordings: true,
+                } as never)
+              }
               activeOpacity={0.8}
               style={R.backToLibraryBtn}
             >
               <Text style={R.backToLibraryIcon}>‹</Text>
-              <Text style={R.backToLibraryText}>Back to Library</Text>
+              <Text style={R.backToLibraryText}> View all Recording</Text>
             </TouchableOpacity>
           </ScrollView>
 
@@ -2272,7 +2495,7 @@ const S = StyleSheet.create({
     backgroundColor: '#1B1922',
     borderRadius: 20,
     width: '100%',
-    overflow: 'hidden',
+    // overflow: 'hidden',
     marginTop: 10,
   },
   glowCircle: {
@@ -2587,8 +2810,9 @@ const R = StyleSheet.create({
   },
   backToLibraryIcon: {
     color: '#9E9AA7',
-    fontSize: 20,
+    fontSize: 25,
     fontWeight: '300',
+    marginBottom: 4
   },
   backToLibraryText: {
     color: '#9E9AA7',

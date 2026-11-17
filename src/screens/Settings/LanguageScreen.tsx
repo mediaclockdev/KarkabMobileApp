@@ -24,6 +24,7 @@ import { showToast } from '../../auth/redux/authSlice';
 import apiUrls from '../../services/apiUrls';
 import { useAppDispatch } from '../../share/hooks/useAppSelector';
 import LinearGradient from 'react-native-linear-gradient';
+import AppImageLg from '../../share/components/AppImageLg';
 
 
 
@@ -256,11 +257,11 @@ const LanguageScreen = () => {
                         ]}
                     >
                         <View style={styles.modalIcon}>
-                            <AppImage
+                            <AppImageLg
                                 source={Logo.language}
                                 width={26}
                                 height={26}
-                                tintColor="#FFB300"
+                            //   tintColor="#FFB300"
                             />
                         </View>
 
@@ -297,7 +298,7 @@ const LanguageScreen = () => {
                                     fontSize={13}
                                     fontFamily={Inter.medium}
                                 >
-                                    {t('common.cancel')}?
+                                    {t('common.cancel')} ?
 
                                 </AppText>
                             </TouchableOpacity>
@@ -309,8 +310,8 @@ const LanguageScreen = () => {
                                 style={styles.confirmButton}
                             >
                                 <LinearGradient
-                                    colors={['#FFB300', '#F3870C', '#CF7D00']}
-                                    start={{ x: 0, y: 0 }}
+                                    colors={['#FD8701', '#D62C64', '#BA17A6', '#8801F1']}
+                                    start={{ x: 0.2, y: 0 }}
                                     end={{ x: 1, y: 1 }}
                                     style={styles.confirmGradient}
                                 >
@@ -372,7 +373,7 @@ const styles = StyleSheet.create({
 
     subtitle: {
         marginTop: 2,
-        color: '#FFF97E',
+        color: '#FD8701',
         fontSize: 12,
         fontFamily: Inter.regular,
     },
@@ -432,7 +433,7 @@ const styles = StyleSheet.create({
 
     selectedIconBox: {
         backgroundColor: '#211505',
-        borderColor: '#F6A202',
+        borderColor: '#FD8701',
     },
 
     languageIcon: {
@@ -443,7 +444,7 @@ const styles = StyleSheet.create({
     },
 
     selectedIcon: {
-        color: '#F6A202',
+        color: '#FD8701',
     },
 
     /* Text */
@@ -481,14 +482,14 @@ const styles = StyleSheet.create({
     },
 
     radioSelected: {
-        borderColor: '#F6A202',
+        borderColor: '#FD8701',
     },
 
     radioInner: {
         width: 11,
         height: 11,
         borderRadius: 6,
-        backgroundColor: '#F6A202',
+        backgroundColor: '#FD8701',
     },
 
     /* Info */
@@ -517,7 +518,7 @@ const styles = StyleSheet.create({
     },
 
     infoIcon: {
-        color: '#F6A202',
+        color: '#FD8701',
         fontSize: 14,
         fontWeight: '700',
     },

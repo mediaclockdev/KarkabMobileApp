@@ -144,7 +144,7 @@ const SettingScreen = () => {
             onValueChange={onValueChange}
             trackColor={{
                 false: '#414147',
-                true: '#873DF2',
+                true: '#FA6144',
             }}
             thumbColor="#FFFFFF"
             ios_backgroundColor="#414147"
@@ -234,6 +234,8 @@ const SettingScreen = () => {
                         title: t('Profile.Notifications'),
                         right: <AppText style={styles.arrow}>›</AppText>,
                         onPress: () => {
+
+                            (navigation as any).navigate('NotificationScreen', { previousScreen: 'SettingScreen' })
                             // Navigate to notification settings when available
                         },
                     })}

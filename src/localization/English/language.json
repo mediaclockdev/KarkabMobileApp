@@ -8,7 +8,8 @@
     "error": "Error",
     "somethingWentWrong": "Something went wrong",
     "restartManually": "Please close and reopen the app to apply the new language.",
-    "Confirm": "Confirm"
+    "Confirm": "Confirm",
+    "Delete": "Delete"
   },
   "auth": {
     "login": {
@@ -16,7 +17,7 @@
       "headline": "Ready for your",
       "tagline": "Your stage is waiting",
       "taglineAccent": "It's your turn to sing, and the stage awaits you",
-      "emailPlaceholder": "Enter Email",
+      "emailPlaceholder": "Enter Your Email",
       "emailOrUsername": "Email, username or mobile",
       "passwordPlaceholder": "Password",
       "forgotPassword": "Forgot password?",
@@ -28,15 +29,18 @@
       "and": "and",
       "privacy": "Privacy Policy",
       "loginFailed": "Login Failed",
-      "encore": "encore?"
+      "encore": "encore?",
+      "Email": "Email",
+      "Password": "Password",
+      "Confir mpassword": "Confirm password"
     },
     "signup": {
       "title": "Create Account",
       "headline": "Ready for your",
-      "fullName": "Full Name *",
-      "emailAddress": "Enter Email *",
-      "choosePassword": "Choose Password *",
-      "confirmPassword": "Confirm Password *",
+      "fullName": "Full Name",
+      "emailAddress": "Enter Email",
+      "choosePassword": "Choose Password",
+      "confirmPassword": "Confirm Password",
       "alreadyHaveAccount": "Already have an account?",
       "signIn": "Sign In",
       "createAccount": "Sign Up",
@@ -211,7 +215,7 @@
     "Textsize": "Text size",
     "Fulllyrics": "Full lyrics",
     "LYRICS": "LYRICS",
-    "Lyricsarenotavailablefortherecordedsong.": "Lyrics are not available for the recorded song.",
+    "Lyricsarenotavailablefortherecordedsong": "This is a user-recorded song, so lyrics are not available for it. If you’d like to view lyrics while listening, please play an official artist song instead.",
     "Lyricsnotavailableforthissong": "Lyrics not available for this song.",
     "Singthissong": "Sing this song",
     "Prepareinstrumentalandlyrics": "Prepare instrumental and lyrics",
@@ -250,5 +254,16 @@
     "ChangeLanguage": "Change Language",
     "Areyouwanttochangetheapplanguage": "Are you sure you want to change the app language?",
     "Theapplicationreloadtoapplythechangesproperly": "The application will reload to apply the changes properly."
+  },
+  "SongAction": {
+    "AddtoFavorite": "Add to Favorite",
+    "RemovefromFavorite": "Remove from Favorite",
+    "AddtoPlaylist": "Add to Playlist",
+    "Like": "Like",
+    "Dislike": "Dislike",
+    "Share": "Share",
+    "CopySongLink": "Copy Song Link",
+    "RequestPublicVerification": "Request Public Verification",
+    "Remove": "Remove"
   }
 }
