@@ -1100,6 +1100,7 @@ const SongCard = ({
             source={Images.playicon}
             height={12}
             width={12}
+            tintColor={'#FF741D'}
           />
         </TouchableOpacity>
 
@@ -1307,7 +1308,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 26,
-    backgroundColor: 'rgba(0,0,0,.6)',
+    backgroundColor: 'rgb(235, 235, 235)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,

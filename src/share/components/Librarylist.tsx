@@ -1745,6 +1745,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
 
     elevation: 5,
+    borderWidth: 1,
+    borderColor: '#FF5A00',
 
   },
 

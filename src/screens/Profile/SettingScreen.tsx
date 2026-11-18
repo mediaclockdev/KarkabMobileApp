@@ -221,13 +221,13 @@ const SettingScreen = () => {
 
                     <View style={styles.divider} />
 
-                    {renderSettingRow({
+                    {/* {renderSettingRow({
                         icon: Images.playicon,
                         title: 'Autoplay',
                         right: renderSwitch(autoPlay, setAutoPlay),
                     })}
 
-                    <View style={styles.divider} />
+                    <View style={styles.divider} /> */}
 
                     {renderSettingRow({
                         icon: Images.bell,
@@ -317,7 +317,7 @@ const SettingScreen = () => {
 
                     {renderSettingRow({
                         icon: Logo.reportfile,
-                        title: t('Profile.AboutKarkab'),
+                        title: 'Terms & Privacy',
                         onPress: () => {
                             Alert.alert(
                                 'Terms & privacy',

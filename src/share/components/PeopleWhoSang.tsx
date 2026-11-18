@@ -126,7 +126,7 @@ const PeopleWhoSang = ({
                     <AppText
                         fontSize={13}
                         fontFamily={Inter.semibold}
-                        color="#FFFFFF"
+                        color="#FF5A00"
                         style={{ marginLeft: 2 }}
                     >
                         ▶
@@ -259,8 +259,8 @@ const styles = StyleSheet.create({
         height: 28,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#494949',
-        backgroundColor: '#202020',
+        borderColor: '#FF5A00',
+        backgroundColor: 'rgb(235, 235, 235)',
         alignItems: 'center',
         justifyContent: 'center',
         marginLeft: 5,

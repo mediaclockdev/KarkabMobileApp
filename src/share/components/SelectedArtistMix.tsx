@@ -101,16 +101,18 @@ const SelectedArtistMix = ({
                 fontFamily={Inter.semibold}
                 numberOfLines={1}
               >
-                {item.name}
+                {item.title}
               </AppText>
 
               <AppText
-                color="#D4AF37"
+                color="#FF5A00"
                 fontSize={11}
                 fontFamily={Inter.medium}
                 marginTop={4}
               >
-                Mix
+
+                {item.artist}
+
               </AppText>
             </View>
 
@@ -121,8 +123,8 @@ const SelectedArtistMix = ({
               style={styles.playButton}
             >
               <AppText
-                color="#FFFFFF"
-                fontSize={16}
+                color="#FF5A00"
+                fontSize={12}
                 fontFamily={Inter.semibold}
                 style={{ marginLeft: 2 }}
               >
@@ -160,7 +162,7 @@ const styles = StyleSheet.create({
 
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     //backgroundColor: 'red',
     height: '100%',
     width: '100%',
@@ -182,8 +184,8 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 24,
     borderWidth: 2,
-    borderColor: '#6B625D',
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderColor: '#FF5A00',
+    backgroundColor: 'rgb(235, 235, 235)',
     alignItems: 'center',
     justifyContent: 'center',
   },

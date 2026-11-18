@@ -164,7 +164,7 @@ const SongItem = React.memo(({
                   source={Images.playicon}
                   width={10}
                   height={10}
-                  tintColor={themeColor.darkthemetext}
+                  tintColor={'#FF5A00'}
                 />
               )}
             </>
@@ -394,6 +394,7 @@ const styles = StyleSheet.create({
     borderColor: '#FF5A00',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgb(235, 235, 235)'
   },
 
   pauseContainer: {

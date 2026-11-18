@@ -590,7 +590,7 @@ const PlaylistDetailScreen = () => {
                                     source={Images.playicon}
                                     width={10}
                                     height={10}
-                                    tintColor={isThisSongActive ? '#EFCB61' : colors.darkthemetext}
+                                    tintColor={isThisSongActive ? '#FF5A00' : '#FF5A00'}
                                 />
                             )}
                         </>
@@ -1469,6 +1469,7 @@ const styles = StyleSheet.create({
         borderRadius: 100,
         borderWidth: 1.5,
         borderColor: '#FF5A00',
+        backgroundColor: 'rgb(235, 235, 235)',
         justifyContent: 'center',
         alignItems: 'center',
     },

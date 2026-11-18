@@ -865,6 +865,7 @@ const Profile = () => {
                                                 width={10}
                                                 height={10}
                                                 resizeMode="contain"
+                                                tintColor={'#FF5A00'}
                                             />
                                         </TouchableOpacity>
 
@@ -1073,7 +1074,9 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: '#292A2E',
+        borderWidth: 1,
+        borderColor: '#FF5A00',
+        backgroundColor: 'rgb(235, 235, 235)',
         justifyContent: 'center',
         alignItems: 'center',
     },

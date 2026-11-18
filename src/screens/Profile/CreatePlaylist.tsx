@@ -266,6 +266,7 @@ const SwipeablePlaylistCard: React.FC<SwipeableCardProps> = ({
                                 width={9}
                                 height={9}
                                 resizeMode="contain"
+                                tintColor={'#FF5A00'}
                             />
                         </TouchableOpacity>
                     </View>
@@ -1653,9 +1654,11 @@ const styles = StyleSheet.create({
         width: 27,
         height: 27,
         borderRadius: 15,
-        backgroundColor: '#090909',
+
         borderWidth: 1,
-        borderColor: '#D07113',
+
+        borderColor: '#FF5A00',
+        backgroundColor: 'rgb(235, 235, 235)',
         justifyContent: 'center',
         alignItems: 'center',
     },

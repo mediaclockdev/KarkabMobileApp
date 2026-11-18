@@ -120,8 +120,8 @@ const PopularSongs: React.FC<PopularSongsProps> = ({
                         style={styles.playButton}
                     >
                         <AppText
-                            color="#FFFFFF"
-                            fontSize={16}
+                            color="#FF5A00"
+                            fontSize={12}
                             fontFamily={Inter.semibold}
                             style={{ marginLeft: 2 }}
                         >
@@ -191,8 +191,8 @@ const styles = StyleSheet.create({
         height: 28,
         borderRadius: 24,
         borderWidth: 2,
-        borderColor: '#6B625D',
-        backgroundColor: 'rgba(0,0,0,0.55)',
+        borderColor: '#FF5A00',
+        backgroundColor: 'rgb(235, 235, 235)',
         alignItems: 'center',
         justifyContent: 'center',
     },

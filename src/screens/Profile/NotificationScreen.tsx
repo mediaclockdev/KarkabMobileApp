@@ -166,7 +166,7 @@ const NotificationScreen = () => {
                 return '#F6A202';
 
             default:
-                return '#6FA8FF';
+                return '#FF5A00';
         }
     };
 
@@ -795,7 +795,7 @@ const NotificationScreen = () => {
                     <RefreshControl
                         refreshing={loading && currentPage === 1}
                         onRefresh={() => fetchNotifications(1)}
-                        tintColor="#F6A202"
+                        tintColor="#FF5A00"
                     />
                 }
             />

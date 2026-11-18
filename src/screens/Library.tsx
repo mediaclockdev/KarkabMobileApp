@@ -892,9 +892,9 @@ const Library = () => {
                 alignItems: 'center',
                 width: '30.6%',
                 flexDirection: 'row',
-                gap: 10,
+                gap: 13,
                 paddingHorizontal: 0,
-                paddingVertical: 10,
+                paddingVertical: 8,
                 borderRadius: 8,
               }}
             >
@@ -908,14 +908,14 @@ const Library = () => {
                   borderRadius: 50,
                 }}
               >
-                <AppImage source={item.image} height={24} width={24} tintColor={"#FF741D"} />
+                <AppImage source={item.image} height={20} width={20} tintColor={"#FF741D"} />
               </View>
 
               <View>
-                <AppText fontSize={9} fontFamily={Inter.regular} color={color.darkthemetext}>
+                <AppText fontSize={8} fontFamily={Inter.regular} color={color.darkthemetext}>
                   {item.title}
                 </AppText>
-                <AppText fontSize={17} fontFamily={Inter.regular} color={color.darkthemetext}>
+                <AppText fontSize={16} fontFamily={Inter.regular} color={color.darkthemetext}>
                   {item.number}
                 </AppText>
               </View>
