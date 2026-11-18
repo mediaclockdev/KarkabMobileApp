@@ -1176,11 +1176,11 @@ const MoodCard = ({ item, onpress }: any) => (
           {item.title.replace(/\p{Emoji}/gu, '').trim()}
         </Text>
 
-        {/* <Text
+        <Text
           numberOfLines={1}
           style={styles.moodSubtitle}>
-          {item.description}
-        </Text> */}
+          {item.songsCount} Songs
+        </Text>
       </View>
       <AppImage
         source={Images.arrow}
@@ -1354,9 +1354,9 @@ const styles = StyleSheet.create({
   },
 
   moodSubtitle: {
-    color: '#888',
-    fontSize: 8,
-    marginTop: 2,
+    color: '#FF741D',
+    fontSize: 10,
+    marginTop: 5,
   },
   moodGrid: {
     flexDirection: 'row',

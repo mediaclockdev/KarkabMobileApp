@@ -145,7 +145,11 @@ const SongItem = React.memo(({
           tintColor={WAVE_COLORS[index % WAVE_COLORS.length]}
         />
         {/* Play Button */}
-        <TouchableOpacity style={styles.playButton} onPress={handlePress}>
+        <TouchableOpacity style={styles.playButton}
+          onPress={() => (navigation as any).navigate('.', { id: item.id, previousScreen: 'Home' })}
+
+        // onPress={handlePress}
+        >
           {isLoading && isPlaying ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (

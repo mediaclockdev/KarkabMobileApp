@@ -5,7 +5,7 @@ import {
     Clipboard,
     Dimensions,
     Pressable,
-    Share,
+
     StyleSheet,
     TouchableOpacity,
     View,
@@ -30,6 +30,8 @@ import { Images, Logo, Banner } from '../share/constants/media';
 import { storage } from '../share/storage/mmkv';
 import { useTranslation } from 'react-i18next';
 import Toast from 'react-native-toast-message';
+import Share from 'react-native-share';
+
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -46,6 +48,14 @@ interface SongActionSheetProps {
     song?: any;
     onClose: () => void;
     onDeleted?: (songId: number | string) => void;
+}
+interface Song {
+    id: number;
+    title?: string;
+    artist?: string;
+    cover_image_url?: string;
+    original_song?: string;
+    recording_url?: string;
 }
 
 const SongActionSheet = ({
@@ -481,6 +491,7 @@ const SongActionSheet = ({
             );
         }
     };
+    console.log(song, "lllll")
 
     const handleAddtofav = async (
         songId: number | string,
@@ -524,6 +535,7 @@ const SongActionSheet = ({
             );
             onDeleted?.(songId);
         } catch (error: any) {
+            console.log(error, "eerrrror")
             dispatch(
                 showToast({
                     visible: true,
@@ -625,50 +637,223 @@ const SongActionSheet = ({
         }
     };
 
-    const handleShare = async () => {
-        closeSheet();
+    // const handleShare = async () => {
+    //     closeSheet();
+    //     try {
+    //         const type = song?.recording_url ? 'recording' : 'song'
+
+    //         try {
+    //             const response =
+    //                 await ApiService.post(apiUrls.sharesong(song.id, type));
+
+    //             const data = (response as any)?.data;
+    //             console.log(data, "kkkkkkkknrnkrnk")
+    //             if (data?.success) {
+
+    //                 const songTitle = song?.title || song?.name || 'Unknown Song';
+    //                 const songId = song?.id;
+    //                 const songUrl = song?.recording_url ?
+    //                     data.recording_song_url : data.song_url
+    //                 console.log(songUrl, "llll")
+    //                 await Share.share({
+    //                     title: songTitle,
+    //                     message: `${songTitle}\n${songUrl}`,
+    //                     url: songUrl,
+    //                 });
+    //             }
+
+
+
+    //         } catch (error: any) {
+    //             dispatch(
+    //                 showToast({
+    //                     visible: true,
+    //                     message: error?.response?.data?.message || 'Unable to share.',
+    //                     type: 'error',
+    //                 }),
+    //             );
+    //         }
+
+
+
+    //     } catch (error: any) {
+    //         console.log('Share error:', error);
+    //     }
+    // };
+    console.log(song)
+
+
+    const handleShare = async (song: Song | null | undefined) => {
+
+        if (!song?.id) {
+
+            dispatch(
+
+                showToast({
+
+                    visible: true,
+
+                    message: 'Song information is unavailable.',
+
+                    type: 'error',
+
+                }),
+
+            );
+
+            return;
+
+        }
+
+        const isRecording = Boolean(song.recording_url);
+
+        const shareUrl = isRecording ? song.recording_url : song.original_song;
+
+        if (!shareUrl) {
+
+            dispatch(
+
+                showToast({
+
+                    visible: true,
+
+                    message: 'Share link is unavailable for this track.',
+
+                    type: 'error',
+
+                }),
+
+            );
+
+            return;
+
+        }
+
         try {
-            const type = song?.recording_url ? 'recording' : 'song'
 
-            try {
-                const response =
-                    await ApiService.post(apiUrls.sharesong(song.id, type));
+            const title = song.title || 'Unknown Song';
 
-                const data = (response as any)?.data;
-                console.log(data, "kkkkkkkknrnkrnk")
-                if (data?.success) {
+            const artistText = song.artist ? ` by ${song.artist}` : '';
 
-                    const songTitle = song?.title || song?.name || 'Unknown Song';
-                    const songId = song?.id;
-                    const songUrl = song?.recording_url ?
-                        data.recording_song_url : data.song_url
-                    console.log(songUrl, "llll")
-                    await Share.share({
-                        title: songTitle,
-                        message: `${songTitle}\n${songUrl}`,
-                        url: songUrl,
-                    });
+            const message = `🎵 Listen to "${title}"${artistText}\n${shareUrl}`;
+
+            let localImageUri: string | null = null;
+
+            if (song.cover_image_url) {
+
+                try {
+
+                    // Save directly into CacheDir (mapped by <cache-path> in filepaths.xml)
+
+                    const targetPath = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/song_cover_${song.id}.jpg`;
+
+                    const res = await ReactNativeBlobUtil.config({
+
+                        path: targetPath,
+
+                    }).fetch('GET', song.cover_image_url);
+
+                    const status = res.info().status;
+
+                    const savedPath = res.path();
+
+                    if (status === 200 && savedPath) {
+
+                        localImageUri = savedPath.startsWith('file://')
+
+                            ? savedPath
+
+                            : `file://${savedPath}`;
+
+                    }
+
+                } catch (imgError) {
+
+                    console.log('Cover image fetch skipped:', imgError);
+
                 }
 
-
-
-            } catch (error: any) {
-                dispatch(
-                    showToast({
-                        visible: true,
-                        message: error?.response?.data?.message || 'Unable to share.',
-                        type: 'error',
-                    }),
-                );
             }
 
+            closeSheet();
 
+            if (Platform.OS === 'ios') {
 
-        } catch (error: any) {
-            console.log('Share error:', error);
+                await new Promise((resolve) => setTimeout(resolve, 350));
+
+            }
+
+            const shareOptions = localImageUri
+
+                ? {
+
+                    title,
+
+                    subject: title,
+
+                    message,
+
+                    url: localImageUri, // Always a valid file:///.../cache/song_cover_1050.jpg URI
+
+                    type: 'image/jpeg',
+
+                }
+
+                : {
+
+                    title,
+
+                    subject: title,
+
+                    message,
+
+                    url: shareUrl,
+
+                };
+
+            const shareResponse = await Share.open(shareOptions);
+
+            if (shareResponse?.success) {
+
+                const type = isRecording ? 'recording' : 'song';
+
+                ApiService.post(apiUrls.sharesong(song.id, type)).catch(() => { });
+
+            }
+
+        } catch (error: unknown) {
+
+            const err = error as { message?: string };
+
+            if (err?.message?.includes('User did not share')) {
+
+                return;
+
+            }
+
+            dispatch(
+
+                showToast({
+
+                    visible: true,
+
+                    message: err?.message || 'Unable to share right now.',
+
+                    type: 'error',
+
+                }),
+
+            );
+
         }
+
     };
-    console.log(song)
+
+
+
+
+
+
 
     const actions: SongAction[] = [
         {
@@ -737,7 +922,7 @@ const SongActionSheet = ({
 
             title: t('SongAction.Share'),
             icon: Logo.share,
-            onPress: handleShare,
+            onPress: async () => { handleShare(song) },
         },
         // {
         //     id: 'download',
@@ -774,7 +959,7 @@ const SongActionSheet = ({
                     Toast.show({
                         type: 'info',
                         position: 'bottom',
-                        bottomOffset: 80,
+                        bottomOffset: 180,
                         text1: 'Coming soon!',
                     }
                     );
@@ -826,7 +1011,7 @@ const SongActionSheet = ({
                 {
                     id: 'Remove',
                     title: t('SongAction.Remove'),
-                    icon: Images.bin,
+                    icon: Logo.dustbin,
                     danger: true,
                     onPress: () => {
                         if (song?.id) {

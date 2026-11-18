@@ -29,6 +29,7 @@ import { useTranslation } from "react-i18next";
 import { prefetchNextSongForQueue } from "../services/player";
 import TrackPlayer from "@rntp/player";
 import { ProfileSkeleton } from "../share/components/ScreenSkeletons";
+import { useAppSelector } from '../share/hooks/useAppSelector';
 
 const Profile = () => {
     const navigation = useNavigation();
@@ -51,7 +52,9 @@ const Profile = () => {
     const [playingId, setPlayingId] = useState<string | null>(null);
     const [loader, setLoader] = useState(false);
     const [favorites, setFavorites] = useState<string | null>(null);
-
+    const recordingRefresh = useAppSelector(
+        state => state.auth.recordingRefresh
+    );
     const fetchProfileData = async () => {
         try {
             setLoader(true);
@@ -78,13 +81,19 @@ const Profile = () => {
     useFocusEffect(
         useCallback(() => {
             fetchProfileData()
-            getRecording()
+
             getFavorites()
             getRecentlyPlayed()
         }, [])
     )
 
+    useFocusEffect(
+        useCallback(() => {
 
+            getRecording()
+
+        }, [recordingRefresh])
+    )
 
     const features = [
         // {

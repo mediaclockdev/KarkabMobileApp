@@ -1282,6 +1282,20 @@ const Librarylist = ({
     }
 
   };
+  const getTimeAgo = (updated_at) => {
+    if (!updated_at) return '';
+
+    const diff = new Date() - new Date(updated_at);
+
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${days}d ago`;
+  };
 
   const openDetail = (item: MusicItem) =>
     // console.log(item, "item", type)
@@ -1440,11 +1454,23 @@ const Librarylist = ({
               ) : null}
 
               {hasDuration ? (
-                <AppText fontSize={11} color={TEXT_SECONDARY}>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
 
-                  {item.duration}
-                </AppText>
+                  <AppText fontSize={11} color={TEXT_SECONDARY}>
 
+                    {item.duration}
+                  </AppText>
+                  {/* {console.log(type, "kkkkkk")} */}
+                  {
+                    type == 'recordings' ?
+                      <AppText fontSize={11} color={TEXT_SECONDARY}>
+
+                        {getTimeAgo(item.updated_at)}
+                      </AppText>
+                      : null
+                  }
+
+                </View>
               ) : null}
             </View>
           </TouchableOpacity>

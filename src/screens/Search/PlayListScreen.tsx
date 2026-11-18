@@ -506,6 +506,16 @@ export default function PlayListScreen() {
 
                                 <View style={styles.selectedInfo}>
                                     <AppText
+                                        style={{
+                                            color: '#FF741D',
+                                            fontSize: 12,
+                                            fontFamily: Inter.semibold,
+                                        }}
+                                        numberOfLines={1}
+                                    >
+                                        {selectedPlaylist.creator_name}
+                                    </AppText>
+                                    <AppText
                                         style={styles.selectedTitle}
                                         numberOfLines={1}
                                     >
@@ -804,7 +814,7 @@ const styles = StyleSheet.create({
     },
 
     selectedCount: {
-        color: '#D5A83F',
+        color: '#FF741D',
         fontSize: 11,
         marginTop: 5,
         fontFamily: Inter.medium,

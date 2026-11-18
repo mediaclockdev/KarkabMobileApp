@@ -3119,7 +3119,7 @@ const AudioRec = () => {
   // In shuffle mode: picks a random song from playlistQueue (or loads random song).
   const handleNext = async () => {
     console.log(isRecordingScreen, type, songdetail, 'next pressed');
-    if (isRecordingScreen || isBuffering) return;
+    if (isBuffering) return;
 
     if (isAutoNextingRef.current) return;
     isAutoNextingRef.current = true;
@@ -3184,7 +3184,7 @@ const AudioRec = () => {
 
   // Previous: >3s restarts; else native previous; else adjacent API.
   const handlePrevious = async () => {
-    if (currentPosition > 3 || isRecordingScreen) {
+    if (currentPosition > 3) {
       setCurrentPosition(0);
       await TrackPlayer.seekTo(0);
       return;
@@ -3520,7 +3520,9 @@ const AudioRec = () => {
               fontFamily={Inter.medium}
               style={{ marginLeft: 4 }}
             >
-              {previousScreen || 'Home'}
+              {previousScreen == 'PlaylistDetailScreen' ? 'Playlist' :
+
+                previousScreen || 'Home'}
             </AppText>
           </TouchableOpacity>
 

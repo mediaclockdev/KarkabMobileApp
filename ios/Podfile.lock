@@ -2296,6 +2296,27 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNShare (12.3.1):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNSVG (15.16.1):
     - hermes-engine
     - RCTRequired
@@ -2472,6 +2493,7 @@ DEPENDENCIES:
   - RNLocalize (from `../node_modules/react-native-localize`)
   - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNShare (from `../node_modules/react-native-share`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - "RNTPPlayer (from `../node_modules/@rntp/player`)"
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -2703,6 +2725,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@notifee/react-native"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNShare:
+    :path: "../node_modules/react-native-share"
   RNSVG:
     :path: "../node_modules/react-native-svg"
   RNTPPlayer:
@@ -2832,6 +2856,7 @@ SPEC CHECKSUMS:
   RNLocalize: 3963adb0476069cbbbff0bdd559701103b115428
   RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
   RNScreens: 5225fcd7c1fd13d64843a14a0e10bfe308e90406
+  RNShare: 1e1a7b4fe6c0ff025b2bc98430a76fda260e79b0
   RNSVG: 77ae3aa8f87c45e408479b0351eb6681cffea774
   RNTPPlayer: cc508f9754126bd1ca3c3c1f0855ba010d7041de
   SDWebImage: e9fc87c1aab89a8ab1bbd74eba378c6f53be8abf

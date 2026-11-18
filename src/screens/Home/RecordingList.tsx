@@ -349,7 +349,8 @@ export default function RecordingList() {
                                     <Text
                                         style={{
                                             color:
-                                                '#D4AF37',
+                                                '#FF741D',
+
                                         }}
                                     >
                                         {' '}{t('Home.Songs')}
@@ -543,9 +544,9 @@ const styles = StyleSheet.create({
     },
 
     subtitle: {
-        color: '#999',
-        marginTop: 2,
-        fontSize: 10,
+        color: '#FF741D',
+        marginTop: 5,
+        fontSize: 12,
         fontFamily: Inter.regular,
     },
 

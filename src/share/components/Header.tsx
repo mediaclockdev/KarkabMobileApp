@@ -124,6 +124,7 @@ const Header: React.FC<HeaderProps> = ({
                     resizeMode='contain'
                     style={{
                       marginTop: 3,
+                      marginRight: 10
                     }}
                   />
 

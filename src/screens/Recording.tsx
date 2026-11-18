@@ -4878,7 +4878,7 @@ const Recording = () => {
               {[
                 { icon: Images.mics, title: 'Freestyle Vocals', desc: 'Record clean vocals anytime' },
                 { icon: Images.bstar, title: 'Word-Sync Lyrics', desc: 'Real-time karaoke highlights' },
-                { icon: Logo.share, title: 'Save & Share', desc: 'Export and share your songs' },
+                { icon: Logo.share, title: 'Save & Share & Record', desc: 'Export and share your songs' },
               ].map(f => (
                 <View key={f.title} style={S.featureCard}>
                   <AppImage source={f.icon} height={24} width={24} tintColor={color.darkthemetext} style={{ marginBottom: 6 }} resizeMode="contain" />
